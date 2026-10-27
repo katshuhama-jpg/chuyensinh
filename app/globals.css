@@ -438,17 +438,26 @@ p {
   height: 4px;
   background-image: repeating-linear-gradient(90deg, var(--card-ink) 0 4px, transparent 4px 8px);
 }
+/* mỗi dòng một mục: nhãn bên trái, giá trị bên phải trên cùng một hàng */
 .kv {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 14px;
-  font-size: 19px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 20px;
+}
+.kv > div {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
 }
 .kv dt {
   color: var(--card-mute);
+  width: 120px;
+  flex: none;
 }
 .kv dd {
   margin: 0;
+  min-width: 0;
 }
 .rare {
   color: var(--rare);
