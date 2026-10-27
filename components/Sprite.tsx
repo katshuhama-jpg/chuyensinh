@@ -7,7 +7,8 @@ import { ANIM, composeStrip, readyStrip, type Anim, type Layer } from '@/lib/lpc
  * Nhân vật LPC. Khung gốc 64x64, hiển thị phóng to đúng bội số nguyên (mặc định 2 lần = 128px)
  * để pixel không bị nhòe.
  */
-export default function Sprite({ layers, scale = 2, anim = 'idle', dir = 2, label }: { layers: Layer[]; scale?: number; anim?: Anim; dir?: number; label: string }) {
+/** dy: dịch dọc theo pixel khung 64 (âm là lên), dùng để đặt nhân vật vào giữa khung ảnh đại diện */
+export default function Sprite({ layers, scale = 2, anim = 'idle', dir = 2, label, dy = 0 }: { layers: Layer[]; scale?: number; anim?: Anim; dir?: number; label: string; dy?: number }) {
   const key = JSON.stringify([layers, anim, dir]);
   const [strip, setStrip] = useState<{ key: string; url: string } | null>(() => {
     const u = typeof window !== 'undefined' ? readyStrip(layers, anim, dir) : undefined;
@@ -34,7 +35,7 @@ export default function Sprite({ layers, scale = 2, anim = 'idle', dir = 2, labe
     width: cell,
     height: cell,
     left: (box - cell) / 2,
-    top: (box - cell) / 2,
+    top: (box - cell) / 2 + dy * scale,
     backgroundImage: url ? `url(${url})` : undefined,
     backgroundSize: `${meta.frames * cell}px ${cell}px`,
     ['--lpc-end' as string]: `-${meta.frames * cell}px`,

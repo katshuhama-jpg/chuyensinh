@@ -71,7 +71,8 @@ function ProfileView({ p, rolls, onRoll, onStart, busy }: { p: Profile; rolls: n
       <div className="body" style={{ paddingTop: 12 }}>
         <div className="card px">
           <div className="who">
-            <Sprite layers={layers} scale={2} anim="walk" dir={2} label={`${p.name} lúc nhỏ`} />
+            {/* bé con nằm thấp trong khung 64 (từ y 20 tới 62): đẩy lên 9px để vào giữa */}
+            <Sprite layers={layers} scale={2} anim="walk" dir={2} dy={-9} label={`${p.name} lúc nhỏ`} />
             <div className="facts">
               <span>
                 {GENDER_NAME[p.gender]} · {pad(p.born.d)}/{pad(p.born.m)}/{p.born.y}
@@ -81,7 +82,7 @@ function ProfileView({ p, rolls, onRoll, onStart, busy }: { p: Profile; rolls: n
               </span>
               <span className="zodiac">
                 {/* bỏ ký hiệu cung: điện thoại tự đổi thành emoji, lạc kiểu pixel */}
-                Cung {p.zodiac.name} · {p.zodiac.el}
+                {p.zodiac.name} · {p.zodiac.el}
               </span>
             </div>
           </div>

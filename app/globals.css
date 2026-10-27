@@ -428,11 +428,12 @@ p {
 .zodiac {
   margin-top: 8px;
   align-self: stretch;
-  padding: 6px 12px;
+  padding: 6px 10px;
   text-align: left;
+  white-space: nowrap;
   background: var(--zodiac-bg);
   color: var(--zodiac-ink);
-  font-size: 18px;
+  font-size: 17px;
 }
 .dash {
   height: 4px;
