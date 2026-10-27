@@ -94,7 +94,7 @@ function ProfileView({ p, rolls, onRoll, onStart, busy }: { p: Profile; rolls: n
               <dd>{p.family.name}</dd>
             </div>
             <div>
-              <dt>Nếp nhà</dt>
+              <dt>Gia đình</dt>
               <dd>{p.home}</dd>
             </div>
             <div>
