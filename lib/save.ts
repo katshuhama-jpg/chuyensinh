@@ -17,27 +17,6 @@ export interface SaveState {
   startedAt: number;
 }
 
-const PENDING = 'cs.pending';
-
-/** Hồ sơ vừa gieo nhưng chưa đăng nhập: giữ trên máy, đăng nhập xong thì lưu lên tài khoản */
-export function keepPending(p: Profile) {
-  try {
-    localStorage.setItem(PENDING, JSON.stringify(p));
-  } catch {
-    /* bỏ qua */
-  }
-}
-
-export function takePending(): Profile | null {
-  try {
-    const raw = localStorage.getItem(PENDING);
-    localStorage.removeItem(PENDING);
-    return raw ? (JSON.parse(raw) as Profile) : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function loadMe(): Promise<{ username: string; meta: Meta; state: SaveState | null } | null> {
   const p = currentPlayer();
   const sb = supabase();

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import Sprite from '@/components/Sprite';
 import { lpcLayers } from '@/lib/look';
@@ -10,16 +11,17 @@ import { useAuth } from '@/lib/useAuth';
 /** Màn chơi chính: tạm thời chỉ hiện đời đang sống. Vòng năm, trọng tâm, biến cố sẽ làm ở bước sau. */
 export default function Choi() {
   const { user, ready } = useAuth();
+  const router = useRouter();
   const [state, setState] = useState<SaveState | null | undefined>(undefined);
 
   useEffect(() => {
     if (!ready) return;
     if (!user) {
-      setState(null);
+      router.replace('/dang-nhap?next=/choi');
       return;
     }
     loadMe().then((m) => setState(m?.state ?? null));
-  }, [ready, user]);
+  }, [ready, user, router]);
 
   const layers = useMemo(() => (state ? lpcLayers(state.char.look, state.char.gender, 'child') : []), [state]);
 
@@ -40,9 +42,9 @@ export default function Choi() {
         {state === undefined && <p className="mute">Đang tải...</p>}
         {state === null && (
           <div className="prose">
-            <p>{user ? 'Bạn chưa bắt đầu đời nào.' : 'Đăng nhập để tiếp tục đời đang sống.'}</p>
-            <Link href={user ? '/chao-doi' : '/dang-nhap?next=/choi'} className="btn-main">
-              {user ? '▶ CHÀO ĐỜI' : 'ĐĂNG NHẬP'}
+            <p>Bạn chưa bắt đầu đời nào.</p>
+            <Link href="/chao-doi" className="btn-main">
+              ▶ CHÀO ĐỜI
             </Link>
           </div>
         )}

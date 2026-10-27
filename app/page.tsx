@@ -89,7 +89,8 @@ export default function Home() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 'auto', padding: '0 4px 8px' }}>
-        <Link href="/chao-doi" className="btn-main">
+        {/* chưa đăng nhập thì đăng ký / đăng nhập trước */}
+        <Link href={ready && user ? '/chao-doi' : '/dang-nhap?next=/chao-doi'} className="btn-main">
           ▶ CHÀO ĐỜI
         </Link>
         <div className="grid3">

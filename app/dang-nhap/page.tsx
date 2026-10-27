@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signIn, signUp } from '@/lib/auth';
-import { saveGame, takePending } from '@/lib/save';
 import { useAuth } from '@/lib/useAuth';
 
 export default function LoginPage() {
@@ -26,11 +25,8 @@ export default function LoginPage() {
       setError(err);
       return;
     }
-    // hồ sơ gieo trước khi đăng nhập: lưu lên tài khoản
-    const pending = takePending();
-    if (pending) await saveGame({ char: pending, age: 0, startedAt: Date.now() });
     const next = new URLSearchParams(window.location.search).get('next');
-    router.push(next && next.startsWith('/') ? next : '/');
+    router.push(next && next.startsWith('/') ? next : '/chao-doi');
   }
 
   return (
