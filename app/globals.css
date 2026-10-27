@@ -426,9 +426,10 @@ p {
   line-height: 1;
 }
 .zodiac {
-  margin-top: 6px;
-  align-self: flex-start;
-  padding: 0 8px;
+  margin-top: 8px;
+  align-self: stretch;
+  padding: 6px 12px;
+  text-align: left;
   background: var(--zodiac-bg);
   color: var(--zodiac-ink);
   font-size: 18px;

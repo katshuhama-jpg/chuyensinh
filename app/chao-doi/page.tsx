@@ -80,8 +80,8 @@ function ProfileView({ p, rolls, onRoll, onStart, busy }: { p: Profile; rolls: n
                 {p.city}, {p.countryName}
               </span>
               <span className="zodiac">
-                {p.zodiac.sym}
-                {'︎'} {p.zodiac.name} · {p.zodiac.el}
+                {/* bỏ ký hiệu cung: điện thoại tự đổi thành emoji, lạc kiểu pixel */}
+                Cung {p.zodiac.name} · {p.zodiac.el}
               </span>
             </div>
           </div>
