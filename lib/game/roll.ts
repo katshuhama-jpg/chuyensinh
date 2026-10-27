@@ -79,7 +79,8 @@ const HAIRS = ['#2a1d16', '#2a1d16', '#4a2f1d', '#6b4426', '#a8763e', '#d9b26a',
 const TOPS = ['#e8e1d0', '#3b5b8c', '#c4573a', '#2f7a63', '#d9a441', '#6a4a8c', '#30343f', '#c46a86'];
 const BOTTOMS = ['#2b3045', '#3b4f7a', '#5a4632', '#30343f', '#7a6a58', '#8c3b3b'];
 
-export function rollProfile(setup: Setup, r: Rng = Math.random): Profile {
+/** avoid: mã nước vừa ra ở lần gieo trước, để gieo lại không ra trùng nước */
+export function rollProfile(setup: Setup, r: Rng = Math.random, avoid?: string): Profile {
   // thời đại
   const world = setup.world === 'any' ? pick(r, ['past', 'now', 'future'] as const) : setup.world;
   const y = world === 'past' ? 1950 + Math.floor(r() * (THIS_YEAR - 1950)) : THIS_YEAR;
@@ -87,12 +88,13 @@ export function rollProfile(setup: Setup, r: Rng = Math.random): Profile {
   const d = 1 + Math.floor(r() * 28);
 
   // nơi sinh
+  const places = COUNTRIES.filter((x) => x.id !== avoid);
   const c =
     setup.draw === 'births'
-      ? pickW(r, COUNTRIES.map((x) => ({ v: x, w: x.births })))
+      ? pickW(r, places.map((x) => ({ v: x, w: x.births })))
       : setup.draw === 'pop'
-        ? pickW(r, COUNTRIES.map((x) => ({ v: x, w: x.pop })))
-        : pick(r, COUNTRIES);
+        ? pickW(r, places.map((x) => ({ v: x, w: x.pop })))
+        : pick(r, places);
 
   const gender: Gender = setup.gender === 'rand' ? (r() < 0.49 ? 'f' : r() < 0.96 ? 'm' : 'nb') : setup.gender;
   const fam = pick(r, c.family);
@@ -123,7 +125,7 @@ export function rollProfile(setup: Setup, r: Rng = Math.random): Profile {
   const skin = pickW(r, skinW.map((w, i) => ({ v: i, w })));
   const look: Look = {
     skin,
-    hair: c.id === 'kr' || c.id === 'jp' || c.id === 'vn' ? (r() < 0.85 ? HAIRS[0] : pick(r, HAIRS.slice(1, 4))) : pick(r, HAIRS),
+    hair: ['kr', 'jp', 'vn', 'cn', 'th', 'in'].includes(c.id) ? (r() < 0.85 ? HAIRS[0] : pick(r, HAIRS.slice(1, 4))) : pick(r, HAIRS),
     hairStyle: Math.floor(r() * 100),
     top: Math.floor(r() * 100),
     bottom: Math.floor(r() * 100),

@@ -121,6 +121,66 @@ export const COUNTRIES: Country[] = [
     familyFirst: false,
     skin: [35, 30, 20, 15],
   },
+  {
+    id: 'cn',
+    name: 'Trung Quốc',
+    births: 9.0,
+    pop: 1410,
+    cities: ['Bắc Kinh', 'Thượng Hải', 'Quảng Châu', 'Thâm Quyến', 'Thành Đô', 'Hàng Châu', 'Vũ Hán', 'Tây An'],
+    family: ['Vương', 'Lý', 'Trương', 'Lưu', 'Trần', 'Dương', 'Hoàng', 'Triệu', 'Chu', 'Ngô'],
+    given: {
+      f: ['Tịnh', 'Mỹ Linh', 'Hiểu Yến', 'Vũ Đồng', 'Tư Vũ', 'Lệ Na', 'Tuyết'],
+      m: ['Vĩ', 'Hạo Nhiên', 'Tử Hiên', 'Kiến Quốc', 'Minh Hiên', 'Hạo', 'Lỗi'],
+      nb: ['Tử Hàm', 'Vũ Hàm', 'An Kỳ', 'Văn'],
+    },
+    familyFirst: true,
+    skin: [55, 40, 5, 0],
+  },
+  {
+    id: 'th',
+    name: 'Thái Lan',
+    births: 0.5,
+    pop: 71,
+    cities: ['Bangkok', 'Chiang Mai', 'Phuket', 'Khon Kaen', 'Pattaya', 'Hat Yai', 'Udon Thani'],
+    family: ['Saetang', 'Srisuk', 'Wongsa', 'Chaiyaporn', 'Boonmee', 'Kittisak', 'Rattanakul', 'Thongdee'],
+    given: {
+      f: ['Ploy', 'Nicha', 'Kanya', 'Malee', 'Pim', 'Fah', 'Mint'],
+      m: ['Somchai', 'Anan', 'Krit', 'Narong', 'Thanakorn', 'Boon', 'Kla'],
+      nb: ['Nat', 'Ton', 'Bam', 'Jay'],
+    },
+    familyFirst: false,
+    skin: [25, 50, 22, 3],
+  },
+  {
+    id: 'uk',
+    name: 'Anh',
+    births: 0.68,
+    pop: 68,
+    cities: ['London', 'Manchester', 'Birmingham', 'Liverpool', 'Edinburgh', 'Bristol', 'Leeds', 'Cardiff'],
+    family: ['Smith', 'Jones', 'Taylor', 'Brown', 'Williams', 'Wilson', 'Evans', 'Patel', 'Khan', 'Murphy'],
+    given: {
+      f: ['Olivia', 'Amelia', 'Isla', 'Emily', 'Charlotte', 'Aisha', 'Sophie'],
+      m: ['Oliver', 'George', 'Harry', 'Jack', 'Mohammed', 'Thomas', 'Leo'],
+      nb: ['Charlie', 'Frankie', 'Robin', 'Jamie', 'Sam'],
+    },
+    familyFirst: false,
+    skin: [65, 18, 10, 7],
+  },
+  {
+    id: 'in',
+    name: 'Ấn Độ',
+    births: 23,
+    pop: 1440,
+    cities: ['Mumbai', 'Delhi', 'Bengaluru', 'Kolkata', 'Chennai', 'Hyderabad', 'Jaipur', 'Lucknow', 'Pune'],
+    family: ['Sharma', 'Patel', 'Singh', 'Kumar', 'Gupta', 'Reddy', 'Iyer', 'Das', 'Khan', 'Mehta'],
+    given: {
+      f: ['Priya', 'Ananya', 'Aisha', 'Kavya', 'Diya', 'Meera', 'Pooja'],
+      m: ['Arjun', 'Rahul', 'Vikram', 'Aarav', 'Rohan', 'Amit', 'Kabir'],
+      nb: ['Kiran', 'Ashwin', 'Sasha', 'Noor'],
+    },
+    familyFirst: false,
+    skin: [5, 35, 45, 15],
+  },
 ];
 
 /** Mốc lịch sử có thật. Chỉ ghi điều đã xảy ra, kể trung tính. */
@@ -175,6 +235,22 @@ export const MILESTONES: Milestone[] = [
   { c: 'br', year: 1994, text: 'Đổi sang đồng real' },
   { c: 'br', year: 2002, text: 'Vô địch World Cup lần thứ năm' },
   { c: 'br', year: 2016, text: 'Olympic Rio' },
+
+  { c: 'cn', year: 1978, text: 'Cải cách mở cửa' },
+  { c: 'cn', year: 1997, text: 'Tiếp nhận Hồng Kông' },
+  { c: 'cn', year: 2001, text: 'Trung Quốc vào WTO' },
+  { c: 'cn', year: 2008, text: 'Olympic Bắc Kinh' },
+
+  { c: 'th', year: 2004, text: 'Sóng thần Ấn Độ Dương' },
+  { c: 'th', year: 2011, text: 'Đại hồng thủy' },
+
+  { c: 'uk', year: 1966, text: 'Vô địch World Cup' },
+  { c: 'uk', year: 2012, text: 'Olympic London' },
+  { c: 'uk', year: 2016, text: 'Trưng cầu Brexit' },
+
+  { c: 'in', year: 1983, text: 'Vô địch World Cup cricket' },
+  { c: 'in', year: 1991, text: 'Cải cách kinh tế' },
+  { c: 'in', year: 2023, text: 'Tàu Chandrayaan-3 đáp xuống Mặt Trăng' },
 ];
 
 /** Mốc tương lai theo dự báo dân số của LHQ (World Population Prospects 2024, phương án trung bình) */

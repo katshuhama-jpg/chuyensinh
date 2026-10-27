@@ -14,7 +14,7 @@ const GENDER_NAME = { f: 'Nữ', m: 'Nam', nb: 'Phi nhị nguyên' };
 const pad = (n: number) => String(n).padStart(2, '0');
 
 /** Mọi thứ đều do số phận: thời, nước, giới tính, gia cảnh... rút ngẫu nhiên như VKL */
-const roll = () => rollProfile({ world: 'any', draw: 'novel', gender: 'rand' });
+const roll = (avoid?: string) => rollProfile({ world: 'any', draw: 'novel', gender: 'rand' }, Math.random, avoid);
 
 export default function ChaoDoi() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function ChaoDoi() {
   }, [ready, user, profile, router]);
 
   function reroll() {
-    setProfile(roll());
+    setProfile((cur) => roll(cur?.country));
     setRolls((n) => n + 1);
     window.scrollTo(0, 0);
   }
