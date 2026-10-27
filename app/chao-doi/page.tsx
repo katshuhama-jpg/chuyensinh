@@ -81,7 +81,7 @@ function ProfileView({ p, rolls, onRoll, onStart, busy }: { p: Profile; rolls: n
               </span>
               <span className="zodiac">
                 {/* bỏ ký hiệu cung: điện thoại tự đổi thành emoji, lạc kiểu pixel */}
-                Cung {p.zodiac.name}
+                Cung {p.zodiac.name} · {p.zodiac.el}
               </span>
             </div>
           </div>
