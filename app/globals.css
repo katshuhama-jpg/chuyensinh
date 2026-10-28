@@ -3409,3 +3409,22 @@ p {
   gap: 4px;
   font-size: 17px;
 }
+/* ---------- trái tim mức tình cảm (giấu số) ---------- */
+.hearts {
+  display: inline-flex;
+  gap: 2px;
+  font-size: 16px;
+  line-height: 1;
+}
+.hearts i {
+  font-style: normal;
+  color: var(--stat-empty);
+}
+.hearts i.on {
+  color: var(--orange);
+  text-shadow: 1px 1px 0 #211833;
+}
+.slot .hearts {
+  font-size: 11px;
+  gap: 1px;
+}

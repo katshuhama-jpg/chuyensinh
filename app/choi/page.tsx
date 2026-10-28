@@ -472,15 +472,13 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
   const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
   const st = statusOf(x.s, id);
   return (
-    <button type="button" className={`slot ${open ? 'on' : ''} st-${st === 'Người yêu' ? 'yeu' : st === 'Mập mờ' ? 'mapmo' : 'moi'}`} onClick={onOpen} aria-expanded={open}>
+    <button type="button" className={`slot ${open ? 'on' : ''} st-${st === 'Người yêu' ? 'yeu' : st === 'Mập mờ' || st === 'Say nắng' ? 'mapmo' : 'moi'}`} onClick={onOpen} aria-expanded={open}>
       <span className="slot-photo">
         <Sprite layers={layers} scale={1} anim="idle" dir={2} label={x.L(id)} />
       </span>
       <b>{x.L(id)}</b>
       <small>{st === 'Người yêu' ? '♥ Người yêu' : st}</small>
-      <span className="slot-meter" aria-label={`Độ thân ${x.s.love[id]}`}>
-        <i style={{ width: `${x.s.love[id]}%` }} />
-      </span>
+      <Hearts v={x.s.love[id]} />
     </button>
   );
 }
@@ -544,7 +542,7 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
           <LoveRow key={id} id={id} x={x} story={story} />
         ))}
       </div>
-      <p className="mt-hint">Lúc cầu hôn: độ thân từ 70 và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
+      <p className="mt-hint">Lúc cầu hôn: phải thật thương nhau (4 tim trở lên) và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
       <div className="mt-h">BẠN - CHỈ SỐ</div>
       <Radar axes={RADAR.map((r) => ({ label: r.label, value: r.of(story.stats) }))} />
@@ -590,12 +588,7 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
             return `✦ Quà: ${yes.length ? `thích ${yes.join(', ')}` : ''}${yes.length && no.length ? ' · ' : ''}${no.length ? `không thích ${no.join(', ')}` : ''}`;
           })()}
         </small>
-        <div className="stat">
-          <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
-            {cells(story.love[id], 'looks')}
-          </span>
-          <span>{lost ? '-' : story.love[id]}</span>
-        </div>
+        <Hearts v={lost ? 0 : story.love[id]} />
         <small className="nb-open">Xem hồ sơ ▸</small>
       </div>
     </div>
@@ -603,6 +596,22 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
     </>
   );
 }
+
+/** Độ thân giấu số: 5 trái tim pixel theo mức (Mới quen, Bạn bè, Mập mờ, Say nắng, Thương) */
+function Hearts({ v }: { v: number }) {
+  const n = v >= 80 ? 5 : v >= 60 ? 4 : v >= 40 ? 3 : v >= 20 ? 2 : v > 0 ? 1 : 0;
+  return (
+    <span className="hearts" aria-label={`Mức tình cảm ${n} trên 5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <i key={i} className={i < n ? 'on' : ''} aria-hidden="true">
+          ♥
+        </i>
+      ))}
+    </span>
+  );
+}
+const signOf = (v: number, n: string) =>
+  v >= 80 ? `${n} nhìn bạn như thể cả thế giới chỉ còn một người.` : v >= 60 ? `${n} hay tìm cớ gặp bạn.` : v >= 40 ? `${n} trả lời tin nhắn rất nhanh.` : v >= 20 ? `${n} coi bạn là bạn tốt.` : `${n} mới chỉ biết tên bạn.`;
 
 /** Hồ sơ chi tiết một người: ảnh, nghề, nhà, xe, chỉ số của người ấy (mạng nhện), độ thân, gu */
 function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: Story; st: string; onClose: () => void }) {
@@ -636,13 +645,9 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
         </ul>
         <div className="mt-h">CHỈ SỐ CỦA {x.L(id).toUpperCase()}</div>
         <Radar axes={PERSONA_AXES.map((label, i) => ({ label, value: p[i] }))} />
-        <div className="mt-h">ĐỘ THÂN VỚI BẠN</div>
-        <div className="stat">
-          <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
-            {cells(story.love[id], 'looks')}
-          </span>
-          <span>{story.love[id]}</span>
-        </div>
+        <div className="mt-h">TÌNH CẢM VỚI BẠN</div>
+        <Hearts v={story.love[id]} />
+        <p className="mt-hint">{signOf(story.love[id], x.L(id))}</p>
       </div>
     </div>
   );

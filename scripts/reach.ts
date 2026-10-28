@@ -28,6 +28,11 @@ for (let i = 0; i < N; i++) {
       return v;
     };
     let best = 0;
+    // ở ngã rẽ của tuyến tình: chọn lựa chọn đầu (tốt nhất), trừ màn chọn hướng thì theo người cần nhắm
+    if (s.scene.startsWith('route@') && !o.some((ch) => ch.loveId)) {
+      s = choose(R, c, fate.family, s, 0).s;
+      continue;
+    }
     o.forEach((ch, j) => score(ch) > score(o[best]) && (best = j));
     s = choose(R, c, fate.family, s, best).s;
   }

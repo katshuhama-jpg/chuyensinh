@@ -9,6 +9,7 @@ import type { Bg } from '@/components/Backdrop';
 import { activeOf, ctxOf, isOut, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, type Choice, type Ctx, type Fx, type LoveId, type Post, type Resolve, type Scene, type Story, type SwipeCard } from './story';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
+import { routeScene } from './routes';
 import { GIFT_CAT, GIFT_PREF, shelfOf } from './gifts';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
@@ -444,7 +445,7 @@ const list: Scene[] = [
         t: 'Dùng ngay',
         do: (fx, x) => {
           const best = (['khoi', 'long', 'minh'] as LoveId[]).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
-          fx.say(`${x.L(best)} đang có cảm tình với ${x.me} nhất (độ thân ${x.s.love[best]}).`);
+          fx.say(`${x.L(best)} đang có cảm tình với ${x.me} nhất (${statusOf(x.s, best).toLowerCase()}).`);
           fx.stat('dao', 5);
         },
       },
@@ -654,7 +655,7 @@ const list: Scene[] = [
         t: 'Nhận lời cưới luôn',
         if: (x) => x.s.love[P(x)] < 45,
         do: (fx) => (fx.marry(), fx.loveEnd('cuoivoi'), fx.mid('cuoivoi')),
-        sys: 'Đinh! Cảnh báo: độ thân chưa đủ. Ký chủ chắc chưa?',
+        sys: 'Đinh! Cảnh báo: hai người chưa đủ thân. Ký chủ chắc chưa?',
       },
     ],
     next: 'hub@24#1',
@@ -940,12 +941,15 @@ function roll(s: Story, salt: number) {
 }
 
 const quetLabel = (y: number) => (y > 2026 ? 'Mở app ghép đôi AI' : y >= 2015 ? 'Mở app Quẹt' : y >= 2005 ? 'Lên diễn đàn kết bạn' : 'Đọc mục Tìm bạn bốn phương');
-export const statusOf = (s: Story, id: LoveId) => (s.partner === id ? 'Người yêu' : s.love[id] >= 40 ? 'Mập mờ' : 'Mới quen');
+/** Độ thân ẩn số, chỉ hiện trạng thái */
+export const statusOf = (s: Story, id: LoveId) =>
+  s.partner === id ? 'Người yêu' : s.love[id] >= 60 ? 'Say nắng' : s.love[id] >= 40 ? 'Mập mờ' : s.love[id] >= 20 ? 'Bạn bè' : 'Mới quen';
 /** người đang thân (độ thân từ 40) */
 const close = (s: Story) => activeOf(s).filter((id) => s.love[id] >= 40);
 
+/** Mỗi năm: 1 lượt tự do ở Bảng tình duyên, rồi tới ngã rẽ của tuyến tình */
 function afterTurn(age: number, n: number) {
-  return n === 1 ? `hub@${age}#2` : `end@${age}`;
+  return n === 1 ? `route@${age}` : `end@${age}`;
 }
 
 /** Tỏ tình: từ 60 là thành, 50-59 thì nhờ Duyên dáng */
@@ -954,7 +958,7 @@ function confess(fx: Fx, x: Ctx, id: LoveId) {
   const ok = v >= 60 || (v >= 50 && x.s.stats.duyen >= 50);
   if (!ok) {
     fx.love(id, -8);
-    fx.say(`${x.L(id)} cười ngượng: "Cho ${x.xung} thêm thời gian nhé." Độ thân chưa đủ.`);
+    fx.say(`${x.L(id)} cười ngượng: "Cho ${x.xung} thêm thời gian nhé." Hai người chưa đủ thân.`);
     return;
   }
   const old = x.s.partner && x.s.partner !== 'xemmat' ? (x.s.partner as LoveId) : null;
@@ -1294,7 +1298,7 @@ function hubScene(age: number, n: number): Scene {
     kind: 'hub',
     bg: () => (n === 1 ? { place: 'pho', time: 'dusk' } : { place: 'phong', time: 'night' }),
     title: `Mùa yêu năm ${age} tuổi`,
-    text: (x) => [`Năm ${x.year}, lượt ${n}/2. Hôm nay ${x.me} sẽ dành thời gian cho ai?`],
+    text: (x) => [`Năm ${x.year}, lượt tự do. Hôm nay ${x.me} dành thời gian cho ai?`],
     choices: [
       ...LOVE_IDS.flatMap(per),
       { t: (x) => quetLabel(x.year), act: 'quet', if: (x) => x.s.met.length < MAX_LIFE, to: `quet@${age}#${n}` },
@@ -1403,7 +1407,7 @@ function dropScene(age: number): Scene {
     choices: [
       ...LOVE_IDS.map(
         (id): Choice => ({
-          t: (x) => `Buông ${x.L(id)} (độ thân ${x.s.love[id]})`,
+          t: (x) => `Buông ${x.L(id)} (${statusOf(x.s, id).toLowerCase()})`,
           if: (x) => activeOf(x.s).includes(id),
           do: (fx) => (fx.drop(id), fx.acceptPending()),
         }),
@@ -1438,6 +1442,8 @@ export function resolverOf(c: Character, f: Family): Resolve {
     switch (kind) {
       case 'ev':
         return eraScene(age, ctxOf(c, f, s, age));
+      case 'route':
+        return routeScene(age, ctxOf(c, f, s, age), `end@${age}`);
       case 'gift':
         return giftScene(age, n, who as LoveId);
       case 'hub':
