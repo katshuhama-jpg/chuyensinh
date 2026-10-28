@@ -91,6 +91,69 @@ function propose(fx: Fx, x: Ctx) {
   }
 }
 
+
+/* ---------- đám cưới: đỉnh của một đời, có tên, có ảnh ---------- */
+const exAtWedding = (x: Ctx): LoveId | null => {
+  const ids = LOVE_IDS.filter((id) => id !== x.s.partner && x.s.met.includes(id) && x.s.love[id] >= 45);
+  return ids.sort((a, b) => x.s.love[b] - x.s.love[a])[0] ?? null;
+};
+const venue = (x: Ctx) =>
+  x.year < 1990 ? 'sân hợp tác xã, tiệc trà, kẹo lạc, thuốc lá' : x.year < 2005 ? 'rạp dựng giữa ngõ, cỗ ba mươi mâm' : x.year < 2020 ? 'nhà hàng tiệc cưới, cổng hoa, MC đọc lời chúc' : 'nhà hàng, quét mã QR mừng cưới ngay cổng';
+function weddingScene(age: number, next: string): Scene {
+  return {
+    id: `wd@${age}`,
+    age,
+    chapter: CH.tre,
+    bg: (x) => (x.year < 2005 ? { place: 'ngo', time: 'day' } : { place: 'quan', time: 'night' }),
+    who: (x) => (x.s.partner ?? null) as LoveId | 'xemmat' | null,
+    skip: (x) => !x.s.married || x.has('cuoi_done'),
+    title: (x) => `Đám cưới ${x.me} và ${spouseName(x)}`,
+    text: (x) => {
+      const lines = [
+        `${x.year < 2000 ? 'Sáng sớm, nhà trai mang tráp sang, dàn bê tráp đi một hàng dài qua ngõ' : 'Đoàn rước dâu đến đúng giờ đẹp, xe hoa kết đầy hồng trắng'}. Tiệc cưới ở ${venue(x)}.`,
+        `${spouseName(x)} ${x.lg === 'm' ? 'trong bộ vest hơi rộng vai' : 'trong tà áo dài đỏ'}, cứ quay sang nhìn ${x.me} rồi cười ngượng.`,
+      ];
+      const ex = exAtWedding(x);
+      if (ex) lines.push(`Cuối hội trường, ${x.L(ex)} đứng lặng một lúc, gửi phong bì cho ${x.s.bestie} rồi lặng lẽ về trước.`);
+      if (x.s.partner === 'khoi' && x.has('dieu')) lines.push('Trên bàn quà cưới có một con diều giấy cũ, buộc nơ đỏ.');
+      return lines;
+    },
+    choices: [
+      {
+        t: 'Cầm micro, nói vài lời trước hai họ',
+        do: (fx, x) => {
+          fx.flag('cuoi_done');
+          if (x.s.partner && x.s.partner !== 'xemmat') fx.love(x.s.partner, 10);
+          fx.rel('bome', 6);
+          if (x.s.partner && x.s.partner !== 'xemmat') fx.photo({ who: x.s.partner, place: 'Ảnh cưới', bg: { place: 'quan', time: 'night' }, line: `"Cảm ơn ${spouseName(x)} đã chọn ${x.me}." Cả hội trường vỗ tay.` });
+        },
+        note: () => '▣ Ảnh cưới đã vào album.',
+      },
+      {
+        t: 'Nắm tay nhau đi chào từng bàn',
+        do: (fx, x) => {
+          fx.flag('cuoi_done');
+          if (x.s.partner && x.s.partner !== 'xemmat') fx.love(x.s.partner, 6);
+          fx.rel('banthan', 6);
+          if (x.s.partner && x.s.partner !== 'xemmat') fx.photo({ who: x.s.partner, place: 'Ảnh cưới', bg: { place: 'quan', time: 'night' }, line: 'Hai bàn tay nắm chặt, đi hết ba mươi bàn tiệc.' });
+        },
+        note: () => '▣ Ảnh cưới đã vào album.',
+      },
+      {
+        t: (x) => (exAtWedding(x) ? `Chạy ra cổng, nói lời cảm ơn ${x.L(exAtWedding(x)!)}` : 'Lén trốn ra sau nhà, thở một hơi thật dài'),
+        do: (fx, x) => {
+          fx.flag('cuoi_done');
+          const ex = exAtWedding(x);
+          if (ex) (fx.love(ex, 6), fx.flag(`cuoi_ex_${ex}`), fx.stat('tinh', 5));
+          else fx.stat('tam', 4);
+        },
+        note: (x) => (exAtWedding(x) ? `🦋 ${x.L(exAtWedding(x)!)} sẽ nhớ buổi tối này.` : ''),
+      },
+    ],
+    next,
+  };
+}
+
 const proposeChoices: Choice[] = [
   { t: 'Gật đầu', do: propose },
   {
@@ -737,7 +800,7 @@ const list: Scene[] = [
       return lines;
     },
     choices: proposeChoices,
-    next: 'y28_hethong',
+    next: 'wd@27',
   },
   {
     id: 'y28_hethong',
@@ -778,7 +841,7 @@ const list: Scene[] = [
       { t: (x) => `Đồng ý, nửa năm sau cưới ${xemmatName(x)}`, do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
       { t: 'Từ chối khéo', do: (fx) => (fx.loveEnd('docthan'), fx.rel('bome', -5)) },
     ],
-    next: 'ev@30',
+    next: 'wd@28',
   },
   {
     id: 'y29_quaylai',
@@ -790,7 +853,7 @@ const list: Scene[] = [
     title: 'Gặp lại',
     text: (x) => [`${x.L(P(x))} đến đúng hẹn, vẫn ngồi chỗ cũ, vẫn gọi đúng món ${x.me} thích.`, `Ngồi được một lúc, ${x.ay} hỏi: "Mình thử lại lần nữa, rồi cưới luôn nhé?"`],
     choices: proposeChoices,
-    next: 'ev@30',
+    next: 'wd@29',
   },
 
   // ===== Lập gia đình =====
@@ -1707,6 +1770,8 @@ export function resolverOf(c: Character, f: Family): Resolve {
         return goScene(age);
       case 'ms':
         return msScene(age);
+      case 'wd':
+        return weddingScene(age, age === 27 ? 'y28_hethong' : 'ev@30');
       case 'rf':
         return ASK[age] ? reflectScene(age) : undefined;
       case 'chat':
