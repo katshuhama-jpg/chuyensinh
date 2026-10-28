@@ -6,28 +6,24 @@ import { useEffect, useMemo, useState } from 'react';
 import Sprite from '@/components/Sprite';
 import {
   CLOTH_COLORS,
-  ERAS,
   EXTRAS,
   HAIR_COLORS,
   SKINS,
   SKIN_SWATCH,
   STYLES,
-  YEAR_MAX,
-  YEAR_MIN,
   defaultCharacter,
   deviceAt,
   hairsFor,
   realityOf,
-  rollFamily,
   siblingText,
   suggestName,
   type Character,
-  type Family,
-  type Gender,
   type Look,
 } from '@/lib/character';
+import { introOf, newStory, rollFate, type Fate } from '@/lib/fate';
 import { lpcLayers, type Stage } from '@/lib/look';
 import { saveGame } from '@/lib/save';
+import { FIRST_SCENE } from '@/lib/scenes';
 import { useAuth } from '@/lib/useAuth';
 
 const STAGES: { id: Stage; name: string }[] = [
@@ -41,55 +37,142 @@ const EYES: { id: Look['eyes']; name: string }[] = [
   { id: 'blue', name: 'Xanh' },
 ];
 
-/** Màn tạo nhân vật: người chơi tự chọn hết, bấm Chào đời thì game rút gia cảnh */
-export default function TaoNhanVat() {
+/** Bắt đầu: số phận random (giới tính, năm sinh, gia cảnh, lời thầy bói), rồi người chơi chọn vẻ ngoài */
+export default function BatDau() {
   const router = useRouter();
   const { user, ready } = useAuth();
-  const [c, setC] = useState<Character>(() => defaultCharacter('f'));
-  const [stage, setStage] = useState<Stage>('adult');
-  const [family, setFamily] = useState<Family | null>(null);
+  const [fate, setFate] = useState<Fate | null>(null);
+  const [rolls, setRolls] = useState(0);
+  const [c, setC] = useState<Character | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (ready && !user) router.replace('/dang-nhap?next=/tao-nhan-vat');
-  }, [ready, user, router]);
+    if (!ready) return;
+    if (!user) router.replace('/dang-nhap?next=/tao-nhan-vat');
+    else if (!fate) {
+      setFate(rollFate());
+      setRolls(1);
+    }
+  }, [ready, user, fate, router]);
 
-  const layers = useMemo(() => lpcLayers(c.look, c.gender, stage), [c, stage]);
-  const set = (p: Partial<Look>) => setC((x) => ({ ...x, look: { ...x.look, ...p } }));
+  function reroll() {
+    setFate(rollFate());
+    setRolls((n) => n + 1);
+    window.scrollTo(0, 0);
+  }
 
-  function setGender(g: Gender) {
-    setC((x) => {
-      const extra = EXTRAS.find((e) => e.id === x.look.extra)?.for.includes(g) ? x.look.extra : 'none';
-      // còn để tóc mặc định của giới kia thì đổi sang tóc mặc định của giới mới
-      const hair = x.look.hair === defaultCharacter(x.gender).look.hair ? defaultCharacter(g).look.hair : x.look.hair;
-      return { ...x, gender: g, look: { ...x.look, extra, hair, brow: g === 'f' ? 'thin' : 'thick' } };
-    });
+  function toLook() {
+    if (!fate) return;
+    setC({ ...defaultCharacter(fate.gender), name: fate.name, birthYear: fate.birthYear });
+    window.scrollTo(0, 0);
   }
 
   async function start() {
-    if (!family) return;
+    if (!fate || !c) return;
     setBusy(true);
-    await saveGame({ char: { ...c, name: c.name.trim() }, family, age: 0, startedAt: Date.now() });
+    const char = { ...c, name: c.name.trim() };
+    await saveGame({ char, family: fate.family, story: newStory(fate, FIRST_SCENE), startedAt: Date.now() });
     router.push('/choi');
   }
 
-  if (!ready || !user) return <main className="app" />;
-  if (family) return <Born c={c} family={family} onBack={() => setFamily(null)} onStart={start} busy={busy} />;
+  if (!ready || !user || !fate) return <main className="app" />;
+  if (c) return <LookStep c={c} setC={(f) => setC((x) => (x ? f(x) : x))} onBack={() => setC(null)} onStart={start} busy={busy} />;
+  return <FateStep key={rolls} fate={fate} rolls={rolls} onRoll={reroll} onNext={toLook} />;
+}
 
-  const name = c.name.trim();
-  const youth = c.birthYear + 16;
-
+/** Bước 1: đoạn giới thiệu số phận */
+function FateStep({ fate, rolls, onRoll, onNext }: { fate: Fate; rolls: number; onRoll: () => void; onNext: () => void }) {
+  const intro = introOf(fate);
+  const layers = useMemo(() => lpcLayers(defaultCharacter(fate.gender).look, fate.gender, 'child'), [fate]);
+  const fam = fate.family;
   return (
-    <main className="app">
+    <main className={`app ${rolls > 1 ? 'rolling' : ''}`}>
       <div className="head">
         <Link href="/" className="back" aria-label="Về trang đầu">
           ‹
         </Link>
         <div style={{ flex: 1 }}>
           <div className="eyebrow" style={{ fontSize: 18 }}>
-            BƯỚC ĐẦU TIÊN
+            SỐ PHẬN AN BÀI
           </div>
-          <h1>Tạo nhân vật</h1>
+          <h1>Chào đời</h1>
+        </div>
+      </div>
+      <div className="body" style={{ paddingTop: 12 }}>
+        <div className="card px">
+          <div className="who">
+            <Sprite layers={layers} scale={2} anim="walk" dir={2} dy={-9} label="Đứa trẻ vừa chào đời" />
+            <div className="facts">
+              <span>
+                {fate.gender === 'f' ? 'Bé gái' : 'Bé trai'} · {fate.birthYear}
+              </span>
+              <span>
+                {fam.province}, {fam.urban ? 'thành thị' : 'nông thôn'}
+              </span>
+            </div>
+          </div>
+          <div className="name">{fate.name}</div>
+          <div className="dash" aria-hidden="true" />
+          <dl className="kv" style={{ margin: 0 }}>
+            <div>
+              <dt>Gia cảnh</dt>
+              <dd>{fam.wealth}</dd>
+            </div>
+            <div>
+              <dt>Bố mẹ</dt>
+              <dd>{fam.parents}</dd>
+            </div>
+            <div>
+              <dt>Anh chị em</dt>
+              <dd>{siblingText(fam.siblings)}</dd>
+            </div>
+          </dl>
+        </div>
+        <div className="story px-dim">
+          {intro.map((p, i) => (
+            <p key={i} className={p.startsWith('“') ? 'quote' : i === intro.length - 1 ? 'ask' : ''}>
+              {p}
+            </p>
+          ))}
+          <p className="mute" style={{ fontSize: 18 }}>
+            {realityOf(fate.birthYear)} Tuổi 16 rơi vào năm {fate.birthYear + 16}: {deviceAt(fate.birthYear + 16)}.
+          </p>
+        </div>
+      </div>
+      <div className="foot">
+        <div className="row">
+          <button type="button" className="btn-sub px" onClick={onRoll}>
+            Gieo lại
+            <br />
+            số phận
+          </button>
+          <button type="button" className="btn-main" onClick={onNext}>
+            CHỌN VẺ NGOÀI
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/** Bước 2: chọn vẻ ngoài và tên */
+function LookStep({ c, setC, onBack, onStart, busy }: { c: Character; setC: (f: (x: Character) => Character) => void; onBack: () => void; onStart: () => void; busy: boolean }) {
+  const [stage, setStage] = useState<Stage>('adult');
+  const layers = useMemo(() => lpcLayers(c.look, c.gender, stage), [c, stage]);
+  const set = (p: Partial<Look>) => setC((x) => ({ ...x, look: { ...x.look, ...p } }));
+  const name = c.name.trim();
+
+  return (
+    <main className="app">
+      <div className="head">
+        <button type="button" className="back" aria-label="Về màn số phận" onClick={onBack}>
+          ‹
+        </button>
+        <div style={{ flex: 1 }}>
+          <div className="eyebrow" style={{ fontSize: 18 }}>
+            {c.gender === 'f' ? 'NỮ' : 'NAM'} · SINH NĂM {c.birthYear}
+          </div>
+          <h1>Chọn vẻ ngoài</h1>
         </div>
       </div>
 
@@ -105,43 +188,12 @@ export default function TaoNhanVat() {
       </div>
 
       <div className="body">
-        <Group label="Giới tính">
-          <div className="grid2">
-            {(['f', 'm'] as const).map((g) => (
-              <button key={g} type="button" className="opt chip px-dim" aria-pressed={c.gender === g} onClick={() => setGender(g)}>
-                {g === 'f' ? 'Nữ' : 'Nam'}
-              </button>
-            ))}
-          </div>
-          <span className="mute" style={{ fontSize: 18 }}>
-            {c.gender === 'f' ? 'Bạn sẽ gặp bản nam của dàn người yêu.' : 'Bạn sẽ gặp bản nữ của dàn người yêu.'}
-          </span>
-        </Group>
-
-        <Group label="Năm sinh">
-          <div className="year">
-            <input
-              type="range"
-              min={YEAR_MIN}
-              max={YEAR_MAX}
-              value={c.birthYear}
-              onChange={(e) => setC((x) => ({ ...x, birthYear: Number(e.target.value) }))}
-              aria-label="Năm sinh"
-            />
-            <output>{c.birthYear}</output>
-          </div>
-          <div className="chips">
-            {ERAS.map((e) => (
-              <button key={e.name} type="button" className="opt chip px-dim" aria-pressed={c.birthYear === e.year} onClick={() => setC((x) => ({ ...x, birthYear: e.year }))}>
-                {e.name}
-              </button>
-            ))}
-          </div>
-          <div className="note px-dim">
-            <span>
-              Tuổi 16 rơi vào năm {youth}: {deviceAt(youth)}.
-            </span>
-            <span className="mute">{realityOf(c.birthYear)}</span>
+        <Group label="Tên">
+          <div className="name-row">
+            <input value={c.name} maxLength={30} onChange={(e) => setC((x) => ({ ...x, name: e.target.value }))} aria-label="Tên nhân vật" className="px-dim" />
+            <button type="button" className="btn-sub px" style={{ minHeight: 48 }} onClick={() => setC((x) => ({ ...x, name: suggestName(x.gender) }))}>
+              Đổi tên
+            </button>
           </div>
         </Group>
 
@@ -218,7 +270,7 @@ export default function TaoNhanVat() {
             ))}
           </div>
           <span className="mute" style={{ fontSize: 18 }}>
-            Đồ tự đổi theo tuổi và thời kỳ, giữ đúng phong cách này. Đồ đi hẹn, đồ cưới, áo dài Tết mở dần trong game.
+            Đồ tự đổi theo tuổi, giữ đúng phong cách này.
           </span>
         </Group>
 
@@ -229,32 +281,11 @@ export default function TaoNhanVat() {
             ))}
           </div>
         </Group>
-
-        <Group label="Tên">
-          <div className="name-row">
-            <input
-              value={c.name}
-              maxLength={30}
-              placeholder="Người yêu sẽ gọi bạn bằng tên này"
-              onChange={(e) => setC((x) => ({ ...x, name: e.target.value }))}
-              aria-label="Tên nhân vật"
-              className="px-dim"
-            />
-            <button type="button" className="btn-sub px" style={{ minHeight: 48 }} onClick={() => setC((x) => ({ ...x, name: suggestName(x.gender) }))}>
-              Gợi ý
-            </button>
-          </div>
-        </Group>
       </div>
 
       <div className="foot">
-        {!name && (
-          <span className="mute" style={{ fontSize: 18, textAlign: 'center' }}>
-            Đặt tên để chào đời
-          </span>
-        )}
-        <button type="button" className="btn-main" disabled={!name} onClick={() => setFamily(rollFamily())}>
-          ▶ CHÀO ĐỜI
+        <button type="button" className="btn-main" disabled={!name || busy} onClick={onStart}>
+          {busy ? 'ĐANG LƯU...' : '▶ BẮT ĐẦU ĐỜI NÀY'}
         </button>
       </div>
     </main>
@@ -267,72 +298,5 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
       <div className="label">{label}</div>
       {children}
     </section>
-  );
-}
-
-/** Thẻ chào đời: gia cảnh vừa rút */
-function Born({ c, family, onBack, onStart, busy }: { c: Character; family: Family; onBack: () => void; onStart: () => void; busy: boolean }) {
-  const layers = useMemo(() => lpcLayers(c.look, c.gender, 'child'), [c]);
-  return (
-    <main className="app rolling">
-      <div className="head">
-        <button type="button" className="back" aria-label="Sửa nhân vật" onClick={onBack}>
-          ‹
-        </button>
-        <div style={{ flex: 1 }}>
-          <div className="eyebrow" style={{ fontSize: 18 }}>
-            GIA CẢNH DO SỐ PHẬN
-          </div>
-          <h1>Chào đời</h1>
-        </div>
-      </div>
-      <div className="body" style={{ paddingTop: 12 }}>
-        <div className="card px">
-          <div className="who">
-            <Sprite layers={layers} scale={2} anim="walk" dir={2} dy={-9} label={`${c.name} lúc nhỏ`} />
-            <div className="facts">
-              <span>
-                {c.gender === 'f' ? 'Nữ' : 'Nam'} · sinh năm {c.birthYear}
-              </span>
-              <span>
-                {family.province}, {family.urban ? 'thành thị' : 'nông thôn'}
-              </span>
-            </div>
-          </div>
-          <div className="name">{c.name.trim()}</div>
-          <div className="dash" aria-hidden="true" />
-          <dl className="kv" style={{ margin: 0 }}>
-            <div>
-              <dt>Gia cảnh</dt>
-              <dd>{family.wealth}</dd>
-            </div>
-            <div>
-              <dt>Bố mẹ</dt>
-              <dd>{family.parents}</dd>
-            </div>
-            <div>
-              <dt>Anh chị em</dt>
-              <dd>{siblingText(family.siblings)}</dd>
-            </div>
-          </dl>
-        </div>
-        <div className="note px-dim">
-          <span>{realityOf(c.birthYear)}</span>
-          <span className="mute">Gia cảnh mở ra kiểu drama riêng, nhưng không khóa người yêu nào.</span>
-        </div>
-      </div>
-      <div className="foot">
-        <div className="row">
-          <button type="button" className="btn-sub px" onClick={onBack}>
-            Sửa
-            <br />
-            nhân vật
-          </button>
-          <button type="button" className="btn-main" onClick={onStart} disabled={busy}>
-            {busy ? 'ĐANG LƯU...' : 'BẮT ĐẦU ĐỜI NÀY'}
-          </button>
-        </div>
-      </div>
-    </main>
   );
 }

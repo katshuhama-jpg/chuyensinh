@@ -2,6 +2,7 @@
 
 import { currentPlayer, dropSession } from './auth';
 import type { Character, Family } from './character';
+import type { Story } from './story';
 import { supabase } from './supabase';
 
 export interface Meta {
@@ -14,7 +15,7 @@ export interface Meta {
 export interface SaveState {
   char: Character;
   family: Family;
-  age: number;
+  story: Story;
   startedAt: number;
 }
 
@@ -38,5 +39,13 @@ export async function saveGame(state: SaveState | null): Promise<boolean> {
   const sb = supabase();
   if (!p || !sb) return false;
   const { error } = await sb.rpc('cs_save_game', { p_token: p.token, p_state: state });
+  return !error;
+}
+
+export async function saveMeta(meta: Meta): Promise<boolean> {
+  const p = currentPlayer();
+  const sb = supabase();
+  if (!p || !sb) return false;
+  const { error } = await sb.rpc('cs_save_meta', { p_token: p.token, p_meta: meta });
   return !error;
 }

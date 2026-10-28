@@ -704,3 +704,260 @@ p {
   animation: blink 1.2s steps(2) infinite;
   z-index: 1;
 }
+
+/* ---------- số phận ---------- */
+.story {
+  margin: 4px;
+  padding: 14px 16px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.story .quote {
+  color: var(--accent);
+  font-size: 24px;
+  padding-left: 12px;
+  border-left: 4px solid var(--accent);
+}
+.story .ask {
+  font-size: 24px;
+  color: var(--orange);
+}
+
+/* ---------- màn chơi ---------- */
+.stage {
+  margin: 4px;
+  height: 200px;
+  background: var(--scene);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.stage .stars {
+  position: absolute;
+  inset: 0 0 24px;
+  background-image: radial-gradient(var(--dim) 2px, transparent 2px);
+  background-size: 36px 28px;
+  opacity: 0.7;
+}
+.stage .ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24px;
+  background: var(--ground);
+}
+.actors {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  z-index: 1;
+}
+.actors figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.actors figcaption {
+  font-size: 17px;
+  color: var(--ink);
+  background: var(--ground);
+  padding: 0 6px;
+  margin-top: -4px;
+}
+.ht-box {
+  width: 128px;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  color: var(--orange);
+  animation: blink 1.4s steps(2) infinite;
+}
+.textbox {
+  margin: 4px;
+  padding: 12px 14px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 21px;
+  line-height: 1.3;
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.choices .opt {
+  margin: 4px;
+  min-height: 52px;
+  padding: 8px 14px;
+}
+.choices .opt b {
+  font-size: 22px;
+  line-height: 1.15;
+}
+.timer {
+  position: relative;
+  height: 22px;
+  margin: 4px;
+  background: var(--stat-empty);
+}
+.timer i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--orange);
+  transition: width 1s steps(4);
+}
+.timer span {
+  position: absolute;
+  right: 6px;
+  top: 0;
+  font-size: 18px;
+  line-height: 22px;
+  color: var(--ink);
+}
+.phone {
+  margin: 4px 24px;
+  background: var(--card);
+  color: var(--card-ink);
+  display: flex;
+  flex-direction: column;
+}
+.phone-top {
+  padding: 6px 12px;
+  background: var(--card-ink);
+  color: var(--card);
+  font-size: 19px;
+}
+.phone-msgs {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bubble {
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 6px 10px;
+  background: var(--card-ph);
+  font-size: 20px;
+  line-height: 1.2;
+  animation: pop 0.2s steps(2) both;
+}
+.bubble.me {
+  align-self: flex-end;
+  background: var(--orange);
+}
+.letter .bubble {
+  max-width: 100%;
+  background: transparent;
+  font-style: italic;
+}
+.typing {
+  font-size: 16px;
+  color: var(--card-mute);
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.fb {
+  margin: 4px;
+  padding: 14px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+.fb-note {
+  color: var(--accent);
+}
+.fb-sys {
+  color: var(--orange);
+}
+.fb-mid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+.fb-mid span {
+  font-size: 16px;
+  letter-spacing: 2px;
+  color: var(--stress);
+}
+.fb-mid b {
+  font-weight: 400;
+  font-size: 26px;
+}
+.fb-mid small {
+  font-size: 18px;
+  color: var(--mute);
+}
+.meters {
+  margin: 4px;
+  padding: 10px 12px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.meters summary {
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--mute);
+  min-height: 32px;
+}
+.meters .stat > span:first-child {
+  width: 104px;
+}
+
+/* ---------- cuối đời ---------- */
+.end-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.end-row span {
+  font-size: 17px;
+  color: var(--card-mute);
+}
+.end-row b {
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1;
+}
+.end-row small {
+  font-size: 18px;
+  color: var(--card-mute);
+}
+.path {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.path .opt {
+  width: calc(100% - 8px);
+  margin: 4px;
+}
+.path .opt b {
+  font-size: 20px;
+}
