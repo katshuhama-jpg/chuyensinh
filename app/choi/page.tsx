@@ -156,13 +156,22 @@ function Board({
 
   useEffect(() => setShown(0), [story.scene, story.path.length]);
 
+  const [toast, setToast] = useState<string | null>(null);
+  // chọn xong là đóng ngay, không hiện lại cảnh vừa chọn; hệ quả hiện thành một dòng nhắc nhỏ và vào nhật ký
   const go = useCallback(
     (i: number, note?: string, quiet = false) => {
       const f = onCommit(i, note);
-      setFb(quiet ? null : f);
+      setFb(null);
+      const msg = f && !quiet ? [...f.sys, ...f.notes][0] : null;
+      if (msg) setToast(msg);
     },
     [onCommit, setFb],
   );
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   // đồng hồ: mỗi nhịp hiện một năm; hết các năm thì sang cảnh tiếp
   useEffect(() => {
@@ -305,6 +314,12 @@ function Board({
           <p className="mt-hint">Màu càng đậm là năm càng vui. Ô viền sáng là năm đang sống.</p>
         </section>
       </div>
+
+      {toast && (
+        <div className="lb-toast px" role="status" onClick={() => setToast(null)}>
+          {toast}
+        </div>
+      )}
 
       {decide && (
         <div className="lb-veil">

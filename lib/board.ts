@@ -73,6 +73,7 @@ export function commit(R: Resolve, c: Character, f: Family, before: Story, i: nu
     const opt = visibleChoices(sc, x0)[i];
     add.push({ age: age0, year: x0.year, t: `${txt(sc.title, x0)}: ${opt ? txt(opt.t, x0) : ''}`, k: 'pick' });
     for (const n of [...r.fb.notes.slice(0, 2), ...r.fb.sys.slice(0, 1)]) add.push({ age: age0, year: x0.year, t: n, k: 'note' });
+    for (const id of r.fb.met) add.push({ age: age0, year: x0.year, t: `♥ Gặp ${x0.L(id)} lần đầu.`, k: 'note' });
   }
   if (note) {
     s.notes = [...(s.notes ?? []), { age: age0, q: sc.ask?.(x0) ?? '', a: note }];

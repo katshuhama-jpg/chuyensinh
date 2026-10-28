@@ -4216,3 +4216,18 @@ p {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+/* dòng nhắc hệ quả sau khi chọn */
+.lb-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 60;
+  width: min(92vw, 480px);
+  padding: 10px 14px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.25;
+  animation: lb-in 0.2s ease-out both;
+}
