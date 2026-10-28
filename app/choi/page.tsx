@@ -146,6 +146,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           </div>
           <h1>{txt(sc.title, x)}</h1>
         </div>
+        <Notebook x={x} story={story} />
       </div>
 
       <div className="body" style={{ paddingTop: 4, gap: 16 }}>
@@ -233,7 +234,6 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           !chat && !swipe && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
         )}
 
-        <Meters x={x} story={story} />
       </div>
     </main>
   );
@@ -392,39 +392,58 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
   );
 }
 
-/** Độ thân với dàn người yêu và chỉ số */
-function Meters({ x, story }: { x: Ctx; story: Story }) {
+/** Nút Sổ tay ở góc trên: bấm mở bảng tình cảm với những người đã gặp và chỉ số của bạn */
+function Notebook({ x, story }: { x: Ctx; story: Story }) {
+  const [open, setOpen] = useState(false);
   const met = story.met ?? LOVE_IDS.filter((id) => story.love[id] > 0);
-  const cells = (v: number, cls = '') =>
-    Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(v / 10) ? `on ${cls}` : ''} />);
+  useEffect(() => {
+    if (!open) return;
+    const k = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', k);
+    return () => window.removeEventListener('keydown', k);
+  }, [open]);
   return (
-    <details className="meters px-dim">
-      <summary>Sổ tay tình cảm</summary>
-      <p className="mt-hint">Ghi lại người ấy thương bạn bao nhiêu và bạn đang là người thế nào. Mỗi lựa chọn làm các số này lên xuống.</p>
-
-      <div className="mt-h">Người ấy - độ thân (0 đến 100)</div>
-      {met.length === 0 && <p className="mt-hint">Chưa thân với ai.</p>}
-      {met.map((id) => {
-        const lost = story.flags.includes(`${id}_out`);
-        return (
-          <div key={id} className="mt-love">
-            <div className="stat">
-              <span>{x.L(id)}</span>
-              <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
-                {cells(story.love[id], 'looks')}
-              </span>
-              <span>{lost ? '-' : story.love[id]}</span>
+    <>
+      <button type="button" className="nb-btn px" onClick={() => setOpen(true)} aria-label="Mở Sổ tay tình cảm">
+        <span aria-hidden="true">♥</span>
+        <small>SỔ TAY</small>
+        {met.length > 0 && <i className="nb-count">{met.length}</i>}
+      </button>
+      {open && (
+        <div className="nb-veil" onClick={() => setOpen(false)}>
+          <div className="nb-sheet px" role="dialog" aria-modal="true" aria-label="Sổ tay tình cảm" onClick={(e) => e.stopPropagation()}>
+            <div className="nb-h">
+              <b>♥ SỔ TAY TÌNH CẢM</b>
+              <button type="button" className="nb-x" onClick={() => setOpen(false)} aria-label="Đóng">
+                ✕
+              </button>
             </div>
-            <small>
-              {story.partner === id ? '♥ Đang hẹn hò · ' : lost ? 'Đã lỡ nhau · ' : ''}
-              Thích {LOVES[id].likesName}
-            </small>
+            <Meters x={x} story={story} met={met} />
           </div>
-        );
-      })}
+        </div>
+      )}
+    </>
+  );
+}
+
+const cells = (v: number, cls = '') => Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(v / 10) ? `on ${cls}` : ''} />);
+
+/** Độ thân với những người đã gặp và chỉ số của bạn */
+function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
+  return (
+    <div className="meters">
+      <p className="mt-hint">
+        Đã gặp {met.length}/{MAX_LIFE} người trong đời. Mỗi lựa chọn làm độ thân và chỉ số lên xuống.
+      </p>
+      {met.length === 0 && <p className="mt-hint">Chưa gặp ai. Người ấy đang ở đâu đó thôi.</p>}
+      <div className="nb-list">
+        {met.map((id) => (
+          <LoveRow key={id} id={id} x={x} story={story} />
+        ))}
+      </div>
       <p className="mt-hint">Lúc cầu hôn: độ thân từ 70 và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
-      <div className="mt-h">Bạn - chỉ số (0 đến 100)</div>
+      <div className="mt-h">BẠN - CHỈ SỐ (0 ĐẾN 100)</div>
       {STAT_KEYS.map((k) => (
         <div className="stat" key={k}>
           <span>{STAT_LABEL[k]}</span>
@@ -434,7 +453,35 @@ function Meters({ x, story }: { x: Ctx; story: Story }) {
           <span>{story.stats[k]}</span>
         </div>
       ))}
-    </details>
+    </div>
+  );
+}
+
+function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
+  const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
+  const lost = story.flags.includes(`${id}_out`);
+  const st = story.partner === id ? (story.married ? '♥ Bạn đời' : '♥ Người yêu') : lost ? 'Đã lỡ nhau' : statusOf(story, id);
+  return (
+    <div className={`nb-row ${lost ? 'lost' : ''}`}>
+      <span className="nb-photo">
+        <Sprite layers={layers} scale={1} anim="idle" dir={2} label={x.L(id)} />
+      </span>
+      <div className="nb-info">
+        <div className="nb-name">
+          <b>{x.L(id)}</b>
+          <small className={story.partner === id ? 'yeu' : ''}>{st}</small>
+        </div>
+        <small>
+          {LOVES[id].job[x.lg === 'm' ? 0 : 1]} · thích {LOVES[id].likesName}
+        </small>
+        <div className="stat">
+          <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
+            {cells(story.love[id], 'looks')}
+          </span>
+          <span>{lost ? '-' : story.love[id]}</span>
+        </div>
+      </div>
+    </div>
   );
 }
 

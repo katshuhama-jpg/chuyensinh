@@ -1,7 +1,7 @@
 /**
  * Nền pixel cho từng cảnh: nơi chốn (ngõ, lớp học, phòng ngủ, quán net, cổng trường, phố, quán,
  * nhà, công viên, văn phòng, vườn), giờ trong ngày (ngày, chiều, đêm), thời kỳ và dịp Tết.
- * Vẽ bằng các ô vuông trên lưới 160x90, phóng to giữ nét pixel.
+ * Vẽ bằng các ô vuông trên lưới 160x90, rồi đổi sang lưới 200x100 có dải mặt đất rộng ở dưới.
  */
 
 export type Place = 'ngo' | 'lop' | 'phong' | 'net' | 'cong' | 'pho' | 'quan' | 'nha' | 'congvien' | 'vanphong' | 'vuon';
@@ -72,7 +72,7 @@ function ngo(t: Time, e: Era, tet?: boolean): R[] {
     for (const x of [10, 50, 90, 130]) out.push([x, 18, 6, 7, '#d93a3a'], [x + 2, 25, 2, 3, '#ffd24a'], [x + 1, 19, 4, 1, '#ffd24a']);
     out.push([70, 40, 20, 4, '#d93a3a']);
   }
-  out.push([0, 78, 160, 12, '#6a6470'], [0, 78, 160, 1, '#8a8490'], [20, 84, 14, 1, '#c9c2ba'], [70, 84, 14, 1, '#c9c2ba'], [120, 84, 14, 1, '#c9c2ba']);
+  out.push([0, 78, 160, 12, '#6a6470']);
   return out;
 }
 
@@ -140,8 +140,8 @@ function cong(t: Time): R[] {
   out.push([32, 52, 96, 2, '#5a5a6a'], [32, 64, 96, 2, '#5a5a6a']);
   for (let x = 34; x < 128; x += 8) out.push([x, 50, 2, 28, '#5a5a6a']);
   for (const x of [2, 144]) out.push([x + 4, 40, 4, 38, '#5a3a24'], [x - 4, 26, 20, 16, '#4f9a46'], [x - 2, 20, 16, 8, '#5fae52']);
-  out.push([0, 78, 160, 12, '#b9ae96'], [0, 78, 160, 1, '#d6ccb4']);
-  out.push([50, 72, 14, 4, '#c4573a'], [52, 76, 3, 3, '#211833'], [60, 76, 3, 3, '#211833']); // xe máy
+  out.push([0, 78, 160, 12, '#8a8490']);
+  out.push([8, 83, 14, 4, '#c4573a'], [10, 87, 3, 2, '#211833'], [18, 87, 3, 2, '#211833']); // xe máy
   return out;
 }
 
@@ -156,7 +156,7 @@ function pho(t: Time, e: Era): R[] {
   if (e === 'future') out.push([66, 20, 24, 3, '#7fd1b9'], [24, 26, 20, 2, '#e8789f'], [114, 30, 22, 2, '#b48ad9'], [50, 14, 8, 3, '#7fd1b9'], [100, 8, 10, 3, '#e8789f']);
   else if (t === 'night') out.push([92, 36, 20, 4, '#e8789f'], [24, 30, 12, 3, '#7fd1b9']);
   for (const x of [16, 76, 136]) out.push([x, 50, 2, 28, '#3a3448'], [x - 2, 48, 8, 3, '#3a3448'], [x + 2, 51, 4, 2, t === 'night' ? '#ffd86a' : '#c9c2ba']);
-  out.push([0, 78, 160, 12, '#3a3448'], [0, 78, 160, 1, '#5a5468'], [10, 84, 12, 1, '#d6ccb4'], [60, 84, 12, 1, '#d6ccb4'], [110, 84, 12, 1, '#d6ccb4']);
+  out.push([0, 78, 160, 12, '#3a3448']);
   return out;
 }
 
@@ -164,11 +164,11 @@ function quan(t: Time, e: Era): R[] {
   if (e === 'old' || e === 'mid') {
     // quán cóc vỉa hè dưới gốc cây
     const out = sky(t);
-    out.push([0, 40, 160, 38, t === 'night' ? '#3a2e4a' : '#e0c08a'], [0, 40, 160, 2, '#a87650'], [10, 46, 36, 20, lit(t)], [60, 46, 26, 14, '#6a4a3a']);
+    out.push([0, 40, 160, 36, t === 'night' ? '#3a2e4a' : '#e0c08a'], [0, 40, 160, 2, '#a87650'], [10, 46, 36, 20, lit(t)], [60, 46, 26, 14, '#6a4a3a']);
     out.push([112, 24, 6, 54, '#5a3a24'], [94, 14, 44, 12, '#3f7a3a'], [100, 8, 32, 8, '#4f9a46']);
     if (t === 'night') out.push([100, 30, 4, 4, '#ffd86a'], [124, 32, 4, 4, '#ffd86a']);
-    out.push([0, 70, 160, 20, '#8a8490'], [0, 70, 160, 1, '#a8a2ac']);
-    out.push([40, 66, 24, 3, '#c4573a'], [42, 69, 2, 8, '#c4573a'], [60, 69, 2, 8, '#c4573a'], [30, 72, 8, 5, '#4a7ab8'], [68, 72, 8, 5, '#d93a3a'], [48, 62, 4, 4, '#e8e1d0']);
+    out.push([0, 76, 160, 14, '#8a8490']);
+    out.push([40, 76, 24, 3, '#c4573a'], [42, 79, 2, 6, '#c4573a'], [60, 79, 2, 6, '#c4573a'], [30, 81, 8, 4, '#4a7ab8'], [68, 81, 8, 4, '#d93a3a'], [48, 73, 4, 3, '#e8e1d0']);
     return out;
   }
   const night = t === 'night';
@@ -262,16 +262,22 @@ function mix(c: string, k: number) {
   return `#${v.map((x) => f(x).toString(16).padStart(2, '0')).join('')}`;
 }
 
-/** Đổi từ lưới cũ 160x90 sang lưới 200x100, làm tròn về ô nguyên, thêm viền và mặt sáng cho khối lớn */
-function toPixels(rects: R[]): R[] {
+/** Đường chân trời (theo lưới cũ 160x90) của từng nơi: dưới đường này là mặt đất / sàn */
+const HORIZON: Record<Place, number> = { ngo: 78, lop: 76, phong: 76, net: 76, cong: 78, pho: 78, quan: 76, nha: 76, congvien: 68, vanphong: 76, vuon: 76 };
+/** Trên lưới mới, mặt đất bắt đầu từ hàng này: còn 36/100 cho nhân vật đứng, không đứng trên nóc nhà */
+const GROUND = 64;
+
+/** Đổi từ lưới cũ 160x90 sang lưới 200x100: phần trên chân trời co lại, mặt đất giãn ra;
+ *  làm tròn về ô nguyên, thêm viền và mặt sáng cho khối lớn */
+function toPixels(rects: R[], hz: number): R[] {
   const sx = GW / 160;
-  const sy = GH / 90;
+  const vy = (y: number) => (y <= hz ? (y * GROUND) / hz : GROUND + ((y - hz) * (GH - GROUND)) / (90 - hz));
   const out: R[] = [];
   for (const [x, y, w, h, c] of rects) {
     const X = Math.round(x * sx);
-    const Y = Math.round(y * sy);
+    const Y = Math.round(vy(y));
     const W = Math.max(1, Math.round((x + w) * sx) - X);
-    const H = Math.max(1, Math.round((y + h) * sy) - Y);
+    const H = Math.max(1, Math.round(vy(y + h)) - Y);
     out.push([X, Y, W, H, c]);
     // khối đặc (tường, bàn, cây, cửa): viền tối hai bên và đáy, mép trên sáng
     if (W >= 4 && H >= 4 && W < GW && hex(c)) {
@@ -282,8 +288,47 @@ function toPixels(rects: R[]): R[] {
   return out;
 }
 
+const STREET: Place[] = ['ngo', 'pho', 'cong'];
+
+/** Mặt đất: vỉa hè lát gạch rồi lòng đường (ngoài phố), sàn gạch / ván (trong nhà), cỏ (vườn, công viên) */
+function ground(place: Place, base: string, time: Time): R[] {
+  const out: R[] = [];
+  const seam = mix(base, -0.16);
+  const hi = mix(base, 0.12);
+  if (STREET.includes(place)) {
+    const walk = mix(base, 0.28);
+    const kerb = 82;
+    out.push([0, GROUND, GW, kerb - GROUND, walk], [0, GROUND, GW, 1, mix(walk, 0.15)]);
+    for (let y = GROUND + 6; y < kerb; y += 6) out.push([0, y, GW, 1, mix(walk, -0.14)]);
+    for (let y = GROUND, r = 0; y < kerb; y += 6, r++) for (let x = r % 2 ? 6 : 0; x < GW; x += 12) out.push([x, y, 1, 6, mix(walk, -0.14)]);
+    out.push([0, kerb, GW, 2, mix(base, -0.3)], [0, kerb + 2, GW, GH - kerb - 2, base]);
+    for (let x = 8; x < GW; x += 36) out.push([x, 92, 18, 2, time === 'night' ? '#b9ae96' : '#e8e1d0']);
+    return out;
+  }
+  if (place === 'congvien' || place === 'vuon') {
+    for (let i = 0; i < 46; i++) {
+      const x = (i * 37) % GW;
+      const y = GROUND + 3 + ((i * 13) % (GH - GROUND - 5));
+      out.push([x, y, 1, 2, i % 3 ? seam : hi]);
+    }
+    if (place === 'congvien') out.push([70, GROUND + 14, 60, GH - GROUND - 14, '#c9a878'], [70, GROUND + 14, 60, 1, '#e0c49a']); // lối đi
+    return out;
+  }
+  // trong nhà: sàn ô vuông so le
+  for (let y = GROUND + 8; y < GH; y += 8) out.push([0, y, GW, 1, seam]);
+  for (let y = GROUND, r = 0; y < GH; y += 8, r++) for (let x = r % 2 ? 12 : 0; x < GW; x += 24) out.push([x, y, 1, 8, seam]);
+  out.push([0, GROUND + 1, GW, 1, hi]);
+  return out;
+}
+
 export default function Backdrop({ bg, year, glitch }: { bg: Bg; year: number; glitch?: boolean }) {
-  const rects = toPixels(PLACES[bg.place](bg.time, eraOf(year), bg.tet));
+  const raw = PLACES[bg.place](bg.time, eraOf(year), bg.tet);
+  const hz = HORIZON[bg.place];
+  const floor = raw.find(([x, y, w]) => x === 0 && y === hz && w === 160)?.[4] ?? '#6a6470';
+  const pix = toPixels(raw, hz);
+  // mặt đất vẽ ngay trên nền đất, dưới đồ vật (bàn, ghế, xe) đặt trên đất
+  const at = pix.findIndex(([, y, w]) => y === GROUND && w === GW);
+  const rects = at >= 0 ? [...pix.slice(0, at + 1), ...ground(bg.place, floor, bg.time), ...pix.slice(at + 1)] : [...pix, ...ground(bg.place, floor, bg.time)];
   return (
     <svg
       className={`backdrop ${glitch ? 'glitch' : ''}`}
