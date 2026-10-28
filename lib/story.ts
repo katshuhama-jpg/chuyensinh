@@ -162,7 +162,9 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer' | 'reflect';
+  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer' | 'reflect' | 'feed';
+  /** dòng thời gian: những năm trôi qua không cần chọn */
+  feed?: (x: Ctx) => { age: number; year: number; t: string }[];
   /** cảnh ngẫm (kiểu 1 in 8 Billion): câu hỏi để người chơi tự viết */
   ask?: (x: Ctx) => string;
   /** cảnh chat: máy dùng (mặc định theo năm); 'pc' là phần mềm chat ở quán net */

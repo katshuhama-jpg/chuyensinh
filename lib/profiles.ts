@@ -81,7 +81,7 @@ export function jobOf(id: LoveId, lg: 'm' | 'f', age: number, year: number): str
   const g = (m: string, f: string) => (lg === 'm' ? m : f);
   switch (id) {
     case 'minh':
-      return a < 18 ? g('lớp trưởng', 'lớp phó học tập') : a < 23 ? 'sinh viên trường top' : g('kỹ sư nghiên cứu', 'giảng viên đại học');
+      return a < 18 ? g('cậu bạn học giỏi nhất lớp', 'cô bạn học giỏi nhất lớp') : a < 23 ? 'sinh viên trường top' : g('kỹ sư nghiên cứu', 'giảng viên đại học');
     case 'phong':
       return a < 18 ? 'học sinh chuyên Sinh' : a < 24 ? 'sinh viên trường Y' : g('bác sĩ', 'bác sĩ');
     case 'kai':

@@ -7,7 +7,7 @@
  */
 
 import type { Bg } from '@/components/Backdrop';
-import type { Choice, Ctx, LoveId, Scene } from './story';
+import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
 
 type Life = {
   id: string;
@@ -49,11 +49,34 @@ const ride = (y: number) => (y < 1993 ? 'xe đạp Phượng Hoàng' : y < 2003 
 const play = (y: number) => (y < 2005 ? 'ô ăn quan, nhảy dây, bắn bi' : y < 2015 ? 'đá bóng, chơi game trên máy tính' : 'game trên điện thoại');
 const msg = (y: number) => (y < 2004 ? 'mảnh giấy gấp tư' : y < 2012 ? 'tin nhắn điện thoại' : 'tin nhắn Chat');
 const bg = (place: Bg['place'], time: Bg['time'] = 'day', tet?: boolean) => () => ({ place, time, tet }) as Bg;
+/** bạn cùng lớp không phải người yêu, tên đổi theo từng đời (để không phải lúc nào cũng là Minh, Long) */
+const KIDS = { f: ['Hoa', 'Lan', 'Trang', 'Ngân', 'Hằng', 'Yến', 'Thủy', 'Nhung', 'Quỳnh', 'Mai'], m: ['Tùng', 'Dũng', 'Hùng', 'Nam', 'Tuấn', 'Đạt', 'Quang', 'Sơn', 'Hiếu', 'Bình'] };
+const kid = (x: Ctx, salt: string) => {
+  const h = hash(`${x.s.seed ?? 0}|${salt}`);
+  const list = h % 2 ? KIDS.f : KIDS.m;
+  return list[(h >>> 3) % list.length];
+};
 
 /* =========================================================
    3-5 TUỔI: những ký ức đầu tiên (mở đầu mỗi đời một khác)
    ========================================================= */
 const SMALL: Life[] = [
+  {
+    id: 'thoinoi',
+    min: 1,
+    max: 1,
+    title: 'Thôi nôi: bốc đồ đoán nghề',
+    bg: bg('nha', 'day'),
+    who: () => 'mom',
+    text: (x) => [`Tròn một tuổi. Cả họ bày một mâm đồ trước mặt ${x.me}: cây bút, xấp tiền, cái gương, ${x.year < 2000 ? 'cái đài' : 'cái micro'}, cuốn sách. Bốc được gì, lớn lên làm nghề nấy.`],
+    choices: [
+      { t: 'Bốc cây bút', do: (fx) => fx.stat('hoc', 6), note: () => 'Bà nội bảo: "Sau này làm thầy giáo."' },
+      { t: 'Bốc xấp tiền', do: (fx) => fx.stat('tien', 6), note: () => 'Cả họ cười: "Sau này giàu to."' },
+      { t: 'Bốc cái gương', do: (fx) => fx.stat('duyen', 6), note: () => '"Sau này đẹp nhất xóm."' },
+      { t: (x) => `Bốc ${x.year < 2000 ? 'cái đài' : 'cái micro'}`, do: (fx) => (fx.stat('duyen', 3), fx.stat('noi', 3)), note: () => '"Sau này làm ca sĩ!"' },
+      { t: 'Ôm cả mâm vào lòng', do: (fx) => fx.stat('dao', 6), note: () => '"Đứa này tham, sau này cái gì cũng muốn."' },
+    ],
+  },
   {
     id: 'maugiao',
     min: 3,
@@ -256,10 +279,10 @@ const KID: Life[] = [
     max: 10,
     title: 'Ngày được quàng khăn đỏ',
     bg: bg('cong'),
-    text: (x) => [`Lễ kết nạp Đội. Anh chị lớp trên thắt khăn đỏ cho từng đứa. ${x.L('minh')} được đọc lời hứa trước toàn trường.`],
+    text: (x) => [`Lễ kết nạp Đội. Anh chị lớp trên thắt khăn đỏ cho từng đứa. ${kid(x, 'khan')} được đọc lời hứa trước toàn trường, run cầm cập.`],
     choices: [
       { t: 'Về khoe cả xóm', do: (fx) => (fx.rel('bome', 5), fx.stat('duyen', 2)) },
-      { t: 'Học thuộc lời hứa đến từng chữ', do: (fx) => (fx.stat('hoc', 5), fx.love('minh', 5)) },
+      { t: 'Học thuộc lời hứa đến từng chữ', do: (fx) => fx.stat('hoc', 5) },
       { t: 'Thắt khăn đỏ lên đầu làm siêu nhân', do: (fx) => (fx.stat('noi', 5), fx.love('long', 4)) },
     ],
   },
@@ -395,11 +418,11 @@ const KID: Life[] = [
     max: 11,
     title: 'Bầu lớp trưởng',
     bg: bg('lop'),
-    text: (x) => [`Cô cho cả lớp bầu lớp trưởng. Tên ${x.me} và ${x.L('minh')} được viết lên bảng, số phiếu ngang nhau.`],
+    text: (x) => [`Cô cho cả lớp bầu lớp trưởng. Tên ${x.me} và ${kid(x, 'lt')} được viết lên bảng, số phiếu ngang nhau.`],
     choices: [
-      { t: 'Bỏ phiếu cho chính mình', do: (fx) => (fx.stat('noi', 5), fx.love('minh', -3)) },
-      { t: (x) => `Nhường cho ${x.L('minh')}`, do: (fx) => (fx.love('minh', 8), fx.stat('tinh', 3)) },
-      { t: 'Đề nghị làm cả hai', do: (fx) => (fx.stat('duyen', 5), fx.love('minh', 4)) },
+      { t: 'Bỏ phiếu cho chính mình', do: (fx) => (fx.stat('noi', 5), fx.stat('duyen', 2)) },
+      { t: (x) => `Nhường cho ${kid(x, 'lt')}`, do: (fx) => (fx.stat('tinh', 5), fx.rel('banthan', 3)) },
+      { t: 'Đề nghị làm cả hai', do: (fx) => fx.stat('duyen', 5) },
     ],
   },
   {
@@ -1030,6 +1053,168 @@ const YOUNG: Life[] = [
 ];
 
 const ALL: Life[] = [...SMALL, ...KID, ...TEEN, ...YOUNG];
+
+/* =========================================================
+   NĂM THÁNG TRÔI QUA: chuyện tự xảy ra, không cần chọn (kiểu 1 in 8 Billion)
+   ========================================================= */
+type Auto = { id: string; min: number; max: number; from?: number; to?: number; if?: (x: Ctx) => boolean; t: (x: Ctx) => string; do?: (fx: Fx, x: Ctx) => void };
+
+const kg = (x: Ctx) => (2.6 + (hash(`${x.s.seed ?? 0}kg`) % 11) / 10).toFixed(1).replace('.', ',');
+const AUTO: Auto[] = [
+  // 0-2 tuổi
+  { id: 'sinh', min: 0, max: 0, t: (x) => `${x.c.name} chào đời ở ${x.f.urban ? 'bệnh viện tỉnh' : 'trạm xá xã'}${x.f.province ? `, ${x.f.province}` : ''}, nặng ${kg(x)} cân. ${x.f.siblings.some((s) => s.older) ? 'Anh chị ghé đầu vào nôi nhìn mãi.' : 'Cả nhà thay nhau bế.'}` },
+  { id: 'daythang', min: 0, max: 0, t: (x) => `Đầy tháng, ${x.bm === 'ông bà' ? 'bà' : 'bà nội'} đặt tên ở nhà là "${['Bống', 'Cún', 'Mít', 'Su', 'Bin', 'Tôm', 'Bơ', 'Na'][hash(`${x.s.seed ?? 0}ten`) % 8]}".` },
+  { id: 'noi', min: 2, max: 2, t: (x) => `Nói được câu đầu tiên: "${['Bà ơi', 'Mẹ', 'Bố', 'Ăn', 'Không'][hash(`${x.s.seed ?? 0}noi`) % 5]}!". Cả nhà vỗ tay như đón Tết.`, do: (fx) => fx.stat('duyen', 2) },
+  { id: 'di', min: 2, max: 2, t: () => 'Biết đi, ngã u đầu ba lần trong một buổi sáng.', do: (fx) => fx.stat('noi', 2) },
+  { id: 'phatban', min: 2, max: 4, t: (x) => `Sốt phát ban một tuần. ${Mom(x)} thức trắng, sáng nào cũng nấu cháo hành.`, do: (fx) => fx.rel('bome', 3) },
+  // 3-5 tuổi
+  { id: 'deptong', min: 3, max: 5, to: 2010, t: (x) => `Được ${x.mom} mua cho đôi dép tổ ong mới, đi ngủ cũng không chịu cởi.` },
+  { id: 'toctrai', min: 3, max: 5, t: () => 'Cắt tóc kiểu trái dừa ở hiệu đầu ngõ, khóc cả buổi chiều.', do: (fx) => fx.stat('duyen', -1) },
+  { id: 'baihat', min: 3, max: 5, t: (x) => `Thuộc bài "${x.year < 2010 ? 'Bà ơi bà' : 'Con cò bé bé'}", hát cho cả họ nghe ngày giỗ.`, do: (fx) => fx.stat('duyen', 3) },
+  { id: 'ongdot', min: 3, max: 6, if: (x) => !x.f.urban, t: () => 'Bị ong đốt sưng một bên mắt vì chọc tổ ong ở bụi chuối.', do: (fx) => fx.stat('noi', 2) },
+  { id: 'chua', min: 3, max: 6, t: (x) => `Theo ${x.bm === 'ông bà' ? 'bà' : 'bà nội'} đi chùa ngày rằm, được cho một nắm xôi.`, do: (fx) => fx.stat('dao', 2) },
+  { id: 'anhviện', min: 3, max: 6, to: 2008, t: () => 'Được chụp một tấm ảnh ở hiệu ảnh: tô son đỏ chót, chấm một chấm giữa trán.' },
+  { id: 'suaongtho', min: 3, max: 6, to: 2000, t: () => 'Ăn vụng nửa hộp sữa đặc Ông Thọ, bị phát hiện vì dính đầy mép.' },
+  { id: 'xemxiec', min: 4, max: 8, t: (x) => `Bố cho đi xem ${x.year < 2005 ? 'xiếc' : 'xiếc và thú'} lần đầu. Về nhà đòi làm diễn viên xiếc.` },
+  // 6-11 tuổi
+  { id: 'xedap', min: 6, max: 9, t: () => 'Tự học đi xe đạp, ngã trầy cả hai đầu gối, nhưng đi được.', do: (fx) => fx.stat('noi', 3) },
+  { id: 'rangsua', min: 6, max: 8, t: () => 'Rụng chiếc răng sữa đầu tiên, ném lên mái nhà, ước mọc răng thật đẹp.' },
+  { id: 'giaykhen', min: 6, max: 11, t: (x) => `Được giấy khen học sinh ${x.s.stats.hoc >= 40 ? 'giỏi' : 'tiên tiến'}. ${Bm(x)} lồng khung treo lên tường.`, do: (fx) => (fx.stat('hoc', 3), fx.rel('bome', 2)) },
+  { id: 'tienansang', min: 6, max: 10, t: () => 'Đánh rơi tiền ăn sáng, nhịn đói cả buổi, không dám kể với ai.', do: (fx) => fx.stat('tam', -2) },
+  { id: 'phimrap', min: 7, max: 11, from: 2005, if: (x) => x.f.urban, t: () => 'Lần đầu đi xem phim ở rạp, sợ đến mức nhắm mắt nửa phim.' },
+  { id: 'cavang', min: 6, max: 11, t: () => 'Nuôi hai con cá vàng trong lọ thủy tinh, đặt tên theo tên hai đứa bạn.' },
+  { id: 'hocboi', min: 7, max: 11, t: (x) => (x.f.urban ? 'Học bơi ở bể bơi thành phố, uống không biết bao nhiêu nước.' : 'Học bơi ở sông với lũ trẻ trong làng, bố đứng trên bờ canh.'), do: (fx) => fx.stat('tam', 2) },
+  { id: 'gaytay', min: 7, max: 11, t: () => 'Trèo cây ổi nhà hàng xóm, ngã gãy tay, bó bột cả tháng. Cả lớp ký tên lên bột.', do: (fx) => fx.stat('noi', 3) },
+  { id: 'tivimau', min: 3, max: 11, from: 1985, to: 1997, t: () => 'Nhà mua chiếc tivi màu đầu tiên. Cả xóm sang xem nhờ.', do: (fx) => fx.stat('tam', 2) },
+  { id: 'dienthoaiban', min: 6, max: 12, from: 1995, to: 2006, t: () => 'Nhà lắp điện thoại bàn. Mỗi lần chuông reo cả nhà tranh nhau nghe.' },
+  { id: 'internet', min: 8, max: 14, from: 2005, to: 2013, t: () => 'Nhà nối mạng internet. Tiếng modem rè rè mỗi tối.', do: (fx) => fx.stat('hoc', 2) },
+  { id: 'xemoi', min: 6, max: 12, t: (x) => `Bố mua chiếc ${ride(x.year)} mới. Cả nhà đứng ngắm cả buổi.`, do: (fx) => fx.stat('tien', 2) },
+  { id: 'ongmat', min: 7, max: 14, if: (x) => x.bm !== 'ông bà', t: () => 'Ông nội mất. Lần đầu tiên thấy bố khóc.', do: (fx) => (fx.stat('tinh', 4), fx.rel('bome', 2)) },
+  { id: 'vequengoai', min: 6, max: 12, t: () => 'Hè về quê ngoại, được bà cho ăn kẹo lạc, đi tắm sông cả tháng.', do: (fx) => fx.stat('tinh', 2) },
+  { id: 'banmoi', min: 6, max: 11, t: (x) => `Lớp có bạn mới chuyển đến, tên ${kid(x, 'moi')}. Hai đứa thành bạn cùng bàn.`, do: (fx) => fx.rel('banthan', 2) },
+  { id: 'trucnhat', min: 7, max: 15, t: () => 'Bị phạt trực nhật cả tuần vì nói chuyện trong giờ.', do: (fx) => fx.stat('noi', 2) },
+  { id: 'diemkem', min: 7, max: 15, t: (x) => `Bị điểm kém môn ${['Toán', 'Văn', 'Tiếng Anh', 'Lịch sử'][hash(`${x.s.seed ?? 0}${x.age}dk`) % 4]}, giấu bài kiểm tra dưới gầm giường.`, do: (fx) => fx.stat('tam', -2) },
+  { id: 'gamebai', min: 8, max: 13, from: 2000, t: (x) => `Mê ${x.year < 2010 ? 'chơi Mario trên máy điện tử bốn nút' : x.year < 2018 ? 'game trên máy tính' : 'game trên điện thoại'}, bị ${x.mom} giấu dây sạc.` },
+  // 12-17 tuổi
+  { id: 'mun', min: 12, max: 15, t: () => 'Nổi mụn trứng cá đầu tiên. Soi gương cả buổi sáng.', do: (fx) => fx.stat('duyen', -1) },
+  { id: 'cao', min: 12, max: 15, t: (x) => `Cao vọt lên mười phân trong một năm. Quần đồng phục ngắn cũn cỡn, ${x.mom} phải nối thêm gấu.` },
+  { id: 'nhinTrom', min: 12, max: 17, t: (x) => `Bắt gặp ${C(x)} nhìn trộm mình trong giờ Văn. Cả hai cùng quay đi.`, do: (fx, x) => fx.love(crush(x), 4) },
+  { id: 'cangtin', min: 12, max: 17, t: (x) => `${C(x)} mua hộ ${x.me} cốc ${x.year < 2008 ? 'nước mía' : 'trà sữa'} ở căng tin, không lấy tiền.`, do: (fx, x) => fx.love(crush(x), 4) },
+  { id: 'tenvo', min: 12, max: 16, t: (x) => `Viết tên ${C(x)} vào góc vở, rồi tô đen kín lại cho không ai đọc được.`, do: (fx, x) => fx.love(crush(x), 2) },
+  { id: 'dichoixa', min: 12, max: 17, t: (x) => `Lần đầu đi chơi xa với lớp: ${['Tam Đảo', 'Đồ Sơn', 'Đà Lạt', 'Hạ Long', 'Vũng Tàu'][hash(`${x.s.seed ?? 0}xa`) % 5]}. Thức trắng đêm buôn chuyện.`, do: (fx) => fx.rel('banthan', 3) },
+  { id: 'bongda', min: 12, max: 17, t: (x) => `Mê ${x.year < 2006 ? 'xem bóng đá Ngoại hạng Anh cùng bố' : 'bóng đá, thức đêm xem Champions League'}.` },
+  { id: 'thuemay', min: 13, max: 17, from: 2004, t: (x) => `Bị ${x.bm} thu điện thoại vì nhắn tin đến một giờ sáng.`, do: (fx) => fx.rel('bome', -2) },
+  { id: 'xebus', min: 12, max: 16, from: 2002, if: (x) => x.f.urban, t: () => 'Lần đầu tự đi xe buýt một mình. Đi nhầm tuyến, về muộn hai tiếng.' },
+  { id: 'giaivannghe', min: 12, max: 17, t: () => 'Lớp đạt giải ba văn nghệ chào mừng 20/11. Cả lớp đi ăn kem mừng.', do: (fx) => fx.stat('duyen', 2) },
+  { id: 'hocgioi', min: 12, max: 17, if: (x) => x.s.stats.hoc >= 45, t: () => 'Được chọn vào đội tuyển học sinh giỏi của trường.', do: (fx) => fx.stat('hoc', 3) },
+  { id: 'xemay16', min: 16, max: 17, from: 1995, t: (x) => `Lén lấy xe của bố tập đi, đâm vào bụi ${x.f.urban ? 'cây trước cửa' : 'tre đầu làng'}.`, do: (fx) => fx.stat('noi', 3) },
+  { id: 'trom_ve', min: 13, max: 17, t: (x) => `Nghe nói ${C(x)} cũng ${x.lg === 'm' ? 'hỏi thăm' : 'hay nhắc'} về mình với bạn. Mất ngủ cả đêm.`, do: (fx, x) => fx.love(crush(x), 3) },
+  { id: 'nhacbuon', min: 13, max: 17, t: (x) => `Nghe đi nghe lại một bài nhạc buồn trên ${x.year < 2003 ? 'đài cassette' : x.year < 2012 ? 'máy MP3' : 'điện thoại'}.` },
+  { id: 'aodai', min: 15, max: 17, if: (x) => isF(x), t: () => 'May bộ áo dài trắng đầu tiên cho cấp ba. Đạp xe vướng tà, ngã một lần.' },
+  { id: 'veoxe', min: 15, max: 17, if: (x) => !isF(x), t: () => 'Vỡ giọng, giọng ồm ồm như vịt đực. Không dám phát biểu cả tháng.' },
+  { id: 'thithu', min: 16, max: 17, t: () => 'Thi thử đại học lần thứ ba, điểm lên xuống như chứng khoán.', do: (fx) => fx.stat('hoc', 2) },
+  // 18-19 tuổi
+  { id: 'banglai', min: 18, max: 19, from: 1996, t: () => 'Thi bằng lái xe máy, trượt vòng số tám một lần rồi mới đỗ.' },
+  { id: 'xanha', min: 18, max: 19, t: (x) => `Lần đầu xa nhà. Tối nào cũng gọi về cho ${x.mom}, rồi thưa dần.`, do: (fx) => fx.rel('bome', -2) },
+  { id: 'nau', min: 18, max: 19, t: () => 'Tự nấu bữa cơm đầu tiên: cơm khê, trứng cháy, vẫn ăn hết.' },
+];
+
+const autoLine = (x: Ctx, used: Set<string>) => {
+  const seed = `${x.s.seed ?? 0}|${x.c.name}|${x.age}`;
+  const ok = AUTO.filter((a) => !used.has(a.id) && !x.has(`la_${a.id}`) && x.age >= a.min && x.age <= a.max && x.year >= (a.from ?? 0) && x.year <= (a.to ?? 9999) && (!a.if || a.if(x)));
+  return ok.sort((a, b) => hash(seed + a.id) - hash(seed + b.id))[0];
+};
+
+/** Chuỗi năm tháng: mỗi năm một ô; tuổi teen hai ô một năm; xen giữa các cảnh chính */
+export const LY_NEXT: Record<string, string> = {
+  '0': 'ly@1',
+  '1': 'ly@2',
+  '2': 'ly@3',
+  '3': 'ly@4',
+  '4': 'ly@5',
+  '5': 'c6_dieu',
+  '6': 'ly@7',
+  '7': 'c8_lop',
+  '8': 'ev@9',
+  '9': 'c10_he',
+  '10': 'ev@11',
+  '11': 'c12_chuyennha',
+  '12': 'ly@12#2',
+  '12#2': 'ly@13',
+  '13': 'ly@13#2',
+  '13#2': 'ev@14',
+  '14': 'ly@14#2',
+  '14#2': 't15',
+  '15': 'ly@15#2',
+  '15#2': 't16_hethong',
+  '16': 'ly@16#2',
+  '16#2': 'ev@16',
+  '17': 'ly@17#2',
+  '17#2': 'ly@18',
+  '18': 'y19_veve',
+  '19': 'y20_chon',
+};
+
+/** ô này có phải hỏi người chơi không: không phải năm nào cũng có lựa chọn */
+const asks = (x: Ctx, key: string) => {
+  const [a, n] = key.split('#').map(Number);
+  if (a === 0 || a === 2) return false;
+  if (a === 1) return true;
+  const p = a <= 5 ? 40 : a <= 11 ? 45 : n ? 40 : 60;
+  return hash(`${x.s.seed ?? 0}|ask|${key}`) % 100 < p;
+};
+const keyOf = (id: string) => id.slice(3);
+
+/** Ô năm tháng `age` (#n): có lựa chọn thì là cảnh chọn; không thì gộp các năm liền nhau thành một dòng thời gian */
+export function lyScene(age: number, n: number, x: Ctx, at: (a: number) => Ctx): Scene {
+  const key = n > 1 ? `${age}#${n}` : `${age}`;
+  const next = LY_NEXT[key] ?? 'y20_chon';
+  if (asks(x, key)) {
+    const sc = lifeAt(age, n, x, next);
+    if (!sc.skip) return sc;
+  }
+  // dòng thời gian: gom các ô liền nhau không có lựa chọn
+  const lines: { age: number; year: number; t: string; a: Auto }[] = [];
+  const used = new Set<string>();
+  let k = key;
+  let last = next;
+  for (;;) {
+    const a = Number(k.split('#')[0]);
+    const xa = at(a);
+    const picks = a === 0 ? AUTO.filter((q) => q.min === 0) : [autoLine(xa, used)].filter(Boolean);
+    for (const p of picks as Auto[]) {
+      used.add(p.id);
+      lines.push({ age: a, year: xa.year, t: p.t(xa), a: p });
+    }
+    last = LY_NEXT[k] ?? 'y20_chon';
+    if (!last.startsWith('ly@') || asks(x, keyOf(last))) break;
+    k = keyOf(last);
+  }
+  const first = lines[0]?.age ?? age;
+  const end = lines[lines.length - 1]?.age ?? age;
+  return {
+    id: n > 1 ? `ly@${age}#${n}` : `ly@${age}`,
+    age,
+    chapter: age <= 12 ? 'Tuổi thơ' : age <= 17 ? 'Tuổi teen' : 'Tuổi trẻ',
+    kind: 'feed',
+    bg: () => ({ place: age < 6 ? 'nha' : age < 12 ? 'ngo' : 'phong', time: 'day' }),
+    title: first === 0 ? 'Chào đời' : first === end ? 'Một năm trôi qua' : `Từ ${first} đến ${end} tuổi`,
+    text: () => [],
+    feed: () => lines.map((l) => ({ age: l.age, year: l.year, t: l.t })),
+    choices: [
+      {
+        t: '▶ Sống tiếp',
+        do: (fx) => {
+          for (const l of lines) {
+            fx.flag(`la_${l.a.id}`);
+            l.a.do?.(fx, at(l.age));
+          }
+        },
+      },
+    ],
+    next: last,
+  };
+}
 export const LIFE_IDS = ALL.map((l) => l.id);
 
 function hash(s: string) {

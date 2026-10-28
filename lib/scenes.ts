@@ -11,7 +11,7 @@ import { jobOf } from './profiles';
 import { dramaAt } from './drama';
 import { dateStep, spotChoice } from './dates';
 import { newsOfLoves } from './lives';
-import { lifeAt } from './life';
+import { lyScene } from './life';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -380,7 +380,7 @@ const list: Scene[] = [
     title: 'Đứa nghịch nhất lớp',
     text: (x) => [
       `${x.L('long')} bàn sau lại ${x.lg === 'm' ? 'giật tóc' : 'giấu dép'} ${x.me}, còn vẽ bậy lên vở mới.`,
-      `${x.L('minh')}, ${x.lg === 'm' ? 'lớp trưởng' : 'lớp phó'} mặt lạnh, đang cầm sổ ghi tên.`,
+      `${x.L('minh')}, ${x.lg === 'm' ? 'cậu' : 'cô'} bạn học giỏi nhất lớp, ngồi bàn đầu nhìn xuống lạnh tanh.`,
     ],
     choices: [
       { t: 'Quay xuống đánh lại', do: (fx) => (fx.flag('danh_long'), fx.stat('noi', 10), fx.love('long', 12)), note: (x) => `${x.L('long')} bắt đầu để ý ${x.me}.` },
@@ -930,34 +930,9 @@ const list: Scene[] = [
 ];
 
 export const SCENES: Record<string, Scene> = Object.fromEntries(list.map((s) => [s.id, s]));
-export const FIRST_SCENE = 'ly@3';
+export const FIRST_SCENE = 'ly@0';
 
-/** Mỗi năm một chuyện từ 3 đến 19 tuổi (tuổi teen hai chuyện một năm), xen giữa các cảnh chính */
-const LY_NEXT: Record<string, string> = {
-  '3': 'ly@4',
-  '4': 'ly@5',
-  '5': 'c6_dieu',
-  '6': 'ly@7',
-  '7': 'c8_lop',
-  '8': 'ev@9',
-  '9': 'c10_he',
-  '10': 'ev@11',
-  '11': 'c12_chuyennha',
-  '12': 'ly@12#2',
-  '12#2': 'ly@13',
-  '13': 'ly@13#2',
-  '13#2': 'ev@14',
-  '14': 'ly@14#2',
-  '14#2': 't15',
-  '15': 'ly@15#2',
-  '15#2': 't16_hethong',
-  '16': 'ly@16#2',
-  '16#2': 'ev@16',
-  '17': 'ly@17#2',
-  '17#2': 'ly@18',
-  '18': 'y19_veve',
-  '19': 'y20_chon',
-};
+
 
 /* =========================================================
    MÙA YÊU (20 đến 26 tuổi): Bảng tình duyên, tin nhắn, hẹn hò, quẹt, đi chỗ mới,
@@ -1568,10 +1543,8 @@ export function resolverOf(c: Character, f: Family): Resolve {
     switch (kind) {
       case 'ev':
         return eraScene(age, ctxOf(c, f, s, age));
-      case 'ly': {
-        const key = n > 1 ? `${age}#${n}` : `${age}`;
-        return lifeAt(age, n, ctxOf(c, f, s, age), LY_NEXT[key] ?? 'y20_chon');
-      }
+      case 'ly':
+        return lyScene(age, n, ctxOf(c, f, s, age), (a) => ctxOf(c, f, s, a));
       case 'dr':
         return dramaAt(age, ctxOf(c, f, s, age), DR_NEXT[age] ?? 'end');
       case 'route':

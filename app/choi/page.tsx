@@ -268,6 +268,8 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           <SlideUnlock>
             <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
           </SlideUnlock>
+        ) : sc.kind === 'feed' ? (
+          <LifeFeed key={sc.id} lines={sc.feed?.(x) ?? []} onDone={() => onChoose(0)} />
         ) : sc.kind === 'reflect' ? (
           <Reflect key={sc.id} ask={sc.ask?.(x) ?? ''} onDone={(t) => (t ? onChoose(0, t) : onChoose(Math.min(1, opts.length - 1)))} />
         ) : sc.kind === 'gift' ? (
@@ -508,6 +510,45 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
 }
 
 /** Nút Sổ tay ở góc trên: bấm mở bảng tình cảm với những người đã gặp và chỉ số của bạn */
+/** Dòng thời gian: các năm lần lượt trôi qua, không cần chọn; chạm để hiện hết */
+function LifeFeed({ lines, onDone }: { lines: { age: number; year: number; t: string }[]; onDone: () => void }) {
+  const [n, setN] = useState(1);
+  const done = useRef(false);
+  useEffect(() => {
+    if (n >= lines.length) return;
+    const t = setTimeout(() => setN((v) => v + 1), 1100);
+    return () => clearTimeout(t);
+  }, [n, lines.length]);
+  const all = n >= lines.length;
+  return (
+    <div className="lf" onClick={() => !all && setN(lines.length)}>
+      <ol className="lf-list" aria-live="polite">
+        {lines.slice(0, n).map((l, i) => (
+          <li key={i} className="lf-line">
+            <span className="lf-y">
+              {l.age} tuổi · {l.year}
+            </span>
+            <span>{l.t}</span>
+          </li>
+        ))}
+      </ol>
+      <button
+        type="button"
+        className="btn-main"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!all) return setN(lines.length);
+          if (done.current) return;
+          done.current = true;
+          onDone();
+        }}
+      >
+        {all ? '▶ SỐNG TIẾP' : '▶▶ TUA NHANH'}
+      </button>
+    </div>
+  );
+}
+
 /** Cảnh ngẫm: tự viết vài dòng, cuối đời đọc lại */
 function Reflect({ ask, onDone }: { ask: string; onDone: (t: string | null) => void }) {
   const [t, setT] = useState('');
