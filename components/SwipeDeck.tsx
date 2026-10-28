@@ -93,7 +93,7 @@ export default function SwipeDeck({
       </div>
       {shop && (
         <div className="dk-pop gold" role="dialog" aria-label="Mua gói Vàng">
-          <div className="dk-match">★ QUẸT VÀNG</div>
+          <div className="dk-match">★ GÓI VÀNG ★</div>
           <p>Xem ngay ai đã thích bạn, match chắc chắn hơn. Giá: -{gold!.price} Tài chính.</p>
           <div className="dk-goldrow">
             {Array.from({ length: Math.max(1, likedMe) }, (_, k) => (

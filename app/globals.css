@@ -3255,9 +3255,13 @@ p {
   gap: 8px;
 }
 .dk-pop.gold .dk-match {
-  font-size: 40px;
+  font-size: 36px;
+  letter-spacing: 2px;
   color: #211833;
   text-shadow: 3px 3px 0 #fbeff2;
+  white-space: nowrap;
+  transform: none;
+  animation: tw-in 0.3s steps(3) both;
 }
 .nb-gift {
   color: var(--orange) !important;
