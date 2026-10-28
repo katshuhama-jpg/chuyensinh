@@ -26,7 +26,7 @@ export default function LoginPage() {
       return;
     }
     const next = new URLSearchParams(window.location.search).get('next');
-    router.push(next && next.startsWith('/') ? next : '/chao-doi');
+    router.push(next && next.startsWith('/') ? next : '/tao-nhan-vat');
   }
 
   return (

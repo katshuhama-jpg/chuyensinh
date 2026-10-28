@@ -1,18 +1,19 @@
 'use client';
 
 import { currentPlayer, dropSession } from './auth';
-import type { Profile } from './game/roll';
+import type { Character, Family } from './character';
 import { supabase } from './supabase';
 
 export interface Meta {
   /** số đời đã sống xong */
   lives?: number;
-  duyen?: number;
+  /** các kết cục đã mở, ghi trong Sổ Tình */
   endings?: string[];
 }
 
 export interface SaveState {
-  char: Profile;
+  char: Character;
+  family: Family;
   age: number;
   startedAt: number;
 }

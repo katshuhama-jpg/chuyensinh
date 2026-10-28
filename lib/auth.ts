@@ -13,7 +13,7 @@ export interface Player {
   token: string;
 }
 
-const KEY = 'cs.session';
+const KEY = 'dt.session';
 export const USERNAME_RE = /^[a-z0-9_]{3,16}$/;
 const listeners = new Set<(p: Player | null) => void>();
 

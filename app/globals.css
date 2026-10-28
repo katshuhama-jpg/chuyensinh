@@ -1,62 +1,64 @@
-/* Chuyển Sinh, Tôi Trở Thành... - pixel đô thị. Tối là mặc định, sáng bật bằng data-theme="light". */
+/* Đường Tình Rẽ Lối - pixel hồng pastel. Tối (tím đêm) là mặc định, sáng (kem hồng) bật bằng data-theme="light". */
 :root {
-  --bg: #1b2340;
-  --bg-deep: #141a30;
-  --panel: #141a30;
-  --scene: #0e1326;
-  --ground: #2a3358;
-  --dith-a: #1b2340;
-  --dith-b: #222b4d;
-  --ink: #f4ebd9;
-  --mute: #b9c2de;
-  --faint: #8a93b8;
-  --line: #f4ebd9;
-  --dim: #3a4470;
-  --accent: #7fd1b9;
-  --sel: #26405a;
-  --orange: #d9774b;
-  --orange-d: #8c4325;
-  --on-orange: #141a30;
-  --card: #f4ebd9;
-  --card-ink: #1b2340;
-  --card-mute: #4a4f6a;
-  --card-ph: #e3d6bc;
-  --zodiac-bg: #1b2340;
-  --zodiac-ink: #7fd1b9;
-  --rare: #9a3f1e;
-  --stat: #7fd1b9;
-  --stat-empty: #2e3860;
-  --stress: #c97b8e;
-  --foot: #141a30;
+  /* tối: tím đêm */
+  --bg: #2a1f3d;
+  --bg-deep: #211833;
+  --panel: #211833;
+  --scene: #1a1229;
+  --ground: #4a3666;
+  --dith-a: #2a1f3d;
+  --dith-b: #322548;
+  --ink: #fbeff2;
+  --mute: #dcc8df;
+  --faint: #ad95b8;
+  --line: #fbeff2;
+  --dim: #4f3d6b;
+  --accent: #f4a6c0;
+  --sel: #5a3a63;
+  --orange: #e8789f;
+  --orange-d: #9c3f63;
+  --on-orange: #211833;
+  --card: #fbeff2;
+  --card-ink: #2a1f3d;
+  --card-mute: #6a5577;
+  --card-ph: #f0d9e2;
+  --zodiac-bg: #2a1f3d;
+  --zodiac-ink: #f4a6c0;
+  --rare: #b4487a;
+  --stat: #f4a6c0;
+  --stat-empty: #3d2f55;
+  --stress: #b48ad9;
+  --foot: #211833;
   --font: 'VT323', ui-monospace, monospace;
   color-scheme: dark;
 }
 
 :root[data-theme='light'] {
-  --bg: #f4ebd9;
-  --bg-deep: #ede2cc;
-  --panel: #fffaf0;
-  --scene: #cfe8df;
-  --ground: #b9ae96;
-  --dith-a: #f4ebd9;
-  --dith-b: #ede2cc;
-  --ink: #1b2340;
-  --mute: #4a5175;
-  --faint: #4a5175;
-  --line: #1b2340;
-  --dim: #c9bca2;
-  --accent: #186652;
-  --sel: #d3ede4;
-  --on-orange: #1b2340;
-  --card: #fffaf0;
-  --card-ph: #ede2cc;
-  --card-mute: #5d6280;
-  --zodiac-bg: #186652;
-  --zodiac-ink: #fffaf0;
-  --stat: #2e8c73;
-  --stat-empty: #dcd0b8;
-  --stress: #b85a70;
-  --foot: #ede2cc;
+  /* sáng: kem hồng */
+  --bg: #fdf1f4;
+  --bg-deep: #f8e6ec;
+  --panel: #fffafb;
+  --scene: #f3dce8;
+  --ground: #d8bfd0;
+  --dith-a: #fdf1f4;
+  --dith-b: #f8e6ec;
+  --ink: #3a2547;
+  --mute: #6a5577;
+  --faint: #6a5577;
+  --line: #3a2547;
+  --dim: #e2c7d6;
+  --accent: #a83f70;
+  --sel: #f6cfdd;
+  --on-orange: #3a2547;
+  --card: #fffafb;
+  --card-ph: #f8e6ec;
+  --card-mute: #6a5577;
+  --zodiac-bg: #a83f70;
+  --zodiac-ink: #fffafb;
+  --stat: #c4628f;
+  --stat-empty: #ecd6e0;
+  --stress: #8a63b8;
+  --foot: #f8e6ec;
   color-scheme: light;
 }
 
@@ -606,4 +608,99 @@ p {
   .rolling .card {
     animation: none !important;
   }
+}
+
+/* ---------- tạo nhân vật ---------- */
+.preview {
+  margin: 4px;
+  background: var(--scene);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.preview .stage-tabs {
+  display: flex;
+  gap: 10px;
+}
+.preview .stage-tabs .opt.chip {
+  min-height: 40px;
+  font-size: 19px;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.sw {
+  width: 40px;
+  height: 40px;
+  margin: 4px;
+}
+.sw[aria-pressed='true'] {
+  outline: 4px solid var(--accent);
+  outline-offset: 4px;
+}
+.year {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.year input[type='range'] {
+  flex: 1;
+  accent-color: var(--orange);
+  min-height: 44px;
+}
+.year output {
+  font-size: 32px;
+  min-width: 64px;
+  text-align: right;
+}
+.note {
+  margin: 4px;
+  padding: 10px 12px;
+  background: var(--panel);
+  font-size: 19px;
+  line-height: 1.25;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.name-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.name-row input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 24px;
+  padding: 8px 12px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 0;
+  margin: 4px;
+}
+
+/* trang đầu: hai người đứng nhìn nhau */
+.couple {
+  display: flex;
+  gap: 0;
+  align-items: flex-end;
+  z-index: 1;
+}
+.heart {
+  position: absolute;
+  top: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--orange);
+  font-size: 34px;
+  animation: blink 1.2s steps(2) infinite;
+  z-index: 1;
 }

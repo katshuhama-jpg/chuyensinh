@@ -14,7 +14,7 @@ export default function ThemeToggle() {
     if (next) document.documentElement.dataset.theme = 'light';
     else delete document.documentElement.dataset.theme;
     try {
-      localStorage.setItem('cs.theme', next ? 'light' : 'dark');
+      localStorage.setItem('dt.theme', next ? 'light' : 'dark');
     } catch {
       /* bỏ qua */
     }

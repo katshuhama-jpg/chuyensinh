@@ -4,47 +4,39 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import Sprite from '@/components/Sprite';
 import ThemeToggle from '@/components/ThemeToggle';
-import type { Look } from '@/lib/game/roll';
-import type { Gender } from '@/lib/game/world';
+import { defaultCharacter, type Look } from '@/lib/character';
 import { lpcLayers } from '@/lib/look';
 import { loadMe, type Meta } from '@/lib/save';
 import { useAuth } from '@/lib/useAuth';
 
-// mỗi lần đổi là một thân phận khác: ý tưởng "trở thành ai cũng được"
-const DEMO: { g: Gender; look: Look; cap: string }[] = [
-  { g: 'f', cap: '...nữ tổng tài', look: { skin: 0, hair: '#2a1d16', hairStyle: 2, top: 3, bottom: 1, topColor: '#e8e1d0', bottomColor: '#30343f' } },
-  { g: 'm', cap: '...tuyển thủ esports', look: { skin: 1, hair: '#2a1d16', hairStyle: 1, top: 0, bottom: 0, topColor: '#c4573a', bottomColor: '#2b3045' } },
-  { g: 'f', cap: '...ca sĩ phòng trà', look: { skin: 2, hair: '#4a2f1d', hairStyle: 0, top: 2, bottom: 0, topColor: '#6a4a8c', bottomColor: '#30343f' } },
-  { g: 'm', cap: '...bác sĩ', look: { skin: 3, hair: '#2a1d16', hairStyle: 0, top: 4, bottom: 1, topColor: '#e8e1d0', bottomColor: '#2b3045' } },
-  { g: 'nb', cap: '...dân du mục số', look: { skin: 0, hair: '#d9b26a', hairStyle: 0, top: 1, bottom: 2, topColor: '#2f7a63', bottomColor: '#7a6a58' } },
-];
+const base = { f: defaultCharacter('f').look, m: defaultCharacter('m').look };
+const L = (g: 'f' | 'm', p: Partial<Look>): Look => ({ ...base[g], ...p });
 
-/** Khoảng 132 triệu trẻ sinh mỗi năm trên thế giới (LHQ, dự báo 2026), tức khoảng 4,2 em bé mỗi giây */
-const BIRTHS_PER_SEC = 132_500_000 / (365.25 * 24 * 3600);
+// mỗi lần đổi là một lối rẽ khác: cùng một cô gái, gặp người khác thì ra chuyện khác
+const DEMO: { me: Look; them: Look; cap: string }[] = [
+  { cap: '...cưới cậu bạn nhà bên', me: L('f', { hair: 'ponytail', style: 'nhenhang' }), them: L('m', { hair: 'unkempt', style: 'nangdong', color: '#7fb3d9' }) },
+  { cap: '...yêu boy phố', me: L('f', { hair: 'ponytail', style: 'nangdong' }), them: L('m', { hair: 'long_messy', style: 'catinh', color: '#c4573a', extra: 'earrings' }) },
+  { cap: '...lỡ hẹn với học bá', me: L('f', { hair: 'ponytail', style: 'thanhlich', color: '#b48ad9' }), them: L('m', { hair: 'buzzcut', style: 'thanhlich' }) },
+  { cap: '...hẹn hò ngôi sao', me: L('f', { hair: 'ponytail', style: 'catinh', color: '#e8789f' }), them: L('m', { hair: 'curtains_long', style: 'nhenhang', color: '#e0b54a', hairColor: '#d9b26a' }) },
+];
 
 export default function Home() {
   const { user, ready } = useAuth();
   const [meta, setMeta] = useState<Meta>({});
   const [i, setI] = useState(0);
-  const [born, setBorn] = useState(0);
 
   useEffect(() => {
     if (user) loadMe().then((m) => m && setMeta(m.meta));
   }, [user]);
 
   useEffect(() => {
-    const t0 = Date.now();
-    const a = setInterval(() => setBorn(Math.floor(((Date.now() - t0) / 1000) * BIRTHS_PER_SEC)), 250);
-    const b = setInterval(() => setI((n) => (n + 1) % DEMO.length), 2600);
-    return () => {
-      clearInterval(a);
-      clearInterval(b);
-    };
+    const t = setInterval(() => setI((n) => (n + 1) % DEMO.length), 2800);
+    return () => clearInterval(t);
   }, []);
 
   const demo = DEMO[i];
-  const layers = useMemo(() => lpcLayers(demo.look, demo.g, 'adult'), [demo]);
-  const lifeNo = (meta.lives ?? 0) + 1;
+  const me = useMemo(() => lpcLayers(demo.me, 'f', 'adult'), [demo]);
+  const them = useMemo(() => lpcLayers(demo.them, 'm', 'adult'), [demo]);
 
   return (
     <main className="app dither home">
@@ -54,23 +46,18 @@ export default function Home() {
         ) : (
           <Link href="/dang-nhap">Đăng nhập</Link>
         )}
-        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'var(--accent)' }}>Duyên {meta.duyen ?? 0}</span>
-          <ThemeToggle />
-        </span>
+        <ThemeToggle />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 10 }}>
-        <div className="eyebrow">KIẾP NÀY MÌNH CHỌN · ĐỜI THỨ {lifeNo}</div>
+        <div className="eyebrow">LOVE&apos;S ALTERED LINES</div>
         <h1 className="logo">
-          CHUYỂN SINH,
+          ĐƯỜNG TÌNH
           <br />
-          TÔI TRỞ THÀNH
-          <br />
-          ...
+          RẼ LỐI
         </h1>
         <p className="mute" style={{ marginTop: 8, fontSize: 22 }}>
-          Sinh ra ở đâu, năm nào, trong nhà ai - bạn không chọn được. Sống thế nào thì có.
+          Một đời ở Việt Nam, trăm lối rẽ. Mỗi lựa chọn hẹn hò đưa bạn tới một người, một kết cục khác.
         </p>
       </div>
 
@@ -79,36 +66,36 @@ export default function Home() {
         <div className="scene-cap" aria-live="polite">
           {demo.cap}
         </div>
-        <Sprite layers={layers} scale={2} anim="walk" dir={2} label={`Nhân vật mẫu: ${demo.cap.replace('...', '')}`} />
+        <span className="heart" aria-hidden="true">
+          ♥
+        </span>
+        <div className="couple">
+          <Sprite layers={me} scale={2} anim="idle" dir={3} label="Nhân vật chính" />
+          <Sprite layers={them} scale={2} anim="idle" dir={1} label={`Người ấy: ${demo.cap.replace('...', '')}`} />
+        </div>
         <span className="ground" aria-hidden="true" />
-      </div>
-
-      <div className="counter">
-        <i aria-hidden="true" />
-        <span>Từ lúc bạn mở trang, {born.toLocaleString('vi-VN')} em bé đã chào đời trên Trái Đất</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 'auto', padding: '0 4px 8px' }}>
         {/* chưa đăng nhập thì đăng ký / đăng nhập trước */}
-        <Link href={ready && user ? '/chao-doi' : '/dang-nhap?next=/chao-doi'} className="btn-main">
-          ▶ CHÀO ĐỜI
+        <Link href={ready && user ? '/tao-nhan-vat' : '/dang-nhap?next=/tao-nhan-vat'} className="btn-main">
+          ▶ BẮT ĐẦU
         </Link>
         <div className="grid3">
           <button type="button" className="tile px is-soon" disabled>
-            Album đời
+            Sổ Tình
             <small>sắp có</small>
           </button>
           <button type="button" className="tile px is-soon" disabled>
-            Xếp hạng
+            Ngã rẽ
             <small>sắp có</small>
           </button>
-          <button type="button" className="tile px is-soon" disabled>
-            Hội bạn
-            <small>sắp có</small>
-          </button>
+          <Link href="/choi" className="tile px">
+            Chơi tiếp
+          </Link>
         </div>
         <div style={{ textAlign: 'center', fontSize: 18 }} className="mute">
-          Sổ Đời {meta.endings?.length ?? 0}/32 kết cục · <Link href="/tac-gia">Ghi nguồn hình ảnh</Link>
+          Sổ Tình {meta.endings?.length ?? 0} kết cục · <Link href="/tac-gia">Ghi nguồn hình ảnh</Link>
         </div>
       </div>
     </main>

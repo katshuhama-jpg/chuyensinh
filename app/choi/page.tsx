@@ -8,7 +8,7 @@ import { lpcLayers } from '@/lib/look';
 import { loadMe, type SaveState } from '@/lib/save';
 import { useAuth } from '@/lib/useAuth';
 
-/** Màn chơi chính: tạm thời chỉ hiện đời đang sống. Vòng năm, trọng tâm, biến cố sẽ làm ở bước sau. */
+/** Màn chơi chính: tạm thời chỉ hiện nhân vật vừa tạo. Cốt truyện nhiều nhánh làm ở bước sau. */
 export default function Choi() {
   const { user, ready } = useAuth();
   const router = useRouter();
@@ -20,7 +20,8 @@ export default function Choi() {
       router.replace('/dang-nhap?next=/choi');
       return;
     }
-    loadMe().then((m) => setState(m?.state ?? null));
+    // bản lưu cũ của Chuyển Sinh không có gia cảnh: coi như chưa có đời nào
+    loadMe().then((m) => setState(m?.state?.family ? m.state : null));
   }, [ready, user, router]);
 
   const layers = useMemo(() => (state ? lpcLayers(state.char.look, state.char.gender, 'child') : []), [state]);
@@ -35,16 +36,16 @@ export default function Choi() {
           <div className="eyebrow" style={{ fontSize: 18 }}>
             ĐỜI ĐANG SỐNG
           </div>
-          <h1>{state ? state.char.name : 'Chưa có đời nào'}</h1>
+          <h1>{state ? state.char.name : 'Chưa có nhân vật'}</h1>
         </div>
       </div>
       <div className="body">
         {state === undefined && <p className="mute">Đang tải...</p>}
         {state === null && (
           <div className="prose">
-            <p>Bạn chưa bắt đầu đời nào.</p>
-            <Link href="/chao-doi" className="btn-main">
-              ▶ CHÀO ĐỜI
+            <p>Bạn chưa tạo nhân vật nào.</p>
+            <Link href="/tao-nhan-vat" className="btn-main">
+              ▶ TẠO NHÂN VẬT
             </Link>
           </div>
         )}
@@ -53,19 +54,19 @@ export default function Choi() {
             <div className="scene px">
               <span className="stars" aria-hidden="true" />
               <div className="scene-cap">
-                {state.char.born.y} · {state.char.city}, {state.char.countryName}
+                {state.char.birthYear} · {state.family.province}
               </div>
               <Sprite layers={layers} scale={2} anim="walk" dir={2} label={`${state.char.name} lúc nhỏ`} />
               <span className="ground" aria-hidden="true" />
             </div>
             <div className="ahead px-dim">
               <div className="eyebrow" style={{ fontSize: 18 }}>
-                MÀN CHƠI ĐANG ĐƯỢC LÀM
+                CỐT TRUYỆN ĐANG ĐƯỢC VIẾT
               </div>
-              <p style={{ fontSize: 20 }}>Hồ sơ đã lưu vào tài khoản. Vòng năm, chọn trọng tâm và thẻ biến cố sẽ có ở bản tới.</p>
+              <p style={{ fontSize: 20 }}>Nhân vật đã lưu vào tài khoản. Tuổi thơ, các mối tình và những ngã rẽ sẽ có ở bản tới.</p>
             </div>
-            <Link href="/chao-doi" className="btn-sub px">
-              Chào đời lại
+            <Link href="/tao-nhan-vat" className="btn-sub px">
+              Tạo nhân vật khác
             </Link>
           </>
         )}

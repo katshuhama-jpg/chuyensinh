@@ -2,20 +2,20 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: { default: 'Chuyển Sinh, Tôi Trở Thành...', template: '%s · Chuyển Sinh, Tôi Trở Thành...' },
-  description: 'Game pixel sống lại một đời khác: sinh ra ở đâu, năm nào, trong nhà ai - bạn không chọn được. Sống thế nào thì có.',
-  applicationName: 'Chuyển Sinh, Tôi Trở Thành...',
+  title: { default: 'Đường Tình Rẽ Lối', template: '%s · Đường Tình Rẽ Lối' },
+  description: "Love's Altered Lines - game pixel hẹn hò sống trọn một đời ở Việt Nam. Mỗi lựa chọn rẽ ra một lối tình, một kết cục khác.",
+  applicationName: 'Đường Tình Rẽ Lối',
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#141a30',
+  themeColor: '#211833',
 };
 
 // đặt giao diện sáng/tối trước khi vẽ để khỏi nháy màn
-const THEME_JS = `try{var t=localStorage.getItem('cs.theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}`;
+const THEME_JS = `try{var t=localStorage.getItem('dt.theme');if(t==='light')document.documentElement.dataset.theme='light'}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
