@@ -4,6 +4,7 @@
  */
 
 import { ageOfScene } from './scenes';
+import { MIDS } from './endings';
 import { choose, ctxOf, txt, visibleChoices, type Feedback, type LogLine, type Resolve, type Story } from './story';
 import type { Character, Family } from './character';
 
@@ -73,6 +74,7 @@ export function commit(R: Resolve, c: Character, f: Family, before: Story, i: nu
     const opt = visibleChoices(sc, x0)[i];
     add.push({ age: age0, year: x0.year, t: `${txt(sc.title, x0)}: ${opt ? txt(opt.t, x0) : ''}`, k: 'pick' });
     for (const n of [...r.fb.notes.slice(0, 2), ...r.fb.sys.slice(0, 1)]) add.push({ age: age0, year: x0.year, t: n, k: 'note' });
+    for (const m of r.fb.mids) add.push({ age: age0, year: x0.year, t: `★ Kết cục giữa chừng: ${MIDS[m]?.name ?? m}`, k: 'note' });
     for (const id of r.fb.met) add.push({ age: age0, year: x0.year, t: `♥ Gặp ${x0.L(id)} lần đầu.`, k: 'note' });
   }
   if (note) {
