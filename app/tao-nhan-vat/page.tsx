@@ -12,9 +12,7 @@ import {
   SKIN_SWATCH,
   STYLES,
   defaultCharacter,
-  deviceAt,
   hairsFor,
-  realityOf,
   siblingText,
   suggestName,
   type Character,
@@ -134,9 +132,6 @@ function FateStep({ fate, rolls, onRoll, onNext }: { fate: Fate; rolls: number; 
               {p}
             </p>
           ))}
-          <p className="mute" style={{ fontSize: 18 }}>
-            {realityOf(fate.birthYear)} Tuổi 16 rơi vào năm {fate.birthYear + 16}: {deviceAt(fate.birthYear + 16)}.
-          </p>
         </div>
       </div>
       <div className="foot">
