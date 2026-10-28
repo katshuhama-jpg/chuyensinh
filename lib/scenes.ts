@@ -304,9 +304,11 @@ function deckOf(x: Ctx): SwipeCard[] {
     quan: 'Đây là tài khoản thật. Không tin thì thôi.',
     bao: 'Kể chuyện cười dở nhất công ty. Nhưng ai cũng cười.',
     duy: 'Tin vào duyên. Hay đi tàu.',
+    hung: x.lg === 'm' ? 'Tài khoản phụ. Lên sân khấu thì cháy, về nhà chỉ muốn ôm mèo chơi game. Giữ bí mật giúp nhé.' : 'Tài khoản phụ. Báo chí bảo tôi lạnh lùng. Thật ra tôi nói nhiều lắm, chỉ là chưa gặp đúng người.',
+    tai: x.lg === 'm' ? 'Dân miệt vườn, có cây đàn với cái giọng mộc. Không phải người trong clip đâu. Mà thôi, đúng là tôi.' : 'Người ta gọi tôi là "bình hoa di động". Tôi đang tập hát mỗi ngày để họ phải đổi cách gọi.',
   };
   // người thật trên app: những ai chưa gặp; ngôi sao chỉ hiện khi Vận đào hoa cao
-  const reals: SwipeCard[] = LOVE_IDS.filter((id) => !x.s.met.includes(id) && !out(x, id) && (id !== 'quan' || x.s.stats.dao >= 55))
+  const reals: SwipeCard[] = LOVE_IDS.filter((id) => !x.s.met.includes(id) && !out(x, id) && (!['quan', 'hung', 'tai'].includes(id) || x.s.stats.dao >= 55))
     .sort((p, q) => ((LOVE_IDS.indexOf(p) * 7 + x.age) % 10) - ((LOVE_IDS.indexOf(q) * 7 + x.age) % 10))
     .slice(0, 3)
     .map((id, k) => ({
@@ -1005,6 +1007,14 @@ const TALKS: Record<LoveId, Talk[]> = {
     { msgs: () => ['Sếp vừa họp ba tiếng.', 'Tôi ngủ gật hai lần.'], good: '"Haha, lần sau tớ huých cho."', ok: '"Cẩn thận bị nhắc đấy."' },
     { msgs: () => ['Trưa nay ăn gì?', 'Tôi bao, hôm nay vui.'], good: '"Bún chả! Kể xem vui chuyện gì."', ok: '"Thôi, tớ mang cơm rồi."' },
   ],
+  hung: [
+    { msgs: () => ['Vừa diễn xong, ba vạn người hát theo.', 'Mà về khách sạn lại thấy trống trải lạ.'], good: '"Thì kể tớ nghe hôm nay thế nào. Không phải chuyện sân khấu."', ok: '"Ghê thế! Cho tớ xin vé lần sau nhé."' },
+    { msgs: () => ['Mai được nghỉ một ngày.', 'Đi ăn bún ốc vỉa hè không? Tôi đội mũ, đeo khẩu trang.'], good: '"Đi! Tớ chọn quán vắng."', ok: '"Lỡ bị nhận ra thì sao?"' },
+  ],
+  tai: [
+    { msgs: () => ['Hôm nay lại bị lên mạng chửi.', 'Bảo tôi hát quê, nói chuyện quê.'], good: '"Thì quê. Quê mà hay thì sao?"', ok: '"Kệ đi, đừng đọc bình luận nữa."' },
+    { msgs: () => ['Tuần sau về quê thăm má.', 'Đi cùng không? Có vườn, có sông.'], good: '"Đi! Tớ muốn nghe cậu hát trên xuồng."', ok: '"Để tớ xem lịch đã."' },
+  ],
   duy: [
     { msgs: () => ['Tôi vẫn giữ tấm vé tàu hôm ấy.', 'Lạ nhỉ.'], good: '"Tớ cũng giữ. Chắc là duyên."', ok: '"Giữ làm gì vậy?"' },
     { msgs: () => ['Hôm nay lại đi ngang ga cũ.', 'Nghĩ đến cậu.'], good: '"Lần sau gọi tớ đi cùng."', ok: '"Ừ."' },
@@ -1094,6 +1104,14 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
 /* ---------- đi chỗ mới: gặp ai do lựa chọn trước đó và Vận đào hoa ---------- */
 const PLACES_MEET: { id: LoveId; ok: (x: Ctx) => boolean; title: string; bg: Bg; text: (x: Ctx) => string }[] = [
   { id: 'duy', ok: (x) => x.s.stats.dao >= 55, title: 'Chuyến tàu Tết', bg: { place: 'pho', time: 'night' }, text: (x) => `Chuyến tàu về quê ăn Tết chật cứng. Người ngồi ghế bên cạnh - ${x.L('duy')} - chia cho ${x.me} nửa gói bánh, rồi hai người nói chuyện suốt đêm.` },
+  { id: 'hung', ok: (x) => x.s.stats.duyen >= 45, title: 'Hậu trường concert', bg: { place: 'pho', time: 'night' }, text: (x) =>
+      x.lg === 'm'
+        ? `Làm tình nguyện viên ở một concert lớn. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - ca sĩ MV nào cũng trăm triệu view, vừa bùng nổ trên sân khấu - đang ngồi một mình ăn hộp cơm nguội, điện thoại để hình nền con mèo.`
+        : `Làm tình nguyện viên ở buổi ra mắt một phim trăm tỷ. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - nữ diễn viên báo chí vẫn gọi là "lạnh lùng" - đang ngồi bệt dưới đất kể chuyện cười cho cả đoàn nghe.` },
+  { id: 'tai', ok: (x) => x.year >= 2012, title: 'Clip triệu view', bg: { place: 'vuon', time: 'dusk' }, text: (x) =>
+      x.lg === 'm'
+        ? `Về miền Tây chơi. Ở bến sông, ${x.me} quay lại cảnh ${x.L('tai')} - chàng trai miệt vườn - ôm cây ghi-ta hát mộc. Sáng hôm sau, clip ấy có một triệu lượt xem, và ${x.L('tai')} nhắn hỏi: "Bạn là người quay clip hả?"`
+        : `Lướt mạng thấy ${x.L('tai')} - cô ca sĩ kiêm hot girl bị chê "bình hoa di động" - livestream tập hát lúc hai giờ sáng, giọng khàn mà không chịu nghỉ. ${x.me} để lại một bình luận động viên, và ${x.L('tai')} nhắn lại thật.` },
   { id: 'phong', ok: () => true, title: 'Buổi hiến máu', bg: { place: 'vanphong', time: 'day' }, text: (x) => `Đi hiến máu ở hội trường. Người lấy máu là ${x.L('phong')}, ${x.lg === 'm' ? 'anh bác sĩ' : 'cô bác sĩ'} trẻ, cười hiền: "Đừng sợ, không đau đâu."` },
   { id: 'hai', ok: () => true, title: 'Quán acoustic', bg: { place: 'quan', time: 'night' }, text: (x) => `Quán acoustic cuối phố. ${x.L('hai')} đang hát, nhìn xuống đúng chỗ ${x.me} ngồi.` },
   { id: 'kai', ok: () => true, title: 'Chuyến du lịch', bg: { place: 'congvien', time: 'day' }, text: (x) => `Đi du lịch một mình. Một người nước ngoài - ${x.L('kai')} - cầm bản đồ ngược, hỏi đường bằng tiếng Việt lơ lớ.` },

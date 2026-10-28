@@ -46,6 +46,14 @@ export const CAST: Record<LoveId | 'xemmat', Record<Gender, Look>> = {
     m: base('m', { hair: 'long_messy', hairColor: '#2a1d16', style: 'nangdong', color: '#4a7ab8', skin: 1 }),
     f: base('f', { hair: 'shoulderl', hairColor: '#2a1d16', style: 'nhenhang', color: '#4a7ab8' }),
   },
+  hung: {
+    m: base('m', { hair: 'curtains_long', hairColor: '#211833', style: 'thanhlich', color: '#30343f', extra: 'earrings', eyes: 'gray' }),
+    f: base('f', { hair: 'long_straight', hairColor: '#4a2f1d', style: 'nhenhang', color: '#e8e1d0', extra: 'earrings' }),
+  },
+  tai: {
+    m: base('m', { hair: 'unkempt', hairColor: '#2a1d16', style: 'nangdong', color: '#c4573a', skin: 2 }),
+    f: base('f', { hair: 'ponytail', hairColor: '#d97a9c', style: 'catinh', color: '#e8789f', extra: 'earrings' }),
+  },
   xemmat: {
     m: base('m', { hair: 'buzzcut', hairColor: '#2a1d16', style: 'thanhlich', color: '#30343f' }),
     f: base('f', { hair: 'half_up', hairColor: '#2a1d16', style: 'thanhlich', color: '#7fd1b9' }),

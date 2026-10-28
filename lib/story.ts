@@ -19,8 +19,8 @@ export const STAT_LABEL: Record<StatKey, string> = {
 };
 export const STAT_KEYS = Object.keys(STAT_LABEL) as StatKey[];
 
-export type LoveId = 'khoi' | 'long' | 'minh' | 'phong' | 'hai' | 'tuananh' | 'kai' | 'quan' | 'bao' | 'duy';
-export const LOVE_IDS: LoveId[] = ['khoi', 'long', 'minh', 'phong', 'hai', 'tuananh', 'kai', 'quan', 'bao', 'duy'];
+export type LoveId = 'khoi' | 'long' | 'minh' | 'phong' | 'hai' | 'tuananh' | 'kai' | 'quan' | 'bao' | 'duy' | 'hung' | 'tai';
+export const LOVE_IDS: LoveId[] = ['khoi', 'long', 'minh', 'phong', 'hai', 'tuananh', 'kai', 'quan', 'bao', 'duy', 'hung', 'tai'];
 
 /** Cùng lúc giữ tối đa 5 người, cả đời gặp tối đa 10 người */
 export const MAX_ACTIVE = 5;
@@ -37,6 +37,9 @@ export const LOVES: Record<LoveId, { m: string; f: string; kind: string; job: [s
   kai: { m: 'Kai', f: 'Mia', kind: 'Du học sinh vui vẻ, học tiếng Việt', job: ['du học sinh', 'du học sinh'], likes: 'noi', likesName: 'người thích khám phá, dám đi xa', happy: 'Yêu Xuyên Biên Giới' },
   quan: { m: 'Quân', f: 'Mai', kind: 'Ngôi sao màn ảnh', job: ['ca sĩ thần tượng', 'diễn viên'], likes: 'duyen', likesName: 'người duyên dáng, không ham nổi tiếng', happy: 'Cặp Đôi Quốc Dân' },
   bao: { m: 'Bảo', f: 'Trâm', kind: 'Đồng nghiệp hài hước', job: ['đồng nghiệp bàn bên', 'đồng nghiệp bàn bên'], likes: 'tam', likesName: 'người vui tính, hay cười', happy: 'Cười Cả Đời' },
+  // hai ngôi sao hư cấu hoàn toàn (tên, quê, tiểu sử đều tự nghĩ), chỉ giữ "vibe" người nổi tiếng
+  hung: { m: 'Hưng', f: 'Diệp', kind: 'Ngôi sao: trước ống kính lạnh lùng, bùng nổ; ở riêng thì nhắng nhít, nuôi mèo, chơi game', job: ['ca sĩ trăm triệu view', 'nữ diễn viên phim trăm tỷ'], likes: 'tinh', likesName: 'người chân thành, coi mình như người thường', happy: 'Ngôi Sao Về Nhà' },
+  tai: { m: 'Tuấn Khang', f: 'Yến', kind: 'Nổi lên từ mạng sau một đêm: phóng khoáng, chân tình, luôn cố vượt qua định kiến', job: ['chàng trai miệt vườn hát mộc', 'ca sĩ kiêm hot girl'], likes: 'noi', likesName: 'người dám đứng cạnh mình trước dư luận', happy: 'Mặc Kệ Thiên Hạ' },
   duy: { m: 'Duy', f: 'Hạ', kind: 'Người lạ định mệnh', job: ['người lạ trên chuyến tàu', 'người lạ trên chuyến tàu'], likes: 'dao', likesName: 'người có Vận đào hoa cao', happy: 'Định Mệnh Trên Chuyến Tàu' },
 };
 

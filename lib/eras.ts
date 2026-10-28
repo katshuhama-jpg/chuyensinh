@@ -37,6 +37,41 @@ const firstLove = (x: Ctx): LoveId => (['khoi', 'long', 'minh'] as LoveId[]).sor
 const sp = (x: Ctx) => (partnerOf(x) ? x.L(partnerOf(x)!) : x.lg === 'm' ? 'chồng' : 'vợ');
 
 
+/* ---------- yêu ngôi sao: bị chụp lén, bị fan soi ---------- */
+const STARS: LoveId[] = ['quan', 'hung', 'tai'];
+const starOf = (x: Ctx): LoveId | null => (partnerOf(x) && STARS.includes(partnerOf(x)!) ? partnerOf(x) : null);
+const STAR: Ev[] = [
+  {
+    id: 'paparazzi',
+    from: 1975,
+    to: 2100,
+    if: (x) => !!starOf(x),
+    title: 'Bị chụp lén',
+    bg: () => ({ place: 'pho', time: 'night' }),
+    who: (x) => starOf(x),
+    post: (x) =>
+      x.year >= 2011
+        ? {
+            author: 'Hóng Biz',
+            time: '15 phút',
+            text: `NÓNG: ${x.L(starOf(x)!)} bị bắt gặp đi ăn đêm cùng một người lạ mặt! Ai đây các bạn ơi??? 👀`,
+            likes: 8800,
+            comments: [
+              { who: 'Fan cứng', t: 'Không tin, chắc là trợ lý thôi' },
+              { who: 'Ẩn danh', t: 'Nhìn kỹ thì cũng xinh đấy chứ' },
+              { who: 'Thánh soi', t: `Mình biết người này, tên là ${x.me}` },
+            ],
+          }
+        : { author: 'Báo Ngôi Sao (bản in)', time: 'Số cuối tuần', text: `${x.L(starOf(x)!)} lộ ảnh dạo phố cùng người bí ẩn.`, likes: 0, comments: [] },
+    text: (x) => [`Một tấm ảnh mờ chụp ${x.me} và ${x.L(starOf(x)!)} ăn đêm ở quán vỉa hè lan khắp nơi. Quản lý của ${x.L(starOf(x)!)} gọi: "Hai người tính thế nào?"`],
+    choices: [
+      { t: 'Công khai luôn, mặc kệ thiên hạ', do: (fx, x) => (fx.love(starOf(x)!, 14), fx.stat('noi', 8), fx.stat('tam', -4)), note: (x) => `${x.L(starOf(x)!)} đăng ảnh hai người, kèm một dòng: "Người của tôi."` },
+      { t: 'Giấu tiếp, nói là bạn bè', do: (fx, x) => (fx.love(starOf(x)!, -4), fx.stat('tinh', 3)) },
+      { t: 'Lánh mặt một thời gian', do: (fx, x) => (fx.love(starOf(x)!, -8), fx.stat('tam', 4)) },
+    ],
+  },
+];
+
 /* ---------- chuyện thế giới chen vào đời (dùng chung cho các ô 14, 16, 21, 26) ---------- */
 const crushOf = (x: Ctx): LoveId => partnerOf(x) ?? (x.age < 18 ? (x.s.love.long >= x.s.love.minh ? 'long' : 'minh') : closest(x));
 const WORLD: Ev[] = [
@@ -339,6 +374,7 @@ const SLOTS: Record<number, Ev[]> = {
   ],
   /* ---------- tuổi trẻ ---------- */
   21: [
+    ...STAR,
     ...WORLD,
     {
       id: 'luadao',
@@ -379,6 +415,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
   ],
   26: [
+    ...STAR,
     ...WORLD,
     {
       id: 'nguoiyeudixa',

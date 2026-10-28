@@ -38,6 +38,8 @@ export const GIFT_PREF: Record<LoveId, { likes: [GiftCat, GiftCat]; hates: GiftC
   quan: { likes: ['handmade', 'hoa'], hates: 'congnghe', why: 'nhận quá nhiều quà đắt của fan, chỉ cảm động trước tấm lòng' },
   bao: { likes: ['doan', 'gaubong'], hates: 'hoa', why: 'vui tính, thích đồ ăn và thứ ngộ nghĩnh, thấy hoa sến' },
   duy: { likes: ['sach', 'trainghiem'], hates: 'trangsuc', why: 'thích những chuyến đi và câu chuyện' },
+  hung: { likes: ['doan', 'handmade'], hates: 'trangsuc', why: 'cả ngày bị quà đắt tiền vây quanh, chỉ thèm bữa cơm nhà và món quà tự tay làm' },
+  tai: { likes: ['amnhac', 'trainghiem'], hates: 'congnghe', why: 'sống bằng âm nhạc, thích về quê, sợ điện thoại vì mỗi lần mở lên lại bị chửi' },
 };
 
 /** Món quà tự làm tốn công: cần Tình cảm đủ cao mới làm đẹp được */
