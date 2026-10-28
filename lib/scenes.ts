@@ -5,6 +5,7 @@
 
 import { defaultCharacter, type Gender, type Look } from './character';
 import { CAST } from './cast';
+import type { Bg } from '@/components/Backdrop';
 import { LOVE_IDS, LOVES, type Choice, type Ctx, type Fx, type LoveId, type Post, type Scene, type SwipeCard } from './story';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
@@ -92,7 +93,19 @@ const proposeChoices: Choice[] = [
 ];
 
 /* ---------- drama theo thời kỳ, lúc 22 tuổi ---------- */
-function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[]; post?: Post } {
+/** nền của cảnh drama theo năm */
+function dramaBg(x: Ctx): Bg {
+  const y = x.year;
+  if (y < 1990) return { place: 'pho', time: 'day' };
+  if (y < 2000) return { place: 'phong', time: 'night' };
+  if (y < 2010) return { place: 'pho', time: 'night' };
+  if (y < 2020) return y === 2018 ? { place: 'pho', time: 'day' } : { place: 'phong', time: 'night' };
+  if (y <= 2021) return { place: 'phong', time: 'day' };
+  if (y <= 2026) return y === 2025 ? { place: 'pho', time: 'day' } : { place: 'pho', time: 'night' };
+  return { place: 'phong', time: 'night' };
+}
+
+function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[]; post?: Post; bg?: Bg } {
   const y = x.year;
   const p = () => P(x);
   const n = hasPartner(x) ? x.L(P(x)) : 'người ấy';
@@ -311,6 +324,7 @@ const list: Scene[] = [
     id: 'c6_dieu',
     age: 6,
     chapter: CH.tho,
+    bg: () => ({ place: 'ngo', time: 'dusk' }),
     who: () => 'khoi',
     title: 'Con diều mắc cây',
     text: (x) => [
@@ -328,6 +342,7 @@ const list: Scene[] = [
     id: 'c8_lop',
     age: 8,
     chapter: CH.tho,
+    bg: () => ({ place: 'lop', time: 'day' }),
     who: () => 'long',
     title: 'Đứa nghịch nhất lớp',
     text: (x) => [
@@ -345,6 +360,7 @@ const list: Scene[] = [
     id: 'c10_he',
     age: 10,
     chapter: CH.tho,
+    bg: () => ({ place: 'ngo', time: 'day' }),
     title: 'Mùa hè năm lớp năm',
     text: (x) => [`Hè này ${x.bm} cho ${x.me} tự chọn đi đâu.`, `Lũ bạn trong xóm thì rủ ra ${playOf(x.year)} đầu ngõ.`],
     choices: [
@@ -358,6 +374,7 @@ const list: Scene[] = [
     id: 'c12_chuyennha',
     age: 12,
     chapter: CH.tho,
+    bg: () => ({ place: 'ngo', time: 'day' }),
     who: () => 'khoi',
     title: 'Ngày chuyển nhà',
     text: (x) => [
@@ -379,6 +396,7 @@ const list: Scene[] = [
     id: 't15',
     age: 15,
     chapter: CH.teen,
+    bg: () => ({ place: 'cong', time: 'day' }),
     title: 'Năm lớp mười',
     text: (x) => [
       `Vào cấp ba, mỗi người chọn một kiểu sống.`,
@@ -395,6 +413,7 @@ const list: Scene[] = [
     id: 't16_hethong',
     age: 16,
     chapter: CH.teen,
+    bg: () => ({ place: 'phong', time: 'night' }),
     who: () => 'he_thong',
     title: 'Đinh!',
     text: (x) => [
@@ -420,6 +439,7 @@ const list: Scene[] = [
     id: 't16_chat',
     age: 16,
     chapter: CH.teen,
+    bg: () => ({ place: 'phong', time: 'night' }),
     kind: 'chat',
     who: (x) => crush(x),
     timer: 12,
@@ -465,6 +485,7 @@ const list: Scene[] = [
     id: 't17_thi',
     age: 17,
     chapter: CH.teen,
+    bg: () => ({ place: 'cong', time: 'day' }),
     title: 'Thi đại học',
     text: (x) => {
       const pass = x.s.stats.hoc >= 55;
@@ -500,6 +521,7 @@ const list: Scene[] = [
     id: 'y19_veve',
     age: 19,
     chapter: CH.tre,
+    bg: () => ({ place: 'ngo', time: 'day', tet: true }),
     who: () => 'khoi',
     title: 'Người trong ngõ cũ',
     text: (x) => {
@@ -532,6 +554,7 @@ const list: Scene[] = [
     id: 'y20_chon',
     age: 20,
     chapter: CH.tre,
+    bg: () => ({ place: 'phong', time: 'night' }),
     who: () => 'he_thong',
     title: 'Hai mươi tuổi, chọn ai?',
     text: (x) => {
@@ -563,6 +586,7 @@ const list: Scene[] = [
     id: 'y20_quet',
     age: 20,
     chapter: CH.tre,
+    bg: () => ({ place: 'phong', time: 'night' }),
     kind: 'swipe',
     title: (x) => (x.year > 2026 ? 'Quẹt AI' : x.year >= 2014 ? 'Quẹt' : x.year >= 2010 ? 'Diễn đàn kết bạn' : 'Tìm bạn bốn phương'),
     text: (x) =>
@@ -590,6 +614,7 @@ const list: Scene[] = [
     id: 'y21_hen',
     age: 21,
     chapter: CH.tre,
+    bg: () => ({ place: 'quan', time: 'dusk' }),
     who: (x) => P(x),
     skip: (x) => !hasPartner(x),
     title: 'Buổi hẹn đầu tiên',
@@ -635,6 +660,7 @@ const list: Scene[] = [
     id: 'y23_noidoi',
     age: 23,
     chapter: CH.tre,
+    bg: () => ({ place: 'quan', time: 'day' }),
     who: (x) => P(x),
     skip: (x) => !hasPartner(x),
     title: 'Tối qua đi đâu?',
@@ -656,6 +682,7 @@ const list: Scene[] = [
     id: 'y24_ramat',
     age: 24,
     chapter: CH.tre,
+    bg: () => ({ place: 'nha', time: 'day' }),
     who: () => 'mom',
     skip: (x) => !hasPartner(x),
     title: (x) => `Ra mắt ${x.bm}`,
@@ -698,6 +725,7 @@ const list: Scene[] = [
     id: 'y25_traxanh',
     age: 25,
     chapter: CH.tre,
+    bg: () => ({ place: 'phong', time: 'night' }),
     kind: 'chat',
     who: () => 'bestie',
     timer: 12,
@@ -738,6 +766,7 @@ const list: Scene[] = [
     id: 'y27_cauhon',
     age: 27,
     chapter: CH.tre,
+    bg: (x) => x.year < 1995 ? { place: 'congvien', time: 'night' } : { place: 'quan', time: 'night' },
     who: (x) => P(x),
     skip: (x) => !hasPartner(x) || x.s.married,
     title: 'Lời cầu hôn',
@@ -758,6 +787,7 @@ const list: Scene[] = [
     id: 'y28_hethong',
     age: 28,
     chapter: CH.tre,
+    bg: () => ({ place: 'phong', time: 'night' }),
     who: () => 'he_thong',
     skip: (x) => x.s.married,
     title: 'Hết hạn nhiệm vụ',
@@ -781,6 +811,7 @@ const list: Scene[] = [
     id: 'y28_xemmat',
     age: 28,
     chapter: CH.tre,
+    bg: () => ({ place: 'quan', time: 'day' }),
     who: () => 'xemmat',
     title: 'Buổi xem mắt',
     text: (x) => [
@@ -797,6 +828,7 @@ const list: Scene[] = [
     id: 'y29_quaylai',
     age: 29,
     chapter: CH.tre,
+    bg: () => ({ place: 'quan', time: 'dusk' }),
     who: (x) => P(x),
     skip: (x) => !hasPartner(x) || x.s.married,
     title: 'Gặp lại',
@@ -810,6 +842,7 @@ const list: Scene[] = [
     id: 'm32_tet',
     age: 32,
     chapter: CH.nha,
+    bg: () => ({ place: 'nha', time: 'day', tet: true }),
     who: () => 'mom',
     skip: (x) => !x.s.married,
     title: 'Tết này về bên nào?',
@@ -830,6 +863,7 @@ const list: Scene[] = [
     id: 'm33_con',
     age: 33,
     chapter: CH.nha,
+    bg: () => ({ place: 'nha', time: 'dusk' }),
     skip: (x) => !x.s.married,
     title: 'Chuyện con cái',
     text: (x) => [`Bạn bè cùng lứa đã có con đi mẫu giáo. ${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} hỏi bóng gió mỗi lần gọi điện.`],
@@ -845,6 +879,7 @@ const list: Scene[] = [
     id: 'm40_nguoicu',
     age: 40,
     chapter: CH.nha,
+    bg: () => ({ place: 'pho', time: 'night' }),
     kind: 'chat',
     who: (x) => exOf(x),
     timer: 12,
@@ -888,6 +923,7 @@ const list: Scene[] = [
     id: 'm45_viec',
     age: 45,
     chapter: CH.nha,
+    bg: () => ({ place: 'vanphong', time: 'day' }),
     title: 'Gia đình hay sự nghiệp',
     text: (x) => [`Công ty đề nghị ${x.me} lên trưởng phòng, đổi lại phải đi công tác xa nửa năm.`, `${x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ'} đã yếu, gọi điện hay quên.`],
     choices: [
@@ -904,6 +940,7 @@ const list: Scene[] = [
     id: 'o60',
     age: 60,
     chapter: CH.gia,
+    bg: () => ({ place: 'vuon', time: 'dusk' }),
     who: (x) => (x.s.married ? (x.s.partner as LoveId | 'xemmat') : 'bestie'),
     title: 'Sáu mươi tuổi',
     text: (x) => {
@@ -927,6 +964,7 @@ const list: Scene[] = [
     id: 'o75',
     age: 75,
     chapter: CH.gia,
+    bg: () => ({ place: 'vuon', time: 'dusk' }),
     who: () => 'he_thong',
     title: 'Cuốn album cuối cùng',
     text: (x) => [
@@ -947,7 +985,7 @@ export function getScene(id: string, x: Ctx): Scene {
   const s = SCENES[id];
   if (id === 'y22_drama') {
     const d = eraDrama(x);
-    return { ...s, choices: d.choices, post: d.post ? () => d.post! : undefined };
+    return { ...s, choices: d.choices, post: d.post ? () => d.post! : undefined, bg: () => d.bg ?? dramaBg(x) };
   }
   return s;
 }

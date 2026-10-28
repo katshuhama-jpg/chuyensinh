@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Backdrop from '@/components/Backdrop';
 import Feed from '@/components/Feed';
 import Phone, { skinOf } from '@/components/Phone';
 import Sprite from '@/components/Sprite';
@@ -149,8 +150,9 @@ function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; 
 
       <div className="body" style={{ paddingTop: 4, gap: 16 }}>
         {!swipe && (
-          <div className={`stage px ch-${CH_ID[sc.chapter]}`}>
-            <span className="stars" aria-hidden="true" />
+          <div className="stage px">
+            {sc.bg && <Backdrop bg={sc.bg(x)} year={x.year} />}
+            {who === 'he_thong' && <span className="ht-scan" aria-hidden="true" />}
             <div className="actors">
               <figure>
                 <Sprite layers={meLayers} scale={2} anim="idle" dir={who ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
@@ -172,7 +174,7 @@ function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; 
                 </figure>
               )}
             </div>
-            <span className="ground" aria-hidden="true" />
+            
           </div>
         )}
 
@@ -281,30 +283,41 @@ function FeedbackBox({ fb, onNext }: { fb: Feedback; onNext: () => void }) {
 /** Độ thân với dàn người yêu và chỉ số */
 function Meters({ x, story }: { x: Ctx; story: Story }) {
   const met = LOVE_IDS.filter((id) => story.love[id] > 0 || story.flags.includes(`${id}_out`));
+  const cells = (v: number, cls = '') =>
+    Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(v / 10) ? `on ${cls}` : ''} />);
   return (
     <details className="meters px-dim">
-      <summary>Người ấy và chỉ số</summary>
-      {met.map((id) => (
-        <div className="stat" key={id}>
-          <span>
-            {x.L(id)}
-            {story.partner === id ? ' ♥' : ''}
-          </span>
-          <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
-            {Array.from({ length: 10 }, (_, i) => (
-              <i key={i} className={i < Math.round(story.love[id] / 10) ? 'on looks' : ''} />
-            ))}
-          </span>
-          <span>{story.flags.includes(`${id}_out`) ? '-' : story.love[id]}</span>
-        </div>
-      ))}
+      <summary>Sổ tay tình cảm</summary>
+      <p className="mt-hint">Ghi lại người ấy thương bạn bao nhiêu và bạn đang là người thế nào. Mỗi lựa chọn làm các số này lên xuống.</p>
+
+      <div className="mt-h">Người ấy - độ thân (0 đến 100)</div>
+      {met.length === 0 && <p className="mt-hint">Chưa thân với ai.</p>}
+      {met.map((id) => {
+        const lost = story.flags.includes(`${id}_out`);
+        return (
+          <div key={id} className="mt-love">
+            <div className="stat">
+              <span>{x.L(id)}</span>
+              <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
+                {cells(story.love[id], 'looks')}
+              </span>
+              <span>{lost ? '-' : story.love[id]}</span>
+            </div>
+            <small>
+              {story.partner === id ? '♥ Đang hẹn hò · ' : lost ? 'Đã lỡ nhau · ' : ''}
+              Thích {LOVES[id].likesName}
+            </small>
+          </div>
+        );
+      })}
+      <p className="mt-hint">Lúc cầu hôn: độ thân từ 70 và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
+
+      <div className="mt-h">Bạn - chỉ số (0 đến 100)</div>
       {STAT_KEYS.map((k) => (
         <div className="stat" key={k}>
           <span>{STAT_LABEL[k]}</span>
           <span className="cells" role="meter" aria-label={STAT_LABEL[k]} aria-valuenow={story.stats[k]} aria-valuemin={0} aria-valuemax={100}>
-            {Array.from({ length: 10 }, (_, i) => (
-              <i key={i} className={i < Math.round(story.stats[k] / 10) ? 'on' : ''} />
-            ))}
+            {cells(story.stats[k])}
           </span>
           <span>{story.stats[k]}</span>
         </div>

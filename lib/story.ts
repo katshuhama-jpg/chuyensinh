@@ -5,6 +5,7 @@
  */
 
 import type { Character, Family, Gender, Look } from './character';
+import type { Bg } from '@/components/Backdrop';
 
 export type StatKey = 'hoc' | 'noi' | 'duyen' | 'tinh' | 'tien' | 'tam' | 'dao';
 export const STAT_LABEL: Record<StatKey, string> = {
@@ -121,6 +122,8 @@ export interface Scene {
   timeout?: number;
   /** cảnh quẹt: các thẻ hồ sơ; thẻ có loveId là người thật, Match thì chọn lựa chọn mang cùng loveId */
   cards?: (x: Ctx) => SwipeCard[];
+  /** nền pixel của cảnh: nơi chốn, giờ, dịp Tết */
+  bg?: (x: Ctx) => Bg;
   /** bài đăng trên Tường hiện trong cảnh */
   post?: (x: Ctx) => Post;
   choices: Choice[];

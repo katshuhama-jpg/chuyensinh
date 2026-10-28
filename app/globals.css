@@ -978,11 +978,18 @@ p {
   }
   to {
     opacity: 1;
-    clip-path: inset(0 0 0 0);
+    /* âm để không cắt viền pixel (box-shadow) và bóng chữ */
+    clip-path: inset(-12px -12px -12px -12px);
   }
 }
 .choices .opt {
-  animation: tw-in 0.35s steps(4) both;
+  animation: opt-in 0.3s steps(3) both;
+}
+@keyframes opt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 .choices .opt:hover {
   background: var(--sel);
@@ -1881,4 +1888,113 @@ p {
 }
 :root[data-theme='light'] .preview {
   background: radial-gradient(circle at 50% 42%, #fffafb 0, var(--scene) 62%);
+}
+
+/* ---------- nền pixel theo cảnh ---------- */
+.stage {
+  background: var(--scene);
+}
+.backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.stage .actors {
+  margin-bottom: 12px;
+}
+.ht-scan {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(232, 120, 159, 0.18) 0 2px, transparent 2px 6px);
+  animation: scan 1.2s steps(6) infinite;
+}
+@keyframes scan {
+  to {
+    background-position: 0 12px;
+  }
+}
+
+/* ---------- màn chương: kiểu pixel, dải màu cắt bậc ---------- */
+.chcard {
+  background-size: 100% 100%;
+  animation: none;
+}
+.chcard.ch-tho {
+  background: linear-gradient(#f6c79a 0 18%, #f3a98c 18% 34%, #e8889a 34% 50%, #c46a86 50% 66%, #7a5aa8 66% 82%, #2a1f3d 82%);
+}
+.chcard.ch-teen {
+  background: linear-gradient(#e2f2f9 0 18%, #b8def3 18% 34%, #8ec9ec 34% 50%, #7fa8d9 50% 66%, #6a6ab0 66% 82%, #2a1f3d 82%);
+}
+.chcard.ch-tre {
+  background: linear-gradient(#352a54 0 18%, #4f3d6b 18% 34%, #7a4a7a 34% 50%, #b4487a 50% 66%, #5a3a63 66% 82%, #211833 82%);
+}
+.chcard.ch-nha {
+  background: linear-gradient(#f6e0a8 0 18%, #e0b54a 18% 34%, #e8a07a 34% 50%, #e8789f 50% 66%, #7a4a7a 66% 82%, #2a1f3d 82%);
+}
+.chcard.ch-gia {
+  background: linear-gradient(#e8dccb 0 18%, #c9b8a0 18% 34%, #a8907a 34% 50%, #8a7a6a 50% 66%, #5a4a5a 66% 82%, #211833 82%);
+}
+.chcard::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: repeating-conic-gradient(rgba(0, 0, 0, 0.06) 0% 25%, transparent 0% 50%);
+  background-size: 8px 8px;
+  pointer-events: none;
+}
+.chc-in {
+  position: relative;
+  padding: 28px 22px 26px;
+  background: var(--panel);
+  color: var(--ink);
+  text-shadow: none;
+  box-shadow: 0 -4px 0 0 var(--line), 0 4px 0 0 var(--line), -4px 0 0 0 var(--line), 4px 0 0 0 var(--line), 8px 8px 0 4px rgba(0, 0, 0, 0.35);
+}
+.chc-no {
+  color: var(--accent);
+}
+.chc-title {
+  color: var(--ink);
+  text-shadow: 4px 4px 0 var(--orange);
+}
+.chc-line {
+  color: var(--ink);
+}
+.chc-year {
+  color: var(--mute);
+  opacity: 1;
+}
+.chc-in .btn-main {
+  animation: opt-in 0.3s 1.2s steps(3) both;
+  margin: 0 4px;
+}
+
+/* ---------- sổ tay tình cảm ---------- */
+.meters summary {
+  color: var(--ink);
+}
+.mt-hint {
+  font-size: 17px;
+  line-height: 1.2;
+  color: var(--mute);
+}
+.mt-h {
+  margin-top: 6px;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.mt-love {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mt-love small {
+  font-size: 16px;
+  color: var(--faint);
+  padding-left: 2px;
 }
