@@ -127,7 +127,10 @@ export default function TileStage({
 }) {
   const back = useRef<HTMLCanvasElement>(null);
   const fore = useRef<HTMLCanvasElement>(null);
+  const hasOps = ops.length > 0 || front.length > 0;
   useEffect(() => {
+    // nền ghép sẵn (src) thì không cần tải bộ tile
+    if (!hasOps) return;
     let live = true;
     Promise.all([atlas('t'), atlas('b')]).then(([t, b]) => {
       if (!live) return;
@@ -142,14 +145,15 @@ export default function TileStage({
     return () => {
       live = false;
     };
-  }, [ops, front, time]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasOps, ops, front, time]);
 
   return (
     <div className="ts" style={{ width: W * 2, height: H * 2 }}>
       {src && <img src={src} alt="" className="ts-cv" />}
-      <canvas ref={back} width={W} height={H} className="ts-cv" />
+      {hasOps && <canvas ref={back} width={W} height={H} className="ts-cv" />}
       <div className="ts-actors">{children}</div>
-      <canvas ref={fore} width={W} height={H} className="ts-cv ts-front" />
+      {hasOps && <canvas ref={fore} width={W} height={H} className="ts-cv ts-front" />}
       {TINT[time] && <div className="ts-tint" style={{ background: TINT[time]! }} />}
       {time !== 'day' &&
         lights.map(([x, y, r], i) => (

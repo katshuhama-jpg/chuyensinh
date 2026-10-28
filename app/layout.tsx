@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import Music from '@/components/Music';
 
 export const metadata: Metadata = {
   title: { default: 'Đường Tình Rẽ Lối', template: '%s · Đường Tình Rẽ Lối' },
@@ -28,10 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=VT323&display=swap" rel="stylesheet" />
       </head>
-      <body>
-        {children}
-        <Music />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
