@@ -12,6 +12,7 @@ import { dramaAt } from './drama';
 import { dateStep, spotChoice } from './dates';
 import { newsOfLoves } from './lives';
 import { lyScene } from './life';
+import { AREA_PEOPLE, tallyOf, type AreaKey } from './actions';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -1024,10 +1025,19 @@ export function candidatesOf(x: Ctx): LoveId[] {
     (id !== 'tai' || x.year >= taiYear(x)) &&
     (id !== 'phong' || x.age >= 20);
   const met = LOVE_IDS.filter((id) => x.s.met.includes(id) && ok(id)).sort((a, b) => x.s.love[b] - x.s.love[a]);
-  const fresh = LOVE_IDS.filter((id) => !x.s.met.includes(id) && ok(id)).sort((a, b) => ((LOVE_IDS.indexOf(a) * 7 + x.age + (x.s.seed ?? 0)) % 11) - ((LOVE_IDS.indexOf(b) * 7 + x.age + (x.s.seed ?? 0)) % 11));
+  // cánh bướm: mảng hay chọn trong đời kéo đến những người hợp mảng ấy
+  const t = tallyOf(x.s);
+  const boost = (id: LoveId) =>
+    (Object.keys(t) as AreaKey[]).reduce((n, k) => n + (AREA_PEOPLE[k].includes(id) ? t[k] * 3 : 0), 0) +
+    (x.has('ac_tau') && id === 'duy' ? 8 : 0) +
+    ((x.has('ac_tienganh') || x.has('ac_duhoc')) && id === 'kai' ? 6 : 0) +
+    (x.has('ac_phuot') && (id === 'duy' || id === 'kai') ? 4 : 0);
+  const rnd = (id: LoveId) => (LOVE_IDS.indexOf(id) * 7 + x.age + (x.s.seed ?? 0)) % 11;
+  const fresh = LOVE_IDS.filter((id) => !x.s.met.includes(id) && ok(id)).sort((a, b) => boost(b) - boost(a) || rnd(a) - rnd(b));
   return [...met, ...fresh].slice(0, 10 - Math.max(0, x.s.met.length - met.length)).slice(0, 10);
 }
-const needPick = (x: Ctx, age: number) => !x.s.married && (age === 20 || !inPool(x).length || ((age === 23 || age === 26) && !hasPartner(x)));
+const needPick = (x: Ctx, age: number) =>
+  !x.s.married && (age === 20 || !inPool(x).length || ((age === 23 || age === 26) && !hasPartner(x)) || ((x.has(`ac_${age - 1}_yeu`) && (x.has('ac_app') || x.has('ac_maimoi'))) && !hasPartner(x)));
 
 function pickScene(age: number): Scene {
   return {

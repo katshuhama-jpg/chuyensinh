@@ -45,7 +45,7 @@ const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 
 /** cộng hiệu ứng trọng tâm cho một năm đi qua */
 function applyFocus(s: Story, age: number) {
-  const k = s.focus && focusesOf(age).some((f) => f.k === s.focus) ? s.focus : focusesOf(age)[0].k;
+  const k = s.focus ?? focusesOf(age)[0].k;
   const st = s.stats;
   const love = () => {
     const p = s.partner && s.partner !== 'xemmat' ? s.partner : [...s.met].filter((id) => !s.flags.includes(`${id}_out`)).sort((a, b) => s.love[b] - s.love[a])[0];
@@ -59,6 +59,9 @@ function applyFocus(s: Story, age: number) {
   // có tuổi thì sức khỏe đi xuống dần
   if (age >= 45) st.khoe = clamp((st.khoe ?? 70) - (age >= 65 ? 2 : 1));
   if (k === 'yeu') ((st.dao = clamp(st.dao + 1)), love());
+  if (k === 'tien') ((st.tien = clamp(st.tien + 3)), (st.khoe = clamp((st.khoe ?? 70) - 1)));
+  if (k === 'dulich') ((st.tam = clamp(st.tam + 2)), (st.dao = clamp(st.dao + 1)));
+  if (k === 'ban') ((s.rel.banthan = clamp(s.rel.banthan + 3)), (st.tam = clamp(st.tam + 1)));
 }
 
 /** Chọn lựa chọn i ở cảnh hiện tại rồi ghi nhật ký, bản đồ đời, trọng tâm */
@@ -87,6 +90,9 @@ export function commit(R: Resolve, c: Character, f: Family, before0: Story, i: n
   }
   // sang chương mới
   const nx = s.scene !== 'end' ? R(s.scene, s) : undefined;
+  // thuyết minh: sang năm mới thì ghi rõ để người chơi biết thời gian đã trôi
+  const ageN = s.scene === 'end' ? age0 : ageOfScene(s.scene);
+  if (sc.kind !== 'feed' && ageN > age0) add.push({ age: ageN, year: c.birthYear + ageN, t: `⏩ ${ageN - age0 > 1 ? `${ageN - age0} năm trôi qua` : 'Một năm trôi qua'}. Năm ${c.birthYear + ageN}, ${ageN} tuổi.`, k: 'ch' });
   if (nx && nx.chapter !== sc.chapter) add.push({ age: nx.age, year: c.birthYear + nx.age, t: `— ${nx.chapter} —`, k: 'ch' });
   // năm đi qua: tô bản đồ đời và cộng trọng tâm
   const age1 = s.scene === 'end' ? age0 + 1 : ageOfScene(s.scene);

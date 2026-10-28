@@ -7,6 +7,7 @@ import type { Character, Family } from './character';
 import { PROPHECIES } from './fate';
 import { ctxOf, LOVE_IDS, LOVES, type LoveId, type Story } from './story';
 import { jobOf } from './profiles';
+import { tallyOf } from './actions';
 import { spouseName } from './scenes';
 
 export const MIDS: Record<string, { name: string; desc: string }> = {
@@ -119,6 +120,7 @@ export function fateResultOf(s: Story) {
 /** Tuổi thọ: theo tuổi thọ trung bình Việt Nam 2025 (nam 72,3, nữ 77,3), cộng trừ theo tâm trạng và người thân */
 export function lifespanOf(c: Character, s: Story) {
   const base = c.gender === 'f' ? 77 : 72;
-  const d = (s.stats.tam - 50) / 5 + ((s.stats.khoe ?? 70) - 60) / 5 + (s.married ? 2 : 0) + (s.rel.banthan - 40) / 10;
+  const t = tallyOf(s);
+  const d = (s.stats.tam - 50) / 5 + ((s.stats.khoe ?? 70) - 60) / 5 + (s.married ? 2 : 0) + (s.rel.banthan - 40) / 10 + t.minh * 0.4 - t.tien * 0.2;
   return Math.max(76, Math.min(95, Math.round(base + d)));
 }

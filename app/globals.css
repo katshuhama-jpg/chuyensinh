@@ -4318,3 +4318,51 @@ p {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* năm nay tập trung cho gì: khối nút như Bảng tình duyên cũ */
+.lb-areas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.lb-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  margin: 4px;
+  min-height: 92px;
+  text-align: center;
+}
+.lb-area i {
+  font-style: normal;
+  font-size: 24px;
+  color: var(--accent);
+}
+.lb-area b {
+  font-weight: 400;
+  font-size: 20px;
+}
+.lb-area small {
+  font-size: 14px;
+  color: var(--mute);
+  line-height: 1.1;
+}
+.lb-area.on {
+  background: var(--sel);
+}
+.lb-area:disabled {
+  opacity: 0.45;
+}
+.lb-small {
+  height: auto !important;
+  align-self: flex-end !important;
+  max-height: 80%;
+}
+.lb-acts {
+  padding: 14px 16px calc(20px + env(safe-area-inset-bottom));
+}
+.lb-toast {
+  white-space: pre-line;
+}

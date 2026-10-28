@@ -17,7 +17,8 @@ import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEn
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
-import { commit, focusesOf } from '@/lib/board';
+import { commit } from '@/lib/board';
+import { AREAS, areasOf, doAction, lifePathOf, doneThisYear, optionsOf, tallyOf, type AreaKey } from '@/lib/actions';
 import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
@@ -149,10 +150,11 @@ function Board({
   const [shown, setShown] = useState(0);
   const [more, setMore] = useState(24);
   const [born, setBorn] = useState(story.path.length > 0);
+  const [area, setArea] = useState<AreaKey | null>(null);
   const isFeed = sc?.kind === 'feed';
   const lines = useMemo(() => (isFeed && sc?.feed ? sc.feed(x) : []), [story.scene, story.path.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const stop = !!sc && STOP_AT.includes(sc.id);
-  const running = born && !paused && !menu;
+  const running = born && !paused && !menu && !area;
 
   useEffect(() => setShown(0), [story.scene, story.path.length]);
 
@@ -167,9 +169,19 @@ function Board({
     },
     [onCommit, setFb],
   );
+  // thuyết minh khi sang năm mới (không tính dòng thời gian, vì nó tự ghi năm)
+  const prevAge = useRef(age);
+  useEffect(() => {
+    if (age > prevAge.current && !isFeed) {
+      const n = age - prevAge.current;
+      const line = `⏩ ${n > 1 ? `${n} năm trôi qua` : 'Một năm trôi qua'}. Năm ${char.birthYear + age}, ${x.me} ${age} tuổi.`;
+      setToast((t) => (t ? `${t}\n${line}` : line));
+    }
+    prevAge.current = age;
+  }, [age]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
+    const t = setTimeout(() => setToast(null), 4500);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -195,8 +207,9 @@ function Board({
   const pending = isFeed ? lines.slice(0, shown) : [];
   const log = [...(story.log ?? []), ...pending.map((l) => ({ ...l, k: 'feed' as const }))].reverse();
   const decide = !!sc && born && ((!isFeed && (!auto || stop)) || !!fb);
-  const fo = focusesOf(curAge);
-  const curFocus = fo.find((f) => f.k === story.focus) ?? fo[0];
+  const xa = ctxOf(char, family, story, curAge);
+  const yearDone = doneThisYear(xa);
+  const tally = tallyOf(story);
   const span = Math.max(80, lifespanOf(char, story));
 
 
@@ -286,14 +299,25 @@ function Board({
 
         <section className="card-d px-dim">
           <div className="lb-h">
-            <b>Trọng tâm năm nay</b>
-            <small>ĐỔI LÚC NÀO CŨNG ĐƯỢC</small>
+            <b>Năm nay tập trung cho</b>
+            <small>MỖI NĂM MỘT VIỆC</small>
           </div>
-          <div className="lb-chips">
-            {fo.map((f) => (
-              <button key={f.k} type="button" className={`lb-chip px ${curFocus.k === f.k ? 'on' : ''}`} onClick={() => onStory({ ...story, focus: f.k })}>
-                <b>{f.t}</b>
-                <small>{f.d}</small>
+          {yearDone ? (
+            <p className="mt-hint">
+              Năm {curAge} tuổi đã chọn: <b className="yeu">{AREAS.find((a) => a.k === story.focus)?.t}</b>. Sang năm chọn tiếp, hiệu ứng vẫn cộng mỗi năm.
+            </p>
+          ) : (
+            <p className="mt-hint">Chọn một mảng, rồi chọn một việc cụ thể. Mảng nào chọn nhiều sẽ quyết định cả đời mình dành cho điều gì.</p>
+          )}
+          <div className="lb-areas">
+            {areasOf(xa).map((a) => (
+              <button key={a.k} type="button" className={`tile px lb-area ${story.focus === a.k ? 'on' : ''}`} disabled={yearDone} onClick={() => setArea(a.k)}>
+                <i aria-hidden="true">{a.icon}</i>
+                <b>{a.t}</b>
+                <small>
+                  {a.d}
+                  {tally[a.k] ? ` · đã chọn ${tally[a.k]} lần` : ''}
+                </small>
               </button>
             ))}
           </div>
@@ -315,6 +339,40 @@ function Board({
           <p className="mt-hint">Màu càng đậm là năm càng vui. Ô viền sáng là năm đang sống.</p>
         </section>
       </div>
+
+      {area && !decide && (
+        <div className="lb-veil" onClick={() => setArea(null)}>
+          <div className="lb-sheet lb-small px" role="dialog" aria-modal="true" aria-label="Chọn việc" onClick={(e) => e.stopPropagation()}>
+            <div className="lb-sh">
+              <span>
+                {AREAS.find((a) => a.k === area)?.icon} {AREAS.find((a) => a.k === area)?.t.toUpperCase()} · {curAge} tuổi · {year}
+              </span>
+              <button type="button" onClick={() => setArea(null)}>
+                Đóng
+              </button>
+            </div>
+            <div className="choices lb-acts">
+              {optionsOf(area, xa).map((o, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="opt px"
+                  onClick={() => {
+                    const r = doAction(R, char, family, story, curAge, area, i);
+                    const name = AREAS.find((a) => a.k === area)!.t;
+                    const add = [{ age: curAge, year, t: `${name}: ${r.t}`, k: 'pick' as const }, ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: curAge, year, t, k: 'note' as const }))];
+                    onStory({ ...r.s, focus: area, log: [...(r.s.log ?? []), ...add].slice(-500) });
+                    setToast([...r.fb.sys, ...r.fb.notes][0] ?? `${name}: ${r.t}`);
+                    setArea(null);
+                  }}
+                >
+                  <b>{txt(o.t, xa)}</b>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div className="lb-toast px" role="status" onClick={() => setToast(null)}>
@@ -1345,6 +1403,15 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
             <b>{old.name}</b>
             <small>{old.desc}</small>
           </div>
+          {lifePathOf(story) && (
+            <div className="end-row">
+              <span>Cả đời dành cho</span>
+              <b>{lifePathOf(story)!.name}</b>
+              <small>
+                {lifePathOf(story)!.desc} (chọn {lifePathOf(story)!.n} năm)
+              </small>
+            </div>
+          )}
           <div className="end-row">
             <span>Bạn yêu kiểu gì</span>
             <b>{type.name}</b>
