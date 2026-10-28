@@ -18,7 +18,7 @@ import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEn
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
-import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, fastForward, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -34,6 +34,7 @@ export default function Choi() {
   const { user, ready } = useAuth();
   const [state, setState] = useState<SaveState | null | undefined>(undefined);
   const [fb, setFb] = useState<Feedback | null>(null);
+  const [ff, setFf] = useState<{ ch: string; lines: { age: number; year: number; t: string }[] } | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -68,6 +69,22 @@ export default function Choi() {
     );
 
   const { char, family, story } = state;
+  if (ff)
+    return (
+      <main className="app dither">
+        <div className="head">
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="eyebrow" style={{ fontSize: 18 }}>
+              ⏩ TUA NHANH
+            </div>
+            <h1>{ff.ch}</h1>
+          </div>
+        </div>
+        <div className="body" style={{ paddingTop: 4 }}>
+          <LifeFeed lines={ff.lines} onDone={() => setFf(null)} />
+        </div>
+      </main>
+    );
   if (story.scene === 'end' && !fb) return <Ending char={char} family={family} story={story} onRewind={(i) => update(rewind(story, i))} />;
 
   return (
@@ -91,6 +108,12 @@ export default function Choi() {
         setFb(has ? r.fb : null);
       }}
       onNext={() => setFb(null)}
+      onFast={(ch) => {
+        const r = fastForward(resolverOf(char, family), char, family, story);
+        update(r.s);
+        setFb(null);
+        setFf({ ch, lines: r.lines.length ? r.lines : [{ age: 0, year: char.birthYear, t: 'Không có gì để tua.' }] });
+      }}
     />
   );
 }
@@ -106,7 +129,7 @@ const CH_LINE: Record<string, string> = {
   'Tuổi già': 'Những người còn ở lại',
 };
 
-function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number, note?: string) => void; onNext: () => void }) {
+function Play({ R, char, family, story, fb, onChoose, onNext, onFast }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number, note?: string) => void; onNext: () => void; onFast: (chapter: string) => void }) {
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
   const last = story.path[story.path.length - 1];
   const shownId = fb ? last.scene : story.scene;
@@ -280,6 +303,11 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           !chat && !swipe && !call && !tap && <Choices key={sc.id} opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} timer={sc.timer} timeout={sc.timeout} />
         )}
 
+        {!fb && (
+          <button type="button" className="ff-btn" onClick={() => onFast(sc.chapter)}>
+            ⏩ Tua nhanh hết {sc.chapter.toLowerCase()}
+          </button>
+        )}
       </div>
     </main>
   );

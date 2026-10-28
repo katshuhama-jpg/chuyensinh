@@ -399,6 +399,33 @@ export function visibleChoices(scene: Scene, x: Ctx) {
   return scene.choices.filter((ch) => !ch.if || ch.if(x));
 }
 
+/** Những cảnh quan trọng không tự chọn hộ khi tua nhanh (cầu hôn, cưới, người cũ) */
+const STOP_AT = ['y27_cauhon', 'y28_hethong', 'y29_quaylai', 'm40_nguoicu'];
+
+/** Tua nhanh hết thời kỳ hiện tại (kiểu Auto của 1 in 8 Billion): tự chọn ngẫu nhiên đến khi sang chương mới
+ *  hoặc gặp một ngã rẽ lớn. Trả về trạng thái mới và các dòng tóm tắt đã trôi qua. */
+export function fastForward(resolve: Resolve, c: Character, f: Family, s0: Story, rnd = Math.random) {
+  const start = resolve(s0.scene, s0)?.chapter;
+  let s = s0;
+  const lines: { age: number; year: number; t: string }[] = [];
+  for (let k = 0; k < 300 && s.scene !== 'end'; k++) {
+    const sc = resolve(s.scene, s);
+    if (!sc || sc.chapter !== start || (k > 0 && STOP_AT.includes(sc.id))) break;
+    const x = ctxOf(c, f, s, sc.age);
+    const opts = visibleChoices(sc, x);
+    if (!opts.length) break;
+    // cảnh ngẫm thì để sau; dòng thời gian thì sống tiếp; còn lại chọn ngẫu nhiên
+    const idx = sc.kind === 'reflect' ? opts.length - 1 : sc.kind === 'feed' ? 0 : Math.floor(rnd() * opts.length);
+    const before = s.path.length;
+    const r = choose(resolve, c, f, s, idx);
+    s = r.s;
+    if (sc.kind === 'feed') for (const l of sc.feed?.(x) ?? []) lines.push(l);
+    else for (const p of s.path.slice(before)) lines.push({ age: p.age, year: c.birthYear + p.age, t: `${p.title}: ${p.choice}` });
+    for (const n of r.fb.notes.slice(0, 1)) lines.push({ age: sc.age, year: c.birthYear + sc.age, t: `↳ ${n}` });
+  }
+  return { s, lines };
+}
+
 /** Quay lại ngã rẽ thứ i: trạng thái ngay trước lựa chọn đó */
 export function rewind(s: Story, i: number): Story {
   const snap = s.hist[i];
