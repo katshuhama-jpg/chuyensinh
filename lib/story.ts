@@ -19,14 +19,25 @@ export const STAT_LABEL: Record<StatKey, string> = {
 };
 export const STAT_KEYS = Object.keys(STAT_LABEL) as StatKey[];
 
-export type LoveId = 'khoi' | 'long' | 'minh';
-export const LOVE_IDS: LoveId[] = ['khoi', 'long', 'minh'];
+export type LoveId = 'khoi' | 'long' | 'minh' | 'phong' | 'hai' | 'tuananh' | 'kai' | 'quan' | 'bao' | 'duy';
+export const LOVE_IDS: LoveId[] = ['khoi', 'long', 'minh', 'phong', 'hai', 'tuananh', 'kai', 'quan', 'bao', 'duy'];
+
+/** Cùng lúc giữ tối đa 5 người, cả đời gặp tối đa 10 người */
+export const MAX_ACTIVE = 5;
+export const MAX_LIFE = 10;
 
 /** Người yêu: bản nam gặp khi nhân vật chính là nữ, bản nữ khi là nam */
-export const LOVES: Record<LoveId, { m: string; f: string; kind: string; likes: StatKey; likesName: string }> = {
-  khoi: { m: 'Khôi', f: 'Thảo', kind: 'Thanh mai trúc mã, nhà bên cạnh', likes: 'tinh', likesName: 'người sống tình cảm, nhớ chuyện cũ' },
-  long: { m: 'Long', f: 'Vy', kind: 'Ngoài lạnh trong ấm, sống bụi', likes: 'noi', likesName: 'người dám liều, không sợ bị nói' },
-  minh: { m: 'Minh', f: 'Ngọc', kind: 'Học bá lạnh lùng', likes: 'hoc', likesName: 'người học giỏi, thành thật' },
+export const LOVES: Record<LoveId, { m: string; f: string; kind: string; job: [string, string]; likes: StatKey; likesName: string; happy: string }> = {
+  khoi: { m: 'Khôi', f: 'Thảo', kind: 'Thanh mai trúc mã, nhà bên cạnh', job: ['bạn nhà bên', 'bạn nhà bên'], likes: 'tinh', likesName: 'người sống tình cảm, nhớ chuyện cũ', happy: 'Thanh Mai Trúc Mã' },
+  long: { m: 'Long', f: 'Vy', kind: 'Ngoài lạnh trong ấm, sống bụi', job: ['boy phố', 'chị đại'], likes: 'noi', likesName: 'người dám liều, không sợ bị nói', happy: 'Lãng Tử Quay Đầu' },
+  minh: { m: 'Minh', f: 'Ngọc', kind: 'Học bá lạnh lùng', job: ['lớp trưởng', 'lớp phó học tập'], likes: 'hoc', likesName: 'người học giỏi, thành thật', happy: 'Học Bá Tan Chảy' },
+  phong: { m: 'Phong', f: 'Hà', kind: 'Bác sĩ điềm đạm', job: ['bác sĩ', 'bác sĩ'], likes: 'tam', likesName: 'người lạc quan, biết giữ sức khỏe', happy: 'Chữa Lành Trái Tim' },
+  hai: { m: 'Hải', f: 'Linh', kind: 'Nghệ sĩ nghèo, lãng mạn', job: ['ca sĩ indie', 'ca sĩ hát quán'], likes: 'duyen', likesName: 'người duyên dáng, biết cảm nhạc', happy: 'Bản Tình Ca Cuối' },
+  tuananh: { m: 'Tuấn Anh', f: 'Lan Anh', kind: 'Sếp hơn 5 tuổi, lạnh ngoài nóng trong', job: ['tổng tài', 'nữ giám đốc'], likes: 'tien', likesName: 'người tự lo được tài chính', happy: 'Tổng Tài Cũng Biết Yêu' },
+  kai: { m: 'Kai', f: 'Mia', kind: 'Du học sinh vui vẻ, học tiếng Việt', job: ['du học sinh', 'du học sinh'], likes: 'noi', likesName: 'người thích khám phá, dám đi xa', happy: 'Yêu Xuyên Biên Giới' },
+  quan: { m: 'Quân', f: 'Mai', kind: 'Ngôi sao màn ảnh', job: ['ca sĩ thần tượng', 'diễn viên'], likes: 'duyen', likesName: 'người duyên dáng, không ham nổi tiếng', happy: 'Cặp Đôi Quốc Dân' },
+  bao: { m: 'Bảo', f: 'Trâm', kind: 'Đồng nghiệp hài hước', job: ['đồng nghiệp bàn bên', 'đồng nghiệp bàn bên'], likes: 'tam', likesName: 'người vui tính, hay cười', happy: 'Cười Cả Đời' },
+  duy: { m: 'Duy', f: 'Hạ', kind: 'Người lạ định mệnh', job: ['người lạ trên chuyến tàu', 'người lạ trên chuyến tàu'], likes: 'dao', likesName: 'người có Vận đào hoa cao', happy: 'Định Mệnh Trên Chuyến Tàu' },
 };
 
 export interface Step {
@@ -57,6 +68,14 @@ export interface StoryCore {
   fate: string;
   /** tên bạn thân (cùng giới với nhân vật) */
   bestie: string;
+  /** những người đã gặp trong đời, theo thứ tự gặp (tối đa 10) */
+  met: LoveId[];
+  /** người mới đang chờ vào đời khi đã đủ 5 người */
+  pending: LoveId | null;
+  /** cảnh đi tiếp sau khi chọn buông ai */
+  resume: string | null;
+  /** số người thân (độ thân từ 50) cùng lúc nhiều nhất từng có */
+  peak: number;
 }
 
 export interface Story extends StoryCore {
@@ -102,8 +121,10 @@ export interface Choice {
   sys?: string | ((x: Ctx) => string);
   /** cảnh kế tiếp riêng của lựa chọn này */
   to?: string | ((x: Ctx) => string);
-  /** cảnh quẹt: lựa chọn này ứng với Match người nào */
+  /** cảnh quẹt: lựa chọn này ứng với Match người nào; Bảng tình duyên: việc này làm với ai */
   loveId?: LoveId;
+  /** Bảng tình duyên: loại việc (nhắn tin, hẹn hò, tỏ tình, buông, quẹt, đi chỗ mới...) */
+  act?: 'chat' | 'date' | 'confess' | 'drop' | 'quet' | 'explore' | 'friends' | 'work';
 }
 
 export interface Scene {
@@ -112,7 +133,7 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat' | 'swipe';
+  kind?: 'talk' | 'chat' | 'swipe' | 'hub';
   title: string | ((x: Ctx) => string);
   text: (x: Ctx) => string[];
   /** cảnh tin nhắn: tin hiện trong khung chat */
@@ -176,6 +197,14 @@ export interface Fx {
   mid: (id: string) => void;
   /** báo thêm một dòng sau lựa chọn */
   say: (t: string) => void;
+  /** gặp một người mới (tôn trọng giới hạn 5 cùng lúc, 10 cả đời) */
+  meet: (id: LoveId) => void;
+  /** buông một người: rời khỏi đời mình */
+  drop: (id: LoveId) => void;
+  /** nhận người mới đang chờ (sau khi đã buông bớt một người) */
+  acceptPending: () => void;
+  /** thôi không quen người mới đang chờ */
+  rejectPending: () => void;
 }
 
 const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
@@ -214,27 +243,36 @@ export interface Feedback {
   notes: string[];
   sys: string[];
   mids: string[];
+  /** người mới gặp ở lựa chọn này */
+  met: LoveId[];
 }
+
+/** Những người đang có trong đời (đã gặp, chưa buông) */
+export const activeOf = (s: StoryCore) => s.met.filter((id) => !s.flags.includes(`${id}_out`));
+export const isOut = (s: StoryCore, id: LoveId) => s.flags.includes(`${id}_out`);
+
+/** Tìm cảnh theo mã; cảnh động (Mùa yêu, tin nhắn, hẹn hò...) dựng theo trạng thái */
+export type Resolve = (id: string, s: Story) => Scene | undefined;
 
 /**
  * Chọn một lựa chọn: chụp trạng thái, áp thay đổi, ghi ngã rẽ, tìm cảnh kế tiếp (bỏ qua các cảnh có skip).
  */
-export function choose(
-  scenes: Record<string, Scene>,
-  c: Character,
-  f: Family,
-  s0: Story,
-  idx: number,
-): { s: Story; fb: Feedback } {
-  const scene = scenes[s0.scene];
+export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx: number): { s: Story; fb: Feedback } {
+  const scene = resolve(s0.scene, s0)!;
   const x0 = ctxOf(c, f, s0, scene.age);
   const opts = visibleChoices(scene, x0);
   const ch = opts[idx];
   const s: Story = { ...core(s0), hist: [...s0.hist, core(s0)] };
-  const fb: Feedback = { notes: [], sys: [], mids: [] };
+  const fb: Feedback = { notes: [], sys: [], mids: [], met: [] };
+  const lg: Gender = c.gender === 'f' ? 'm' : 'f';
+  const name = (id: LoveId) => LOVES[id][lg];
   const fx: Fx = {
     stat: (k, d) => (s.stats[k] = clamp(s.stats[k] + d)),
-    love: (id, d) => (s.love[id] = clamp(s.love[id] + d)),
+    love: (id, d) => {
+      // thêm độ thân với người chưa quen là gặp người đó
+      if (d > 0 && !s.met.includes(id)) fx.meet(id);
+      if (s.met.includes(id)) s.love[id] = clamp(s.love[id] + d);
+    },
     rel: (k, d) => (s.rel[k] = clamp(s.rel[k] + d)),
     flag: (fl) => {
       if (!s.flags.includes(fl)) s.flags.push(fl);
@@ -252,6 +290,31 @@ export function choose(
       fb.mids.push(id);
     },
     say: (t) => fb.notes.push(t),
+    meet: (id) => {
+      if (s.met.includes(id) || s.pending === id) return;
+      if (s.met.length >= MAX_LIFE) {
+        fb.notes.push(`Đời này đã gặp đủ ${MAX_LIFE} người. ${name(id)} chỉ lướt qua.`);
+        return;
+      }
+      if (activeOf(s).length >= MAX_ACTIVE) {
+        s.pending = id;
+        return;
+      }
+      s.met.push(id);
+      fb.met.push(id);
+    },
+    drop: (id) => {
+      fx.flag(`${id}_out`);
+      if (s.partner === id) s.partner = null;
+    },
+    acceptPending: () => {
+      const id = s.pending;
+      s.pending = null;
+      if (id) fx.meet(id);
+    },
+    rejectPending: () => {
+      s.pending = null;
+    },
   };
   const x = ctxOf(c, f, s, scene.age);
   ch.do?.(fx, x);
@@ -260,11 +323,17 @@ export function choose(
   const sys = txt(ch.sys, x);
   if (sys) fb.sys.push(sys);
   s.path.push({ scene: scene.id, age: scene.age, title: txt(scene.title, x0), choice: txt(ch.t, x0) });
+  s.peak = Math.max(s.peak ?? 0, activeOf(s).filter((id) => s.love[id] >= 50).length);
 
   let next = ch.to ? txt(ch.to, x) : txt(scene.next, x);
+  // đủ 5 người mà gặp thêm: hỏi buông ai trước khi đi tiếp
+  if (s.pending && !scene.id.startsWith('drop@')) {
+    s.resume = next;
+    next = `drop@${scene.age}`;
+  }
   // bỏ qua các cảnh không hợp với nhánh hiện tại
   for (let guard = 0; guard < 50; guard++) {
-    const sc = scenes[next];
+    const sc = resolve(next, s);
     if (!sc) break;
     const xs = ctxOf(c, f, s, sc.age);
     if (!sc.skip || !sc.skip(xs)) break;
@@ -282,4 +351,20 @@ export function visibleChoices(scene: Scene, x: Ctx) {
 export function rewind(s: Story, i: number): Story {
   const snap = s.hist[i];
   return { ...JSON.parse(JSON.stringify(snap)), hist: s.hist.slice(0, i) };
+}
+
+/** Bản lưu cũ (trước khi có 10 người yêu): bổ sung trường còn thiếu để chơi tiếp được */
+export function normalizeStory(s: Story): Story {
+  const fix = <T extends StoryCore>(c: T): T => {
+    const love = { ...Object.fromEntries(LOVE_IDS.map((id) => [id, 0])), ...c.love } as Record<LoveId, number>;
+    return {
+      ...c,
+      love,
+      met: c.met ?? LOVE_IDS.filter((id) => love[id] > 0 || c.flags.includes(`${id}_out`)),
+      pending: c.pending ?? null,
+      resume: c.resume ?? null,
+      peak: c.peak ?? 0,
+    };
+  };
+  return { ...fix(s), hist: (s.hist ?? []).map(fix) };
 }

@@ -4,7 +4,7 @@
  */
 
 import { REAL_UNTIL, rollFamily, siblingText, suggestName, type Family, type Gender } from './character';
-import type { Story, StoryCore } from './story';
+import { LOVE_IDS, type Story, type StoryCore } from './story';
 
 export interface Fate {
   gender: Gender;
@@ -96,7 +96,7 @@ export function newStory(f: Fate, first: string): Story {
   return {
     scene: first,
     stats,
-    love: { khoi: 0, long: 0, minh: 0 },
+    love: Object.fromEntries(LOVE_IDS.map((id) => [id, 0])) as StoryCore['love'],
     rel: { bome, banthan: 40, con: 0 },
     flags: [],
     partner: null,
@@ -108,6 +108,10 @@ export function newStory(f: Fate, first: string): Story {
     path: [],
     fate: f.fate,
     bestie: f.bestie,
+    met: [],
+    pending: null,
+    resume: null,
+    peak: 0,
     hist: [],
   };
 }

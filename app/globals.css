@@ -1895,14 +1895,17 @@ p {
   background: var(--scene);
 }
 .backdrop {
+  /* hiện đúng 2px mỗi điểm ảnh như nhân vật, căn giữa, không co giãn */
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 200px;
+  max-width: none;
 }
 .stage .actors {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .ht-scan {
   position: absolute;
@@ -1997,4 +2000,202 @@ p {
   font-size: 16px;
   color: var(--faint);
   padding-left: 2px;
+}
+
+/* ---------- Bảng tình duyên ---------- */
+.hub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.hub-top {
+  margin: 4px;
+  padding: 8px 12px;
+  background: var(--panel);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 17px;
+  color: var(--mute);
+}
+.hub-top b {
+  font-weight: 400;
+  color: var(--accent);
+  font-size: 22px;
+}
+.hub-slots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px;
+}
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px 6px;
+  min-width: 0;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 -3px 0 0 var(--dim), 0 3px 0 0 var(--dim), -3px 0 0 0 var(--dim), 3px 0 0 0 var(--dim);
+}
+.slot.on {
+  background: var(--sel);
+  box-shadow: 0 -3px 0 0 var(--accent), 0 3px 0 0 var(--accent), -3px 0 0 0 var(--accent), 3px 0 0 0 var(--accent);
+}
+.slot b {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.slot small {
+  font-size: 12px;
+  line-height: 1;
+  color: var(--faint);
+  white-space: nowrap;
+}
+.slot.st-yeu small {
+  color: var(--orange);
+}
+.slot.st-mapmo small {
+  color: var(--accent);
+}
+.slot-photo {
+  width: 100%;
+  height: 52px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: var(--scene);
+}
+.slot-photo .lpc {
+  margin-top: -4px;
+}
+.slot-meter {
+  width: 90%;
+  height: 5px;
+  background: var(--stat-empty);
+  position: relative;
+}
+.slot-meter i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--orange);
+}
+.slot.empty {
+  justify-content: center;
+  color: var(--faint);
+  min-height: 92px;
+  background: transparent;
+  box-shadow: 0 -3px 0 0 var(--dim), 0 3px 0 0 var(--dim), -3px 0 0 0 var(--dim), 3px 0 0 0 var(--dim);
+  opacity: 0.6;
+}
+.slot.empty span {
+  font-size: 30px;
+}
+.hub-acts {
+  margin: 4px;
+  padding: 10px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: opt-in 0.25s steps(3) both;
+}
+.hub-acts-h {
+  font-size: 18px;
+  color: var(--accent);
+}
+.hub-acts .opt {
+  margin: 4px;
+  min-height: 48px;
+}
+.hub-acts .act-confess {
+  background: var(--sel);
+}
+.hub-acts .act-drop b {
+  color: var(--stress);
+}
+.hub-hint {
+  font-size: 17px;
+  text-align: center;
+}
+.hub-global {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 4px;
+}
+.hub-g {
+  min-height: 60px;
+  font-size: 18px;
+  line-height: 1.1;
+  padding: 6px 8px;
+  gap: 4px;
+}
+.hub-g i {
+  font-style: normal;
+  font-size: 22px;
+  color: var(--orange);
+}
+
+/* thẻ người mới */
+.newface {
+  margin: 8px 4px;
+  padding: 12px;
+  background: var(--card);
+  color: var(--card-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 -4px 0 0 var(--orange), 0 4px 0 0 var(--orange), -4px 0 0 0 var(--orange), 4px 0 0 0 var(--orange), 6px 8px 0 4px rgba(0, 0, 0, 0.25);
+  animation: stamp 0.4s steps(4) both;
+}
+.nf-tag {
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: #a83f70;
+}
+.nf-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.nf-photo {
+  background: var(--card-ph);
+  flex: none;
+}
+.nf-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.nf-info b {
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1;
+}
+.nf-info span {
+  font-size: 18px;
+}
+.nf-info small {
+  font-size: 16px;
+  color: var(--card-mute);
+  line-height: 1.15;
+}
+.nf-like {
+  color: #a83f70 !important;
+}
+.nf-count {
+  font-size: 16px;
+  color: var(--card-mute);
+  text-align: right;
 }

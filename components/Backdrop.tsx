@@ -243,13 +243,66 @@ function vuon(t: Time): R[] {
 
 const PLACES: Record<Place, (t: Time, e: Era, tet?: boolean) => R[]> = { ngo, lop, phong, net, cong, pho, quan, nha, congvien, vanphong, vuon };
 
+/* ---------- cùng cỡ điểm ảnh với nhân vật LPC ----------
+   Nhân vật 64x64 hiện gấp đôi, nên 1 điểm ảnh = 2px. Nền vẽ trên lưới 200x100 rồi hiện đúng 400x200px
+   (không co giãn), mỗi khối có viền tối, mặt trên sáng và lớp chấm sần như ô gạch LPC. */
+const GW = 200;
+const GH = 100;
+
+function hex(c: string): [number, number, number] | null {
+  const m = /^#([0-9a-f]{6})$/i.exec(c);
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function mix(c: string, k: number) {
+  const v = hex(c);
+  if (!v) return c;
+  const f = (x: number) => Math.max(0, Math.min(255, Math.round(k > 0 ? x + (255 - x) * k : x * (1 + k))));
+  return `#${v.map((x) => f(x).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** Đổi từ lưới cũ 160x90 sang lưới 200x100, làm tròn về ô nguyên, thêm viền và mặt sáng cho khối lớn */
+function toPixels(rects: R[]): R[] {
+  const sx = GW / 160;
+  const sy = GH / 90;
+  const out: R[] = [];
+  for (const [x, y, w, h, c] of rects) {
+    const X = Math.round(x * sx);
+    const Y = Math.round(y * sy);
+    const W = Math.max(1, Math.round((x + w) * sx) - X);
+    const H = Math.max(1, Math.round((y + h) * sy) - Y);
+    out.push([X, Y, W, H, c]);
+    // khối đặc (tường, bàn, cây, cửa): viền tối hai bên và đáy, mép trên sáng
+    if (W >= 4 && H >= 4 && W < GW && hex(c)) {
+      const dark = mix(c, -0.28);
+      out.push([X, Y, W, 1, mix(c, 0.22)], [X, Y + H - 1, W, 1, dark], [X, Y, 1, H, dark], [X + W - 1, Y, 1, H, dark]);
+    }
+  }
+  return out;
+}
+
 export default function Backdrop({ bg, year, glitch }: { bg: Bg; year: number; glitch?: boolean }) {
-  const rects = PLACES[bg.place](bg.time, eraOf(year), bg.tet);
+  const rects = toPixels(PLACES[bg.place](bg.time, eraOf(year), bg.tet));
   return (
-    <svg className={`backdrop ${glitch ? 'glitch' : ''}`} viewBox="0 0 160 90" preserveAspectRatio="xMidYMax slice" shapeRendering="crispEdges" aria-hidden="true">
+    <svg
+      className={`backdrop ${glitch ? 'glitch' : ''}`}
+      width={GW * 2}
+      height={GH * 2}
+      viewBox={`0 0 ${GW} ${GH}`}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+    >
+      <defs>
+        <pattern id="bd-dither" width="2" height="2" patternUnits="userSpaceOnUse">
+          <rect x="0" y="0" width="1" height="1" fill="rgba(0,0,0,0.07)" />
+          <rect x="1" y="1" width="1" height="1" fill="rgba(255,255,255,0.05)" />
+        </pattern>
+      </defs>
       {rects.map(([x, y, w, h, c], i) => (
         <rect key={i} x={x} y={y} width={w} height={h} fill={c} />
       ))}
+      <rect x="0" y="0" width={GW} height={GH} fill="url(#bd-dither)" />
     </svg>
   );
 }

@@ -9,11 +9,11 @@ import Sprite from '@/components/Sprite';
 import SwipeDeck from '@/components/SwipeDeck';
 import { BESTIE, CAST, MOM } from '@/lib/cast';
 import type { Character, Family } from '@/lib/character';
-import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEndOf } from '@/lib/endings';
+import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEndOf, titlesOf } from '@/lib/endings';
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
-import { getScene, sceneTable, SCENES } from '@/lib/scenes';
-import { choose, ctxOf, LOVE_IDS, LOVES, rewind, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Ctx, type Feedback, type Story } from '@/lib/story';
+import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
+import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -26,7 +26,7 @@ export default function Choi() {
   useEffect(() => {
     if (!ready) return;
     // bản lưu cũ không có cốt truyện: coi như chưa có đời nào
-    loadMe().then((m) => setState(m?.state?.story ? m.state : null));
+    loadMe().then((m) => setState(m?.state?.story ? { ...m.state, story: normalizeStory(m.state.story) } : null));
   }, [ready, user]);
 
   const update = useCallback(
@@ -60,14 +60,14 @@ export default function Choi() {
 
   return (
     <Play
+      R={resolverOf(char, family)}
       key={`${story.path.length}${fb ? "f" : "n"}`}
       char={char}
       family={family}
       story={story}
       fb={fb}
       onChoose={(i) => {
-        const x = ctxOf(char, family, story, SCENES[story.scene].age);
-        const r = choose(sceneTable(x), char, family, story, i);
+        const r = choose(resolverOf(char, family), char, family, story, i);
         update(r.s);
         const has = r.fb.notes.length || r.fb.sys.length || r.fb.mids.length;
         setFb(has ? r.fb : null);
@@ -88,19 +88,19 @@ const CH_LINE: Record<string, string> = {
   'Tuổi già': 'Những người còn ở lại',
 };
 
-function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number) => void; onNext: () => void }) {
+function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number) => void; onNext: () => void }) {
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
   const last = story.path[story.path.length - 1];
   const shownId = fb ? last.scene : story.scene;
-  const age = SCENES[shownId].age;
+  const age = ageOfScene(shownId);
   // lúc xem phản hồi, vẽ cảnh bằng trạng thái ngay trước lựa chọn (người yêu có thể vừa chia tay)
   const before = fb && story.hist.length ? { ...story.hist[story.hist.length - 1], hist: [] } : story;
   const x = ctxOf(char, family, before, age);
-  const sc = getScene(shownId, x);
+  const sc = R(shownId, before)!;
   const opts = visibleChoices(sc, x);
   const who = sc.who?.(x) ?? null;
   // sang chương mới thì hiện màn chương
-  const prevCh = !fb && last ? SCENES[last.scene]?.chapter : undefined;
+  const prevCh = !fb && last ? R(last.scene, story.hist[story.hist.length - 1] ? { ...story.hist[story.hist.length - 1], hist: [] } : story)?.chapter : undefined;
   const [card, setCard] = useState(!fb && (story.path.length === 0 || prevCh !== sc.chapter));
 
   const meLayers = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
@@ -225,7 +225,13 @@ function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; 
           />
         )}
 
-        {fb ? <FeedbackBox fb={fb} onNext={onNext} /> : !chat && !swipe && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />}
+        {fb ? (
+          <FeedbackBox fb={fb} x={x} after={story} onNext={onNext} />
+        ) : sc.kind === 'hub' ? (
+          <HubBoard x={x} opts={opts} onChoose={onChoose} />
+        ) : (
+          !chat && !swipe && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
+        )}
 
         <Meters x={x} story={story} />
       </div>
@@ -251,9 +257,12 @@ function Choices({ opts, onChoose }: { opts: string[]; onChoose: (i: number) => 
   );
 }
 
-function FeedbackBox({ fb, onNext }: { fb: Feedback; onNext: () => void }) {
+function FeedbackBox({ fb, x, after, onNext }: { fb: Feedback; x: Ctx; after: Story; onNext: () => void }) {
   return (
     <div className="fb" role="status">
+      {fb.met.map((id) => (
+        <NewFace key={id} id={id} x={x} count={after.met.indexOf(id) + 1} />
+      ))}
       {fb.sys.map((n, i) => (
         <div key={`s${i}`} className="ht-pop">
           <div className="ht-pop-h">◆ HỆ THỐNG</div>
@@ -280,9 +289,112 @@ function FeedbackBox({ fb, onNext }: { fb: Feedback; onNext: () => void }) {
   );
 }
 
+/** Thẻ hồ sơ người mới bước vào đời */
+function NewFace({ id, x, count }: { id: LoveId; x: Ctx; count: number }) {
+  const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, stageOf(x.age)), [id, x.lg, x.age]);
+  return (
+    <div className="newface">
+      <span className="nf-tag">NGƯỜI MỚI BƯỚC VÀO ĐỜI BẠN</span>
+      <div className="nf-row">
+        <div className="nf-photo">
+          <Sprite layers={layers} scale={2} anim="idle" dir={2} label={x.L(id)} />
+        </div>
+        <div className="nf-info">
+          <b>{x.L(id)}</b>
+          <span>{LOVES[id].job[x.lg === 'm' ? 0 : 1]}</span>
+          <small>{LOVES[id].kind}</small>
+          <small className="nf-like">Thích {LOVES[id].likesName}</small>
+        </div>
+      </div>
+      <div className="nf-count">
+        Người thứ {count}/{MAX_LIFE} trong đời
+      </div>
+    </div>
+  );
+}
+
+/** Bảng tình duyên: 5 ô người ấy, mỗi ô có việc riêng; bên dưới là việc chung */
+function HubBoard({ x, opts, onChoose }: { x: Ctx; opts: Choice[]; onChoose: (i: number) => void }) {
+  const [open, setOpen] = useState<LoveId | null>(null);
+  const done = useRef(false);
+  const pick = (c: Choice) => {
+    if (done.current) return;
+    done.current = true;
+    onChoose(opts.indexOf(c));
+  };
+  const act = activeOf(x.s);
+  const slots: (LoveId | null)[] = [...act, ...Array(Math.max(0, MAX_ACTIVE - act.length)).fill(null)];
+  const global = opts.filter((o) => !o.loveId);
+  const ICON: Record<string, string> = { chat: '✉', date: '♥', confess: '❀', drop: '✕', quet: '⇆', explore: '✈', friends: '☺', work: '▣' };
+  return (
+    <div className="hub">
+      <div className="hub-top">
+        <span>
+          Đang có <b>{act.length}</b>/{MAX_ACTIVE} người
+        </span>
+        <span>
+          Đã gặp <b>{x.s.met.length}</b>/{MAX_LIFE} người trong đời
+        </span>
+      </div>
+      <div className="hub-slots">
+        {slots.map((id, i) =>
+          id ? (
+            <Slot key={id} id={id} x={x} open={open === id} onOpen={() => setOpen(open === id ? null : id)} />
+          ) : (
+            <div key={`e${i}`} className="slot empty" aria-label="Ô trống">
+              <span>?</span>
+              <small>Ô trống</small>
+            </div>
+          ),
+        )}
+      </div>
+      {open && (
+        <div className="hub-acts px-dim">
+          <div className="hub-acts-h">Với {x.L(open)}:</div>
+          {opts
+            .filter((o) => o.loveId === open)
+            .map((o) => (
+              <button key={o.act} type="button" className={`opt px act-${o.act}`} onClick={() => pick(o)}>
+                <b>
+                  {ICON[o.act ?? '']} {txt(o.t, x)}
+                </b>
+              </button>
+            ))}
+        </div>
+      )}
+      {!open && act.length > 0 && <p className="mute hub-hint">Bấm vào một người để nhắn tin, hẹn hò, tỏ tình hoặc buông tay.</p>}
+      <div className="hub-global">
+        {global.map((o) => (
+          <button key={o.act} type="button" className="tile px hub-g" onClick={() => pick(o)}>
+            <i aria-hidden="true">{ICON[o.act ?? '']}</i>
+            {txt(o.t, x)}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOpen: () => void }) {
+  const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
+  const st = statusOf(x.s, id);
+  return (
+    <button type="button" className={`slot ${open ? 'on' : ''} st-${st === 'Người yêu' ? 'yeu' : st === 'Mập mờ' ? 'mapmo' : 'moi'}`} onClick={onOpen} aria-expanded={open}>
+      <span className="slot-photo">
+        <Sprite layers={layers} scale={1} anim="idle" dir={2} label={x.L(id)} />
+      </span>
+      <b>{x.L(id)}</b>
+      <small>{st === 'Người yêu' ? '♥ Người yêu' : st}</small>
+      <span className="slot-meter" aria-label={`Độ thân ${x.s.love[id]}`}>
+        <i style={{ width: `${x.s.love[id]}%` }} />
+      </span>
+    </button>
+  );
+}
+
 /** Độ thân với dàn người yêu và chỉ số */
 function Meters({ x, story }: { x: Ctx; story: Story }) {
-  const met = LOVE_IDS.filter((id) => story.love[id] > 0 || story.flags.includes(`${id}_out`));
+  const met = story.met ?? LOVE_IDS.filter((id) => story.love[id] > 0);
   const cells = (v: number, cls = '') =>
     Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(v / 10) ? `on ${cls}` : ''} />);
   return (
@@ -388,6 +500,19 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
             <b>{type.name}</b>
             <small>{type.desc}</small>
           </div>
+          {titlesOf(story).map((t) => (
+            <div className="end-row" key={t.name}>
+              <span>Danh hiệu</span>
+              <b>★ {t.name}</b>
+              <small>{t.desc}</small>
+            </div>
+          ))}
+          <div className="end-row">
+            <span>Những người đã gặp</span>
+            <b>
+              {(story.met ?? []).length}/{MAX_LIFE} người
+            </b>
+          </div>
         </div>
 
         <div className="note px-dim">
@@ -435,7 +560,7 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
 
         <div className="note px-dim">
           <span className="mute">Dàn người yêu đời này:</span>
-          {LOVE_IDS.map((id) => (
+          {(story.met ?? []).map((id) => (
             <span key={id}>
               · {LOVES[id][char.gender === 'f' ? 'm' : 'f']} ({LOVES[id].kind.toLowerCase()}): độ thân {story.love[id]}
             </span>

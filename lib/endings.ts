@@ -19,6 +19,7 @@ export const MIDS: Record<string, { name: string; desc: string }> = {
   traxanh: { name: 'Trà Xanh Thắng Thế', desc: 'Bạn thân và người yêu, mất cả hai trong một tối.' },
   bocphot: { name: 'Bóc Phốt', desc: 'Kể hết cho thiên hạ, và người ấy không quay lại nữa.' },
   nguoicu: { name: 'Người Cũ Quay Lại', desc: 'Một ly cà phê với người cũ làm rạn cả một gia đình.' },
+  cacahaitay: { name: 'Bắt Cá Hai Tay', desc: 'Bị phát hiện trong nhóm chat ba người, mất cả hai.' },
 };
 
 const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = {
@@ -40,8 +41,18 @@ export function loveEndOf(c: Character, s: Story) {
   const id = s.loveEnd ?? (s.married ? 'bimeep' : 'docthan');
   const [kind, who] = id.split('_') as [string, LoveId | undefined];
   const n = who ? LOVES[who][lg] : '';
+  if (kind === 'hanhphuc' && who && !LOVE_END[id]) return { id, name: LOVES[who].happy, desc: `Cưới ${n}, ${LOVES[who].job[lg === 'm' ? 0 : 1]}, và hạnh phúc đến tận già.` };
   const f = LOVE_END[id] ?? LOVE_END[kind];
   return { id, ...f(n) };
+}
+
+/** Danh hiệu cả đời */
+export function titlesOf(s: Story) {
+  const out: { name: string; desc: string }[] = [];
+  if ((s.peak ?? 0) >= 3 && !s.flags.includes('caught')) out.push({ name: 'Cao Thủ Thả Thính', desc: 'Từng giữ 3 người thân cùng lúc mà chưa một lần bị phát hiện.' });
+  if (s.met.length >= 10) out.push({ name: 'Đào Hoa Cả Đời', desc: 'Gặp đủ 10 người trong một đời.' });
+  if (s.met.length <= 2 && s.married) out.push({ name: 'Một Đời Một Người', desc: 'Chỉ quen rất ít người, và cưới một trong số đó.' });
+  return out;
 }
 
 export function oldEndOf(s: Story) {
