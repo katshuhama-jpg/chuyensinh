@@ -16,7 +16,7 @@ export function focusesOf(age: number): Focus[] {
       { k: 'hoc', t: 'Học', d: 'Thông minh ↑' },
       { k: 'choi', t: 'Chơi với bạn', d: 'Bạn bè ↑ Vui ↑' },
       { k: 'nha', t: 'Giúp nhà', d: 'Gần bố mẹ ↑' },
-      { k: 'minh', t: 'Vận động', d: 'Tâm lý ↑' },
+      { k: 'minh', t: 'Vận động', d: 'Sức khỏe ↑ Vui ↑' },
     ];
   if (age < 18)
     return [
@@ -28,15 +28,15 @@ export function focusesOf(age: number): Focus[] {
   if (age < 60)
     return [
       { k: 'yeu', t: 'Yêu', d: 'Tình cảm ↑ Duyên ↑' },
-      { k: 'lam', t: 'Sự nghiệp', d: 'Tài chính ↑' },
+      { k: 'lam', t: 'Sự nghiệp', d: 'Tài chính ↑ Sức khỏe ↓' },
       { k: 'nha', t: 'Gia đình', d: 'Bố mẹ, con cái ↑' },
-      { k: 'minh', t: 'Bản thân', d: 'Tâm lý ↑ Nhan sắc ↑' },
+      { k: 'minh', t: 'Bản thân', d: 'Sức khỏe ↑ Vui ↑' },
       { k: 'hoc', t: 'Học thêm', d: 'Thông minh ↑' },
     ];
   return [
     { k: 'yeu', t: 'Bạn đời', d: 'Tình cảm ↑' },
     { k: 'nha', t: 'Con cháu', d: 'Con cái ↑' },
-    { k: 'minh', t: 'Sức khỏe', d: 'Tâm lý ↑' },
+    { k: 'minh', t: 'Sức khỏe', d: 'Sức khỏe ↑ Vui ↑' },
   ];
 }
 
@@ -53,8 +53,10 @@ function applyFocus(s: Story, age: number) {
   if (k === 'hoc') (st.hoc = clamp(st.hoc + 2), (st.tam = clamp(st.tam - 1)));
   if (k === 'choi') ((s.rel.banthan = clamp(s.rel.banthan + 3)), (st.tam = clamp(st.tam + 1)));
   if (k === 'nha') ((s.rel.bome = clamp(s.rel.bome + 3)), s.kids && (s.rel.con = clamp(s.rel.con + 2)));
-  if (k === 'minh') ((st.tam = clamp(st.tam + 2)), (st.duyen = clamp(st.duyen + 1)));
-  if (k === 'lam') ((st.tien = clamp(st.tien + 3)), (st.tam = clamp(st.tam - 1)));
+  if (k === 'minh') ((st.tam = clamp(st.tam + 2)), (st.duyen = clamp(st.duyen + 1)), (st.khoe = clamp((st.khoe ?? 70) + 2)));
+  if (k === 'lam') ((st.tien = clamp(st.tien + 3)), (st.tam = clamp(st.tam - 1)), (st.khoe = clamp((st.khoe ?? 70) - 1)));
+  // có tuổi thì sức khỏe đi xuống dần
+  if (age >= 45) st.khoe = clamp((st.khoe ?? 70) - (age >= 65 ? 2 : 1));
   if (k === 'yeu') ((st.dao = clamp(st.dao + 1)), love());
 }
 

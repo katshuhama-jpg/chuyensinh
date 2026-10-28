@@ -4148,3 +4148,9 @@ p {
   font-size: 17px;
   min-height: 38px;
 }
+/* màu từng chỉ số chính */
+.lb-stats .ms-0 em { background: #5a9a62; }
+.lb-stats .ms-1 em { background: #c99a3e; }
+.lb-stats .ms-2 em { background: #4a9a90; }
+.lb-stats .ms-3 em { background: #b8455e; }
+.lb-stats .ms-4 em { background: var(--stat); }

@@ -119,6 +119,6 @@ export function fateResultOf(s: Story) {
 /** Tuổi thọ: theo tuổi thọ trung bình Việt Nam 2025 (nam 72,3, nữ 77,3), cộng trừ theo tâm trạng và người thân */
 export function lifespanOf(c: Character, s: Story) {
   const base = c.gender === 'f' ? 77 : 72;
-  const d = (s.stats.tam - 50) / 5 + (s.married ? 2 : 0) + (s.rel.banthan - 40) / 10;
+  const d = (s.stats.tam - 50) / 5 + ((s.stats.khoe ?? 70) - 60) / 5 + (s.married ? 2 : 0) + (s.rel.banthan - 40) / 10;
   return Math.max(76, Math.min(95, Math.round(base + d)));
 }

@@ -7,7 +7,7 @@
 import type { Character, Family, Gender, Look } from './character';
 import type { Bg } from '@/components/Backdrop';
 
-export type StatKey = 'hoc' | 'noi' | 'duyen' | 'tinh' | 'tien' | 'tam' | 'dao';
+export type StatKey = 'hoc' | 'noi' | 'duyen' | 'tinh' | 'tien' | 'tam' | 'dao' | 'khoe';
 export const STAT_LABEL: Record<StatKey, string> = {
   hoc: 'Thông minh',
   noi: 'Nổi loạn',
@@ -16,6 +16,7 @@ export const STAT_LABEL: Record<StatKey, string> = {
   tien: 'Tài chính',
   tam: 'Tâm lý',
   dao: 'Vận đào hoa',
+  khoe: 'Sức khỏe',
 };
 
 /** 5 trục hiện trên biểu đồ mạng nhện; Tâm lý gộp tâm trạng và tình cảm, Vận đào hoa giữ kín */
@@ -27,6 +28,23 @@ export const RADAR: { label: string; of: (s: Record<StatKey, number>) => number 
   { label: 'Tâm lý', of: (s) => Math.round((s.tam + s.tinh) / 2) },
 ];
 export const STAT_KEYS = Object.keys(STAT_LABEL) as StatKey[];
+
+/** Gắn kết: trung bình độ thân với bố mẹ, bạn thân, người yêu và con cái (nếu có) */
+export function bondsOf(s: StoryCore) {
+  const xs = [s.rel.bome, s.rel.banthan];
+  if (s.partner && s.partner !== 'xemmat') xs.push(s.love[s.partner]);
+  if (s.kids) xs.push(s.rel.con);
+  return Math.round(xs.reduce((a, b) => a + b, 0) / xs.length);
+}
+
+/** 4 chỉ số chính kiểu 1in8b (Sức khỏe, Vui vẻ, Hiểu biết, Gắn kết) và Tình duyên cho game tình yêu */
+export const MAIN_STATS: { label: string; of: (s: StoryCore) => number }[] = [
+  { label: 'Sức khỏe', of: (s) => s.stats.khoe ?? 70 },
+  { label: 'Vui vẻ', of: (s) => s.stats.tam },
+  { label: 'Hiểu biết', of: (s) => s.stats.hoc },
+  { label: 'Gắn kết', of: (s) => bondsOf(s) },
+  { label: 'Tình duyên', of: (s) => Math.max(0, ...s.met.filter((id) => !s.flags.includes(`${id}_out`)).map((id) => s.love[id])) },
+];
 
 export type LoveId = 'khoi' | 'long' | 'minh' | 'phong' | 'hai' | 'tuananh' | 'kai' | 'quan' | 'bao' | 'duy' | 'hung' | 'tai';
 export const LOVE_IDS: LoveId[] = ['khoi', 'long', 'minh', 'phong', 'hai', 'tuananh', 'kai', 'quan', 'bao', 'duy', 'hung', 'tai'];
@@ -459,6 +477,7 @@ export function normalizeStory(s: Story): Story {
       peak: c.peak ?? 0,
       album: c.album ?? [],
       notes: c.notes ?? [],
+      stats: { ...c.stats, khoe: c.stats.khoe ?? 70 },
       log: c.log ?? [],
       mood: c.mood ?? [],
     };

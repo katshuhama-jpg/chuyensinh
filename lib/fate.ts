@@ -89,7 +89,7 @@ const START: Record<string, Partial<StoryCore['stats']>> = {
 };
 
 export function newStory(f: Fate, first: string): Story {
-  const stats = { hoc: 30, noi: 30, duyen: 30, tinh: 30, tien: 30, tam: 60, dao: 50, ...START[f.family.wealth] };
+  const stats = { hoc: 30, noi: 30, duyen: 30, tinh: 30, tien: 30, tam: 60, dao: 50, khoe: 72, ...START[f.family.wealth] };
   const p = f.family.parents;
   if (p === 'Gia trưởng') stats.noi += 5;
   if (p === 'Bố mẹ ly thân' || p === 'Bố mẹ hay cãi nhau') stats.tam -= 10;

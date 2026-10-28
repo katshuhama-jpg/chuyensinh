@@ -18,7 +18,7 @@ import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { commit, focusesOf } from '@/lib/board';
-import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, bondsOf, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -250,12 +250,12 @@ function Board({
           </div>
         )}
         <div className="lb-stats">
-          {RADAR.map((r) => (
-            <div key={r.label}>
+          {MAIN_STATS.map((r, i) => (
+            <div key={r.label} className={`ms-${i}`}>
               <span>{r.label}</span>
-              <b>{Math.round(r.of(story.stats))}</b>
+              <b>{Math.round(r.of(story))}</b>
               <i>
-                <em style={{ width: `${r.of(story.stats)}%` }} />
+                <em style={{ width: `${r.of(story)}%` }} />
               </i>
             </div>
           ))}
@@ -1045,7 +1045,7 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
       <p className="mt-hint">Lúc cầu hôn: phải thật thương nhau (4 tim trở lên) và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
       <div className="mt-h">CHỈ SỐ CỦA BẠN (0 ĐẾN 100)</div>
-      <StatBars rows={STAT_KEYS.map((k) => ({ label: STAT_LABEL[k], value: story.stats[k] }))} />
+      <StatBars rows={[...STAT_KEYS.map((k) => ({ label: STAT_LABEL[k], value: story.stats[k] ?? 70 })), { label: 'Gắn kết', value: bondsOf(story) }]} />
     </div>
   );
 }
