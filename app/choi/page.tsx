@@ -579,7 +579,7 @@ function Stage({ x, bg, sceneId, children }: { x: Ctx; bg: Bg; sceneId: string; 
         <div className="news" role="note" aria-label={`Tin năm ${x.year}: ${news}`}>
           <b>TIN NÓNG {x.year}</b>
           <span className="news-run">
-            <span>{news}</span>
+            <span style={{ animationDuration: `${Math.max(14, Math.round(news.length / 7))}s` }}>{news}</span>
           </span>
         </div>
       )}

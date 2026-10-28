@@ -6,7 +6,7 @@
 
 import type { Bg } from '@/components/Backdrop';
 import { LOVE_IDS, type Choice, type Ctx, type LoveId, type Scene } from './story';
-import { LOL_WORLDS } from './world';
+import { HITS, LOL_WORLDS } from './world';
 
 type Ev = {
   id: string;
@@ -124,6 +124,42 @@ const WORLD: Ev[] = [
     ],
   },
   {
+    id: 'concert',
+    from: 2014,
+    to: 2020,
+    if: (x) => !!HITS[x.year],
+    title: (x) => `Đêm nhạc có ${HITS[x.year].artist}`,
+    bg: () => ({ place: 'pho', time: 'night' }),
+    who: (x) => crushOf(x),
+    kind: 'cheer',
+    tap: { goal: 22 },
+    text: (x) => [
+      `${x.year} là năm của "${HITS[x.year].song}". Một đêm nhạc lớn có ${HITS[x.year].artist} biểu diễn, ${x.me} xếp hàng từ chiều mới mua được vé.`,
+      `${x.L(crushOf(x))} đứng cạnh, tay cầm lightstick. Đèn sân khấu vừa bật, cả biển người hát theo câu đầu tiên.`,
+    ],
+    choices: [
+      { t: 'Hát theo khản cổ, quay sang thì chạm mắt nhau', do: (fx, x) => (fx.love(crushOf(x), 12), fx.stat('duyen', 4), fx.stat('tam', 6)), note: (x) => `Lúc về, ${x.L(crushOf(x))} vẫn ngân nga "${HITS[x.year].song}".` },
+      { t: 'Mải quay điện thoại, lỡ mất đoạn hay nhất', do: (fx, x) => (fx.love(crushOf(x), 3), fx.stat('tam', 2)) },
+      { t: 'Mua thêm vé cho hội bạn thân', do: (fx) => (fx.stat('tien', -5), fx.rel('banthan', 8)) },
+      { t: 'Đứng xa xa, nhường chỗ cho fan cứng', do: (fx) => fx.stat('tinh', 4) },
+    ],
+  },
+  {
+    id: 'nhacquan',
+    from: 2014,
+    to: 2020,
+    if: (x) => !!HITS[x.year],
+    title: 'Bài hit trong quán',
+    bg: () => ({ place: 'quan', time: 'dusk' }),
+    who: (x) => crushOf(x),
+    text: (x) => [`Quán cà phê mở "${HITS[x.year].song}" của ${HITS[x.year].artist} lần thứ ba trong buổi chiều. ${x.L(crushOf(x))} gõ nhịp lên bàn: "Cậu có thích bài này không?"`],
+    choices: [
+      { t: '"Thích! Hát được cả bài luôn"', do: (fx, x) => (fx.love(crushOf(x), 8), fx.stat('duyen', 4)), note: (x) => `Hai đứa hát nhỏ theo, ${x.L(crushOf(x))} cười suốt.` },
+      { t: '"Nghe nhiều quá rồi, nhức đầu"', do: (fx, x) => (fx.love(crushOf(x), -2), fx.stat('noi', 4)) },
+      { t: '"Cậu thích thì tớ thích"', do: (fx, x) => (fx.love(crushOf(x), 5), fx.stat('tinh', 3)) },
+    ],
+  },
+  {
     id: 'iphone',
     from: 2007,
     to: 2009,
@@ -139,6 +175,27 @@ const WORLD: Ev[] = [
       { t: 'Xin chụp chung một kiểu', do: (fx) => (fx.rel('banthan', 6), fx.stat('duyen', 4)) },
       { t: '"Máy của tớ rơi không vỡ, pin một tuần!"', do: (fx) => (fx.stat('noi', 5), fx.stat('tam', 3)) },
       { t: 'Về nhà dành dụm tiền mua một chiếc', do: (fx) => (fx.stat('tien', -6), fx.stat('dao', 4)) },
+    ],
+  },
+];
+
+/* ---------- xem gameshow cùng cả nhà ---------- */
+const TVSHOW: Ev[] = [
+  {
+    id: 'gameshow',
+    from: 2016,
+    to: 2019,
+    if: (x) => x.s.married || x.s.kids > 0,
+    title: (x) => (x.year <= 2018 ? 'Tối thứ bảy xem "Thách thức danh hài"' : 'Tối chủ nhật xem "Running Man Việt Nam"'),
+    bg: () => ({ place: 'nha', time: 'night' }),
+    text: (x) =>
+      x.year <= 2018
+        ? [`Cả nhà quây quần trước tivi xem "Thách thức danh hài" do Trường Giang dẫn. ${x.s.kids ? 'Đứa nhỏ' : sp(x)} cười đến mức đánh rơi cả đĩa hoa quả.`]
+        : [`Cả nhà xem "Running Man Việt Nam" có Jack và Ninh Dương Lan Ngọc. ${x.s.kids ? 'Đứa nhỏ' : sp(x)} đòi cả nhà chơi xé bảng tên ngay trong phòng khách.`],
+    choices: [
+      { t: 'Chơi luôn, cả nhà chạy quanh phòng khách', do: (fx, x) => (fx.rel('con', 8), fx.stat('tam', 8), partnerOf(x) ? fx.love(partnerOf(x)!, 6) : undefined), note: () => 'Cái bình hoa không qua khỏi, nhưng không ai giận.' },
+      { t: 'Ngồi xem, tay vẫn ôm điện thoại làm việc', do: (fx) => (fx.stat('tien', 4), fx.rel('con', -4)) },
+      { t: 'Đi ngủ sớm', do: (fx) => fx.stat('tam', 2) },
     ],
   },
 ];
@@ -458,6 +515,7 @@ const SLOTS: Record<number, Ev[]> = {
   ],
   /* ---------- lập gia đình ---------- */
   30: [
+    ...TVSHOW,
     {
       id: 'orieng',
       from: 1975,
@@ -479,6 +537,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
   ],
   35: [
+    ...TVSHOW,
     {
       id: 'sotdat',
       from: 2007,
@@ -528,6 +587,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
   ],
   42: [
+    ...TVSHOW,
     {
       id: 'truongdiem',
       from: 2000,

@@ -42,6 +42,17 @@ const REAL: Record<number, string> = {
   2026: 'World Cup 2026 tổ chức ở Mỹ, Canada và Mexico, lần đầu có 48 đội.',
 };
 
+/** Tin giải trí có thật (chỉ nêu tác phẩm, sự kiện; không nhắc đời tư) */
+const CELEB: Record<number, string> = {
+  2010: 'Ninh Dương Lan Ngọc gây chú ý với vai diễn đầu tay trong phim "Cánh đồng bất tận". Bích Phương giành Á quân Vietnam Idol.',
+  2014: 'Bài "Em của ngày hôm qua" của Sơn Tùng M-TP phủ sóng khắp nơi. Bích Phương ra mắt "Mình yêu nhau đi".',
+  2016: 'Trường Giang dẫn gameshow "Thách thức danh hài".',
+  2017: 'Sơn Tùng M-TP ra MV "Lạc trôi". Chi Pu chính thức đi hát với "Từ hôm nay".',
+  2018: 'MV "Chạy ngay đi" của Sơn Tùng M-TP lập nhiều kỷ lục lượt xem. Bích Phương ra "Bùa yêu".',
+  2019: 'Sơn Tùng M-TP ra "Hãy trao cho anh" cùng Snoop Dogg. "Sóng gió" của K-ICM và Jack gây sốt. Bích Phương ra "Đi đu đưa đi". Jack, Ninh Dương Lan Ngọc góp mặt trong "Running Man Việt Nam".',
+  2023: 'Chi Pu tham gia show "Đạp gió rẽ sóng" ở Trung Quốc.',
+};
+
 const FUTURE = [
   'Xe tự lái chạy thử trên cao tốc Bắc - Nam',
   'Trợ lý AI được cấp "căn cước số" để đi làm hộ chủ',
@@ -54,9 +65,19 @@ const FUTURE = [
 ];
 
 export function newsOf(year: number): string | null {
-  if (year <= 2026) return REAL[year] ?? null;
+  if (year <= 2026) return [REAL[year], CELEB[year]].filter(Boolean).join(' · ') || null;
   return `(giả định) ${FUTURE[year % FUTURE.length]}.`;
 }
+
+/** Ca sĩ, bài hit có thật theo năm, dùng cho cảnh làm fan */
+export const HITS: Record<number, { artist: string; song: string }> = {
+  2014: { artist: 'Sơn Tùng M-TP', song: 'Em của ngày hôm qua' },
+  2015: { artist: 'Bích Phương', song: 'Mình yêu nhau đi' },
+  2017: { artist: 'Sơn Tùng M-TP', song: 'Lạc trôi' },
+  2018: { artist: 'Sơn Tùng M-TP', song: 'Chạy ngay đi' },
+  2019: { artist: 'K-ICM và Jack', song: 'Sóng gió' },
+  2020: { artist: 'Bích Phương', song: 'Đi đu đưa đi' },
+};
 
 /** Năm T1 vô địch Chung kết Thế giới LMHT (đến 2025) */
 export const LOL_WORLDS = [2013, 2015, 2016, 2023, 2024, 2025];
