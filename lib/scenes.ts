@@ -12,12 +12,14 @@ import type { Character, Family } from './character';
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
 /* ---------- bối cảnh theo năm ---------- */
-const msgOf = (y: number) => (y < 2000 ? 'thư tay' : y < 2010 ? 'tin nhắn điện thoại' : y <= 2026 ? 'tin nhắn trên Chat' : 'tin nhắn qua trợ lý AI');
-const playOf = (y: number) => (y < 1997 ? 'quán điện tử băng' : y < 2012 ? 'quán net' : y <= 2026 ? 'quán game' : 'phòng game thực tế ảo');
+const msgOf = (y: number) => (y < 2004 ? 'thư tay' : y < 2012 ? 'tin nhắn điện thoại' : y <= 2026 ? 'tin nhắn trên Chat' : 'tin nhắn qua trợ lý AI');
+const playOf = (y: number) => (y < 2000 ? 'quán điện tử băng' : y < 2012 ? 'quán net' : y <= 2026 ? 'quán game' : 'phòng game thực tế ảo');
 const spotOf = (y: number) => (y < 1995 ? 'bờ hồ, ăn kem que' : y < 2010 ? 'quán cà phê cóc' : y <= 2026 ? 'quán trà sữa' : 'quán cà phê robot pha');
 const drinkOf = (y: number) => (y < 2008 ? 'chè' : 'trà sữa');
 const tvOf = (y: number) => (y < 1995 ? 'phim hoạt hình trên chiếc tivi đen trắng cả xóm xem chung' : y <= 2026 ? 'phim hoạt hình' : 'phim hoạt hình chiếu nổi giữa phòng');
-const wall = (y: number) => (y < 2010 ? 'kể cho cả xóm' : y <= 2026 ? 'đăng lên Tường' : 'phát lên mạng thực tế ảo');
+const wall = (y: number) => (y < 2011 ? 'kể cho cả xóm' : y <= 2026 ? 'đăng lên Tường' : 'phát lên mạng thực tế ảo');
+/** điểm Học vấn cần để đỗ đại học theo thời: 1990s rất khó (vài % vào được), 2002-2014 thi ba chung, từ 2015 dễ hơn */
+const passMark = (y: number) => (y < 2000 ? 64 : y < 2015 ? 55 : 50);
 const jobOf = (y: number) => (y < 2000 ? 'kế toán hợp tác xã' : y < 2015 ? 'nhân viên ngân hàng' : y <= 2026 ? 'kỹ sư phần mềm' : 'người huấn luyện AI');
 
 /** "cậu bé" / "cô bé" theo giới người yêu */
@@ -456,8 +458,8 @@ const list: Scene[] = [
     who: (x) => crush(x),
     timer: 12,
     timeout: 2,
-    title: (x) => `${x.year < 2000 ? 'Lá thư trong ngăn bàn' : 'Tin nhắn lúc nửa đêm'}`,
-    text: (x) => [x.year < 2000 ? `Có lá thư gấp hình máy bay nhét trong ngăn bàn từ chiều, giờ ${x.me} mới dám mở.` : `Đã 11 giờ đêm. Điện thoại rung.`],
+    title: (x) => `${x.year < 2004 ? 'Lá thư trong ngăn bàn' : 'Tin nhắn lúc nửa đêm'}`,
+    text: (x) => [x.year < 2004 ? `Có lá thư gấp hình máy bay nhét trong ngăn bàn từ chiều, giờ ${x.me} mới dám mở.` : `Đã 11 giờ đêm. Điện thoại rung.`],
     msgs: (x) =>
       crush(x) === 'long'
         ? [
@@ -480,7 +482,7 @@ const list: Scene[] = [
       },
       { t: '"Ừ, để mai tính"', do: (fx, x) => fx.love(crush(x), 3) },
       {
-        t: (x) => (x.year < 2000 ? '(Cất thư đi, không hồi âm)' : x.year < 2010 ? '(Đọc xong, không nhắn lại)' : '(Để "Đã xem", không trả lời)'),
+        t: (x) => (x.year < 2004 ? '(Cất thư đi, không hồi âm)' : x.year < 2012 ? '(Đọc xong, không nhắn lại)' : '(Để "Đã xem", không trả lời)'),
         do: (fx, x) => {
           const c = crush(x);
           fx.love(c, -10);
@@ -488,7 +490,7 @@ const list: Scene[] = [
           if (x.s.love[c] < 15) fx.mid('seen');
         },
         note: (x) =>
-          x.year < 2000 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : x.year < 2010 ? `${x.L(crush(x))} cầm điện thoại đợi tin nhắn cả đêm.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`,
+          x.year < 2004 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : x.year < 2012 ? `${x.L(crush(x))} cầm điện thoại đợi tin nhắn cả đêm.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`,
       },
     ],
     next: 't17_thi',
@@ -500,7 +502,7 @@ const list: Scene[] = [
     bg: () => ({ place: 'cong', time: 'day' }),
     title: 'Thi đại học',
     text: (x) => {
-      const pass = x.s.stats.hoc >= 55;
+      const pass = x.s.stats.hoc >= passMark(x.year);
       const lines = [pass ? `Có kết quả: ${x.me} đỗ đại học!` : `Có kết quả: ${x.me} trượt, thiếu hai điểm.`];
       if (!pass && x.s.love.long >= 25) lines.push(`Chiều hôm ấy, ${x.L('long')} ngồi ngoài cổng trường, chìa cho ${x.me} một cốc ${drinkOf(x.year)}.`);
       if (!pass && x.s.love.minh >= 25) lines.push(`${x.L('minh')} gửi ${msgOf(x.year)}: "Năm sau thi lại, tớ kèm."`);
@@ -509,7 +511,7 @@ const list: Scene[] = [
     choices: [
       {
         t: 'Lên thành phố học, ở ký túc xá',
-        if: (x) => x.s.stats.hoc >= 55,
+        if: (x) => x.s.stats.hoc >= passMark(x.year),
         do: (fx, x) => {
           fx.flag('daihoc');
           fx.stat('hoc', 5);
@@ -667,7 +669,7 @@ const list: Scene[] = [
     skip: (x) => !hasPartner(x) || x.s.married,
     title: (x) => `Tin nhắn của ${x.s.bestie}`,
     text: (x) => [
-      x.year < 2000
+      x.year < 2004
         ? `${x.me} dọn bàn giúp ${x.L(P(x))} thì thấy một lá thư của ${x.s.bestie}, bạn thân của mình.`
         : `${x.me} cầm nhầm điện thoại của ${x.L(P(x))} và thấy tin nhắn của ${x.s.bestie}, bạn thân của mình.`,
     ],
@@ -684,7 +686,7 @@ const list: Scene[] = [
           else (fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('traxanh'));
         },
       },
-      { t: (x) => `${x.year < 2010 ? 'Kể cho cả xóm biết' : 'Đăng lên Tường bóc phốt'}`, do: (fx, x) => (fx.rel('banthan', -30), fx.stat('noi', 10), fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('bocphot')) },
+      { t: (x) => `${x.year < 2012 ? 'Kể cho cả xóm biết' : 'Đăng lên Tường bóc phốt'}`, do: (fx, x) => (fx.rel('banthan', -30), fx.stat('noi', 10), fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('bocphot')) },
       {
         t: '(Giả vờ như không thấy)',
         do: (fx, x) => {
@@ -936,7 +938,7 @@ function roll(s: Story, salt: number) {
   return n - Math.floor(n);
 }
 
-const quetLabel = (y: number) => (y > 2026 ? 'Mở app ghép đôi AI' : y >= 2014 ? 'Mở app Quẹt' : y >= 2010 ? 'Lên diễn đàn kết bạn' : 'Đọc mục Tìm bạn bốn phương');
+const quetLabel = (y: number) => (y > 2026 ? 'Mở app ghép đôi AI' : y >= 2015 ? 'Mở app Quẹt' : y >= 2005 ? 'Lên diễn đàn kết bạn' : 'Đọc mục Tìm bạn bốn phương');
 export const statusOf = (s: Story, id: LoveId) => (s.partner === id ? 'Người yêu' : s.love[id] >= 40 ? 'Mập mờ' : 'Mới quen');
 /** người đang thân (độ thân từ 40) */
 const close = (s: Story) => activeOf(s).filter((id) => s.love[id] >= 40);
@@ -990,7 +992,7 @@ const TALKS: Record<LoveId, Talk[]> = {
     { msgs: () => ['Công ty sắp mở chi nhánh mới.', 'Muốn đi cùng không?'], good: '"Muốn chứ, em tự lo được mà."', ok: '"Em chưa chắc."' },
   ],
   kai: [
-    { msgs: () => ['Xin chào! Hôm nay tôi học được từ "thả thính".', 'Nghĩa là gì vậy?'], good: '"Là như cậu đang làm đấy!"', ok: '"Là... thôi, khó giải thích."' },
+    { msgs: (x) => [`Xin chào! Hôm nay tôi học được từ "${x.year >= 2016 ? 'thả thính' : 'cưa cẩm'}".`, 'Nghĩa là gì vậy?'], good: '"Là như cậu đang làm đấy!"', ok: '"Là... thôi, khó giải thích."' },
     { msgs: () => ['Cuối tuần đi Hà Giang không?', 'Tôi muốn xem ruộng bậc thang.'], good: '"Đi! Tớ làm hướng dẫn viên."', ok: '"Xa quá à."' },
   ],
   quan: [
@@ -1018,7 +1020,7 @@ function chatScene(age: number, n: number, id: LoveId): Scene {
     timeout: 2,
     bg: () => ({ place: 'phong', time: 'night' }),
     title: (x) => `Nhắn tin với ${x.L(id)}`,
-    text: (x) => [x.year < 2000 ? `Có thư của ${x.L(id)}.` : `${x.L(id)} vừa nhắn.`],
+    text: (x) => [x.year < 2004 ? `Có thư của ${x.L(id)}.` : `${x.L(id)} vừa nhắn.`],
     msgs: (x) => TALKS[id][(age + n) % 2].msgs(x).map((t) => ({ me: false, t })),
     choices: [
       {
@@ -1032,7 +1034,7 @@ function chatScene(age: number, n: number, id: LoveId): Scene {
       },
       { t: () => TALKS[id][(age + n) % 2].ok, do: (fx) => fx.love(id, 4) },
       {
-        t: (x) => (x.year < 2010 ? '(Không trả lời)' : '(Để "Đã xem")'),
+        t: (x) => (x.year < 2012 ? '(Không trả lời)' : '(Để "Đã xem")'),
         do: (fx) => fx.love(id, -8),
         note: (x) => `${x.L(id)} đợi mãi không thấy trả lời.`,
       },
@@ -1067,7 +1069,7 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
     age,
     chapter: CH.tre,
     who: () => id,
-    bg: (x) => (x.year < 2010 ? { place: 'quan', time: 'dusk' } : { place: 'quan', time: 'dusk' }),
+    bg: (x) => (x.year < 2012 ? { place: 'quan', time: 'dusk' } : { place: 'quan', time: 'dusk' }),
     title: (x) => `Hẹn hò với ${x.L(id)}`,
     text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${LOVES[id].job[x.lg === 'm' ? 0 : 1]}).`, `Đi đâu bây giờ?`],
     choices: order.map(
@@ -1160,9 +1162,9 @@ function quetScene(age: number, n: number): Scene {
     chapter: CH.tre,
     kind: 'swipe',
     bg: () => ({ place: 'phong', time: 'night' }),
-    title: (x) => (x.year > 2026 ? 'Quẹt AI' : x.year >= 2014 ? 'Quẹt' : x.year >= 2010 ? 'Diễn đàn kết bạn' : 'Tìm bạn bốn phương'),
+    title: (x) => (x.year > 2026 ? 'Quẹt AI' : x.year >= 2015 ? 'Quẹt' : x.year >= 2010 ? 'Diễn đàn kết bạn' : 'Tìm bạn bốn phương'),
     text: (x) =>
-      x.year < 2010
+      x.year < 2012
         ? [`Tờ báo cuối tuần có cả trang "Tìm bạn bốn phương". ${x.me} cầm bút, đọc từng mẩu nhắn.`]
         : x.year < 2014
           ? [`${x.me} lập nick trên diễn đàn kết bạn, lướt từng hồ sơ trong mục "Tìm một nửa".`]

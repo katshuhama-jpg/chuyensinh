@@ -113,8 +113,8 @@ export const ERAS = [
 
 /** Đồ trong tay lúc tuổi trẻ (16 tuổi) theo năm */
 export function deviceAt(year: number) {
-  if (year < 2000) return 'thư tay, điện thoại bàn, đài cassette';
-  if (year < 2010) return 'điện thoại "cục gạch", chat ở quán net';
+  if (year < 2004) return 'thư tay, điện thoại bàn, đài cassette';
+  if (year < 2012) return 'điện thoại "cục gạch", chat Yahoo ở quán net';
   if (year <= REAL_UNTIL) return 'smartphone, mạng xã hội, app hẹn hò';
   if (year <= 2045) return 'điện thoại có trợ lý AI nhắn hộ (giả định)';
   if (year <= 2080) return 'kính thực tế ảo (giả định)';
@@ -220,14 +220,21 @@ function pickW(r: () => number, xs: { v: string; w: number }[]) {
   return xs[xs.length - 1].v;
 }
 
-export function rollFamily(r = Math.random): Family {
+/** Số anh chị em theo năm sinh: sinh 1975-1984 nhà thường 3-5 con, 1985-1994 2-3 con, từ 1995 1-2 con (TFR 5,9 → 2,2 → 1,9) */
+function siblingsW(birthYear: number) {
+  if (birthYear < 1985) return [{ v: '0', w: 4 }, { v: '1', w: 12 }, { v: '2', w: 30 }, { v: '3', w: 30 }, { v: '4', w: 24 }];
+  if (birthYear < 1995) return [{ v: '0', w: 10 }, { v: '1', w: 40 }, { v: '2', w: 35 }, { v: '3', w: 15 }];
+  return SIBLING_COUNT;
+}
+
+export function rollFamily(r = Math.random, birthYear = 2000): Family {
   const province = pickW(r, PROVINCES.map((v, i) => ({ v, w: PROVINCE_W[i] })));
   const big = province === 'Hà Nội' || province === 'TP. Hồ Chí Minh';
   const wealth = pickW(r, WEALTH);
   const urban = wealth === 'Nhà nông' ? false : r() < (big ? 0.8 : 0.35);
   // mồ côi thì không có mục bố mẹ
   const parents = wealth.startsWith('Mồ côi') ? 'Không còn bố mẹ' : pickW(r, PARENTS);
-  const n = Number(pickW(r, SIBLING_COUNT));
+  const n = Number(pickW(r, siblingsW(birthYear)));
   const siblings: Sibling[] = Array.from({ length: n }, () => ({ older: r() < 0.5, gender: (r() < 0.5 ? 'f' : 'm') as Gender }));
   siblings.sort((a, b) => Number(b.older) - Number(a.older));
   return { province, urban, wealth, parents, siblings };

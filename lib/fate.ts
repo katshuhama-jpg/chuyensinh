@@ -39,11 +39,12 @@ function rollYear(r: () => number) {
 export function rollFate(r = Math.random): Fate {
   const gender: Gender = r() < 0.5 ? 'f' : 'm';
   const pick = <T,>(xs: T[]) => xs[Math.floor(r() * xs.length)];
+  const birthYear = rollYear(r);
   return {
     gender,
-    birthYear: rollYear(r),
+    birthYear,
     name: suggestName(gender, r),
-    family: rollFamily(r),
+    family: rollFamily(r, birthYear),
     fate: pick(PROPHECIES).id,
     bestie: pick(BESTIES[gender]),
   };

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 export type PhoneSkin = 'letter' | 'nokia' | 'smart' | 'ai';
 
-export const skinOf = (year: number): PhoneSkin => (year < 2000 ? 'letter' : year < 2010 ? 'nokia' : year <= 2026 ? 'smart' : 'ai');
+export const skinOf = (year: number): PhoneSkin => (year < 2004 ? 'letter' : year < 2012 ? 'nokia' : year <= 2026 ? 'smart' : 'ai');
 
 /**
  * Khung tin nhắn theo thời kỳ: thư tay, điện thoại "cục gạch", smartphone, trợ lý AI.
