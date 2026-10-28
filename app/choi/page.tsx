@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Feed from '@/components/Feed';
 import Phone, { skinOf } from '@/components/Phone';
@@ -20,19 +19,14 @@ const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder
 
 export default function Choi() {
   const { user, ready } = useAuth();
-  const router = useRouter();
   const [state, setState] = useState<SaveState | null | undefined>(undefined);
   const [fb, setFb] = useState<Feedback | null>(null);
 
   useEffect(() => {
     if (!ready) return;
-    if (!user) {
-      router.replace('/dang-nhap?next=/choi');
-      return;
-    }
     // bản lưu cũ không có cốt truyện: coi như chưa có đời nào
     loadMe().then((m) => setState(m?.state?.story ? m.state : null));
-  }, [ready, user, router]);
+  }, [ready, user]);
 
   const update = useCallback(
     (story: Story) => {

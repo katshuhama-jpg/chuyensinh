@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { signIn, signUp } from '@/lib/auth';
+import { migrateGuest } from '@/lib/save';
 import { useAuth } from '@/lib/useAuth';
 
 export default function LoginPage() {
@@ -25,8 +26,10 @@ export default function LoginPage() {
       setError(err);
       return;
     }
+    // đang chơi thử thì mang đời đó vào tài khoản
+    await migrateGuest();
     const next = new URLSearchParams(window.location.search).get('next');
-    router.push(next && next.startsWith('/') ? next : '/tao-nhan-vat');
+    router.push(next && next.startsWith('/') ? next : '/');
   }
 
   return (
@@ -66,7 +69,7 @@ export default function LoginPage() {
             autoCapitalize="none"
             spellCheck={false}
             maxLength={16}
-            placeholder="vd: minhanh89"
+            placeholder="vd: abc123"
             required
           />
           <small className="mute">3-16 ký tự: chữ thường không dấu, số, dấu _</small>

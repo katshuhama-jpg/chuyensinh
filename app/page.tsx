@@ -26,8 +26,9 @@ export default function Home() {
   const [i, setI] = useState(0);
 
   useEffect(() => {
-    if (user) loadMe().then((m) => m && setMeta(m.meta));
-  }, [user]);
+    // chơi thử cũng có Sổ Tình, lưu trên máy
+    if (ready) loadMe().then((m) => m && setMeta(m.meta));
+  }, [ready, user]);
 
   useEffect(() => {
     const t = setInterval(() => setI((n) => (n + 1) % DEMO.length), 2800);
@@ -41,11 +42,7 @@ export default function Home() {
   return (
     <main className="app dither home">
       <div className="topbar">
-        {ready && user ? (
-          <span className="mute">@{user.username}</span>
-        ) : (
-          <Link href="/dang-nhap">Đăng nhập</Link>
-        )}
+        {ready && user ? <span className="mute">@{user.username}</span> : <span className="mute">Đang chơi thử</span>}
         <ThemeToggle />
       </div>
 
@@ -77,10 +74,24 @@ export default function Home() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 'auto', padding: '0 4px 8px' }}>
-        {/* chưa đăng nhập thì đăng ký / đăng nhập trước */}
-        <Link href={ready && user ? '/tao-nhan-vat' : '/dang-nhap?next=/tao-nhan-vat'} className="btn-main">
-          ▶ BẮT ĐẦU
-        </Link>
+        {ready && user ? (
+          <Link href="/tao-nhan-vat" className="btn-main">
+            ▶ BẮT ĐẦU
+          </Link>
+        ) : (
+          <>
+            {/* chưa có tài khoản: chơi thử ngay, đời lưu trên máy; đăng ký sau vẫn mang theo được */}
+            <Link href="/tao-nhan-vat" className="btn-main">
+              ▶ CHƠI THỬ
+            </Link>
+            <Link href="/dang-nhap" className="btn-sub px">
+              Đăng ký / Đăng nhập
+            </Link>
+            <p className="mute" style={{ fontSize: 17, textAlign: 'center', marginTop: -6 }}>
+              Chơi thử lưu trên máy này. Đăng ký để chơi tiếp ở máy khác.
+            </p>
+          </>
+        )}
         <div className="grid3">
           <button type="button" className="tile px is-soon" disabled>
             Sổ Tình

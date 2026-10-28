@@ -40,7 +40,7 @@ const EYES: { id: Look['eyes']; name: string }[] = [
 /** Bắt đầu: số phận random (giới tính, năm sinh, gia cảnh, lời thầy bói), rồi người chơi chọn vẻ ngoài */
 export default function BatDau() {
   const router = useRouter();
-  const { user, ready } = useAuth();
+  const { ready } = useAuth();
   const [fate, setFate] = useState<Fate | null>(null);
   const [rolls, setRolls] = useState(0);
   const [c, setC] = useState<Character | null>(null);
@@ -48,12 +48,12 @@ export default function BatDau() {
 
   useEffect(() => {
     if (!ready) return;
-    if (!user) router.replace('/dang-nhap?next=/tao-nhan-vat');
-    else if (!fate) {
+    // chưa đăng nhập vẫn chơi thử được, đời lưu trong trình duyệt
+    if (!fate) {
       setFate(rollFate());
       setRolls(1);
     }
-  }, [ready, user, fate, router]);
+  }, [ready, fate]);
 
   function reroll() {
     setFate(rollFate());
@@ -75,7 +75,7 @@ export default function BatDau() {
     router.push('/choi');
   }
 
-  if (!ready || !user || !fate) return <main className="app" />;
+  if (!ready || !fate) return <main className="app" />;
   if (c) return <LookStep c={c} setC={(f) => setC((x) => (x ? f(x) : x))} onBack={() => setC(null)} onStart={start} busy={busy} />;
   return <FateStep key={rolls} fate={fate} rolls={rolls} onRoll={reroll} onNext={toLook} />;
 }
