@@ -19,6 +19,7 @@ import {
   hairsFor,
   realityOf,
   rollFamily,
+  siblingText,
   suggestName,
   type Character,
   type Family,
@@ -311,7 +312,7 @@ function Born({ c, family, onBack, onStart, busy }: { c: Character; family: Fami
             </div>
             <div>
               <dt>Anh chị em</dt>
-              <dd>{family.siblings}</dd>
+              <dd>{siblingText(family.siblings)}</dd>
             </div>
           </dl>
         </div>

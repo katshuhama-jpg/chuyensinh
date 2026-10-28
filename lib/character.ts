@@ -33,7 +33,14 @@ export interface Family {
   urban: boolean;
   wealth: string;
   parents: string;
-  siblings: string;
+  /** anh chị em cụ thể, xếp từ lớn đến bé; rỗng là con một */
+  siblings: Sibling[];
+}
+
+/** older: lớn hơn nhân vật (anh, chị) hay nhỏ hơn (em) */
+export interface Sibling {
+  older: boolean;
+  gender: Gender;
 }
 
 /** Năm hiện tại: chuyện đến hết năm này là có thật, sau đó là giả định */
@@ -180,12 +187,29 @@ const PARENTS = [
   { v: 'Bố mẹ ly thân', w: 10 },
   { v: 'Bố mẹ hay cãi nhau', w: 3 },
 ];
-const SIBLINGS = [
-  { v: 'Con một', w: 25 },
-  { v: 'Có anh hoặc chị', w: 30 },
-  { v: 'Có em', w: 30 },
-  { v: 'Nhà đông anh chị em', w: 15 },
+/** số anh chị em: con một, một, hai, ba */
+const SIBLING_COUNT = [
+  { v: '0', w: 22 },
+  { v: '1', w: 43 },
+  { v: '2', w: 25 },
+  { v: '3', w: 10 },
 ];
+
+/** Gọi tên anh chị em: "1 anh trai, 2 em gái" */
+export function siblingText(xs: Sibling[]) {
+  if (!xs.length) return 'Con một';
+  const kinds: [string, (x: Sibling) => boolean][] = [
+    ['anh trai', (x) => x.older && x.gender === 'm'],
+    ['chị gái', (x) => x.older && x.gender === 'f'],
+    ['em trai', (x) => !x.older && x.gender === 'm'],
+    ['em gái', (x) => !x.older && x.gender === 'f'],
+  ];
+  return kinds
+    .map(([name, f]) => [xs.filter(f).length, name] as const)
+    .filter(([n]) => n > 0)
+    .map(([n, name]) => `${n} ${name}`)
+    .join(', ');
+}
 
 function pickW(r: () => number, xs: { v: string; w: number }[]) {
   let n = r() * xs.reduce((s, x) => s + x.w, 0);
@@ -203,5 +227,8 @@ export function rollFamily(r = Math.random): Family {
   const urban = wealth === 'Nhà nông' ? false : r() < (big ? 0.8 : 0.35);
   // mồ côi thì không có mục bố mẹ
   const parents = wealth.startsWith('Mồ côi') ? 'Không còn bố mẹ' : pickW(r, PARENTS);
-  return { province, urban, wealth, parents, siblings: pickW(r, SIBLINGS) };
+  const n = Number(pickW(r, SIBLING_COUNT));
+  const siblings: Sibling[] = Array.from({ length: n }, () => ({ older: r() < 0.5, gender: (r() < 0.5 ? 'f' : 'm') as Gender }));
+  siblings.sort((a, b) => Number(b.older) - Number(a.older));
+  return { province, urban, wealth, parents, siblings };
 }
