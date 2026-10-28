@@ -37,7 +37,9 @@ const Bm = (x: Ctx) => (x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ');
 const isF = (x: Ctx) => x.c.gender === 'f';
 /** người đang cảm nắng: thân nhất trong đám bạn học (Khôi, Long, Minh) */
 const crush = (x: Ctx): LoveId => {
-  const ids = (['khoi', 'long', 'minh'] as LoveId[]).filter((id) => !x.has(`${id}_out`));
+  // Khôi chuyển nhà năm 12 tuổi, đến Tết năm 19 mới về
+  const moved = x.age >= 12 && x.age < 19 && x.s.path.some((p) => p.scene === 'c12_chuyennha');
+  const ids = (['khoi', 'long', 'minh'] as LoveId[]).filter((id) => !x.has(`${id}_out`) && !(moved && id === 'khoi'));
   const met = ids.filter((id) => x.s.met.includes(id));
   const pool = met.length ? met : ids;
   return pool.sort((a, b) => x.s.love[b] - x.s.love[a])[0] ?? 'khoi';
@@ -163,9 +165,9 @@ const SMALL: Life[] = [
     id: 'ngoisauxe',
     min: 3,
     max: 5,
-    title: 'Ngồi trước xe bố đi chơi phố',
+    title: (x) => `Ngồi trước xe ${x.bm === 'ông bà' ? 'ông' : 'bố'} đi chơi ${x.f.urban ? 'phố' : 'chợ huyện'}`,
     bg: bg('pho', 'dusk'),
-    text: (x) => [`Tối thứ bảy, bố chở cả nhà bằng ${ride(x.year)} đi một vòng phố. ${x.me} ngồi phía trước, gió thổi tóc bay.`],
+    text: (x) => [`Tối thứ bảy, ${x.bm === 'ông bà' ? 'ông' : 'bố'} chở cả nhà bằng ${ride(x.year)} đi một vòng ${x.f.urban ? 'phố' : 'ra chợ huyện'}. ${x.me} ngồi phía trước, gió thổi tóc bay.`],
     choices: [
       { t: 'Đòi mua kem que', do: (fx) => (fx.stat('tam', 5), fx.rel('bome', 3)) },
       { t: 'Đếm đèn đường đến lúc ngủ gật', do: (fx) => (fx.stat('hoc', 3), fx.stat('tam', 3)) },
@@ -881,10 +883,11 @@ const TEEN: Life[] = [
     min: 14,
     max: 17,
     from: 2013,
+    if: (x) => !x.has('ev_confession'),
     title: 'Trang confession của trường',
     bg: bg('phong', 'night'),
     who: cw(),
-    text: (x) => [`Trang confession của trường đăng bài: "Gửi bạn ${isF(x) ? 'nữ' : 'nam'} hay ngồi bàn ba dãy giữa lớp 11..." Đó chính là chỗ ${x.me} ngồi.`],
+    text: (x) => [`Trang confession của trường đăng bài: "Gửi bạn ${isF(x) ? 'nữ' : 'nam'} hay ngồi bàn ba dãy giữa lớp ${x.age - 5}..." Đó chính là chỗ ${x.me} ngồi.`],
     choices: [
       { t: 'Bình luận: "Ai đó?"', do: (fx) => (fx.stat('noi', 4), fx.stat('dao', 4)) },
       { t: 'Đoán là người ấy, nhắn hỏi', do: (fx, x) => (fx.love(crush(x), 8), fx.stat('noi', 3)), note: (x) => `${C(x)} trả lời đúng một chữ: "Ừ."` },
@@ -931,7 +934,7 @@ const TEEN: Life[] = [
     text: (x) => [`Buổi học cuối. Hoa phượng rụng đỏ sân trường. ${C(x)} đứng ở cổng như đang đợi ai.`],
     choices: [
       { t: 'Đến nói lời tạm biệt thật', do: (fx, x) => (fx.love(crush(x), 8), fx.stat('tinh', 3)) },
-      { t: 'Tỏ tình luôn, không còn gì để mất', do: (fx, x) => (fx.love(crush(x), x.s.love[crush(x)] >= 30 ? 14 : -4), fx.stat('noi', 6)), note: (x) => (x.s.love[crush(x)] >= 30 ? `${C(x)} cười: "Sao giờ mới nói?"` : `${C(x)} ngượng: "Mình... là bạn thôi nhé."`) },
+      { t: 'Tỏ tình luôn, không còn gì để mất', do: (fx, x) => (x.s.love[crush(x)] >= 30 && fx.flag(`teen_yeu_${crush(x)}`), fx.love(crush(x), x.s.love[crush(x)] >= 30 ? 14 : -4), fx.stat('noi', 6)), note: (x) => (x.s.love[crush(x)] >= 30 ? `${C(x)} cười: "Sao giờ mới nói?" Mối tình học trò bắt đầu, vụng về và trong veo.` : `${C(x)} ngượng: "Mình... là bạn thôi nhé."`) },
       { t: 'Đi đường khác về', do: (fx) => fx.stat('tam', -3), note: () => 'Mười năm sau vẫn còn tự hỏi nếu hôm ấy...' },
     ],
   },
@@ -971,7 +974,7 @@ const TEEN: Life[] = [
     title: 'Đêm Noel',
     bg: bg('pho', 'night'),
     who: cw(),
-    text: (x) => [`Đêm Giáng sinh, cả phố chen nhau ra ${x.f.province === 'TP. Hồ Chí Minh' ? 'nhà thờ Đức Bà' : 'nhà thờ Lớn'}. ${C(x)} rủ ${x.me} đi cùng nhóm bạn.`],
+    text: (x) => [`Đêm Giáng sinh, cả phố chen nhau ra ${x.f.province === 'TP. Hồ Chí Minh' ? 'nhà thờ Đức Bà' : x.f.province === 'Hà Nội' ? 'nhà thờ Lớn' : 'nhà thờ chính tòa của tỉnh'}. ${C(x)} rủ ${x.me} đi cùng nhóm bạn.`],
     choices: [
       { t: (x) => `Đi, xin ${x.bm} về trước mười giờ`, do: (fx, x) => (fx.love(crush(x), 8), fx.rel('bome', 2)) },
       { t: 'Trốn đi, về lúc nửa đêm', do: (fx, x) => (fx.love(crush(x), 10), fx.stat('noi', 5), fx.rel('bome', -6)) },
@@ -1107,7 +1110,7 @@ const AUTO: Auto[] = [
   { id: 'nhinTrom', min: 12, max: 17, t: (x) => `Bắt gặp ${C(x)} nhìn trộm mình trong giờ Văn. Cả hai cùng quay đi.`, do: (fx, x) => fx.love(crush(x), 4) },
   { id: 'cangtin', min: 12, max: 17, t: (x) => `${C(x)} mua hộ ${x.me} cốc ${x.year < 2008 ? 'nước mía' : 'trà sữa'} ở căng tin, không lấy tiền.`, do: (fx, x) => fx.love(crush(x), 4) },
   { id: 'tenvo', min: 12, max: 16, t: (x) => `Viết tên ${C(x)} vào góc vở, rồi tô đen kín lại cho không ai đọc được.`, do: (fx, x) => fx.love(crush(x), 2) },
-  { id: 'dichoixa', min: 12, max: 17, t: (x) => `Lần đầu đi chơi xa với lớp: ${(regionOf(x.f.province) === 'nam' ? ['Vũng Tàu', 'Đà Lạt', 'Mũi Né', 'Cần Giờ'] : regionOf(x.f.province) === 'trung' ? ['Hội An', 'Bà Nà', 'Cửa Lò', 'Nha Trang'] : ['Tam Đảo', 'Đồ Sơn', 'Hạ Long', 'Sa Pa'])[hash(`${x.s.seed ?? 0}xa`) % 4]}. Thức trắng đêm buôn chuyện.`, do: (fx) => fx.rel('banthan', 3) },
+  { id: 'dichoixa', min: 12, max: 17, t: (x) => `Lần đầu đi chơi xa với lớp: ${(regionOf(x.f.province) === 'nam' ? ['Vũng Tàu', 'Đà Lạt', 'Mũi Né', 'Cần Giờ'] : regionOf(x.f.province) === 'trung' ? (['Gia Lai', 'Đắk Lắk'].includes(x.f.province) ? ['Nha Trang', 'Quy Nhơn', 'Đà Lạt', 'thác Dray Nur'] : ['Hội An', 'Bà Nà', x.f.province === 'Nghệ An' || x.f.province === 'Hà Tĩnh' || x.f.province === 'Thanh Hóa' ? 'Cửa Lò' : 'Lăng Cô', 'Nha Trang']) : ['Tam Đảo', 'Đồ Sơn', 'Hạ Long', 'Sa Pa'])[hash(`${x.s.seed ?? 0}xa`) % 4]}. Thức trắng đêm buôn chuyện.`, do: (fx) => fx.rel('banthan', 3) },
   { id: 'bongda', min: 12, max: 17, t: (x) => `Mê ${x.year < 2006 ? 'xem bóng đá Ngoại hạng Anh cùng bố' : 'bóng đá, thức đêm xem Champions League'}.` },
   { id: 'thuemay', min: 13, max: 17, from: 2004, t: (x) => `Bị ${x.bm} thu điện thoại vì nhắn tin đến một giờ sáng.`, do: (fx) => fx.rel('bome', -2) },
   { id: 'xebus', min: 12, max: 16, from: 2002, if: (x) => x.f.urban, t: () => 'Lần đầu tự đi xe buýt một mình. Đi nhầm tuyến, về muộn hai tiếng.' },

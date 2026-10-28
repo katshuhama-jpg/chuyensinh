@@ -182,8 +182,8 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
 
   if (step === 0)
     return scene(
-      'Hẹn riêng, kiểu khác hẳn',
-      (cx) => [`Lần đầu hẹn riêng với ${L(cx)}. Đi đâu đây?`],
+      'Thêm một buổi, kiểu khác hẳn',
+      (cx) => [`Sau buổi hôm ấy, ${L(cx)} rủ đi thêm một buổi nữa, lần này để ${cx.me} chọn kiểu khác hẳn. Đi đâu đây?`],
       [
         ...(p.past
           ? [

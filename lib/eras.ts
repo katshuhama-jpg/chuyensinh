@@ -29,12 +29,15 @@ type Ev = {
   tap?: Scene['tap'];
 };
 
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const partnerOf = (x: Ctx): LoveId | null => (x.s.partner && x.s.partner !== 'xemmat' ? x.s.partner : null);
 const closest = (x: Ctx): LoveId => {
-  const ids = LOVE_IDS.filter((id) => !x.has(`${id}_out`)).sort((a, b) => x.s.love[b] - x.s.love[a]);
-  return ids[0] ?? 'khoi';
+  // Khôi chuyển nhà năm 12 tuổi, đến Tết năm 19 mới về
+  const moved = x.age >= 12 && x.age < 19 && x.s.path.some((p) => p.scene === 'c12_chuyennha');
+  const ids = LOVE_IDS.filter((id) => !x.has(`${id}_out`) && !(moved && id === 'khoi')).sort((a, b) => x.s.love[b] - x.s.love[a]);
+  return ids[0] ?? 'long';
 };
-const firstLove = (x: Ctx): LoveId => (['khoi', 'long', 'minh'] as LoveId[]).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
+const firstLove = (x: Ctx): LoveId => (['khoi', 'long', 'minh'] as LoveId[]).filter((id) => id !== x.s.partner).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
 const sp = (x: Ctx) => (partnerOf(x) ? x.L(partnerOf(x)!) : x.s.partner === 'xemmat' ? xemmatName(x) : x.lg === 'm' ? 'Chồng' : 'Vợ');
 
 
@@ -345,6 +348,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
     {
       id: 'confession',
+      if: (x) => !x.has('ly_confesstruong'),
       from: 2013,
       to: 2100,
       title: 'Trang confession của trường',
@@ -444,16 +448,16 @@ const SLOTS: Record<number, Ev[]> = {
       bg: () => ({ place: 'quan', time: 'dusk' }),
       kind: 'chat',
       msgs: (x) => [
-        { me: false, t: 'Em ơi, anh đang kẹt ở sân bay, thẻ bị khóa 😭' },
-        { me: false, t: x.year <= 2026 ? 'Em chuyển giúp anh mười triệu, mai anh trả gấp đôi nhé' : 'Cho anh mượn tạm điểm tín dụng AI, mai trả liền' },
+        { me: false, t: `${cap(x.goi)} ơi, ${x.xung} đang kẹt ở sân bay, thẻ bị khóa 😭` },
+        { me: false, t: x.year <= 2026 ? `${cap(x.goi)} chuyển giúp ${x.xung} mười triệu, mai ${x.xung} trả gấp đôi nhé` : `Cho ${x.xung} mượn tạm điểm tín dụng AI, mai trả liền` },
       ],
       text: (x) => [
         `Một hồ sơ trên app nhắn với ${x.me} suốt hai tuần: ảnh đẹp, nói chuyện ngọt, nhưng chưa bao giờ chịu gọi video.`,
-        `Hôm nay người ấy nhắn: "${x.year <= 2026 ? 'Anh đang kẹt tiền ở sân bay, em chuyển giúp anh mười triệu' : 'Em mượn tạm điểm tín dụng AI của anh nhé'}, mai trả liền."`,
+        `Hôm nay người ấy nhắn: "${x.year <= 2026 ? `${cap(x.xung)} đang kẹt tiền ở sân bay, ${x.goi} chuyển giúp ${x.xung} mười triệu` : `${cap(x.goi)} cho ${x.xung} mượn tạm điểm tín dụng AI nhé`}, mai trả liền."`,
       ],
       choices: [
-        { t: '"Gọi video cho em xem mặt đã"', do: (fx) => (fx.stat('hoc', 4), fx.stat('dao', 3)), note: () => 'Người ấy chặn liên lạc ngay. Một tài khoản ảo.' },
-        { t: '"Dạ, em chuyển ngay"', do: (fx) => (fx.stat('tien', -15), fx.stat('tam', -10), fx.mid('quet')) },
+        { t: (x) => `"Gọi video cho ${x.goi} xem mặt đã"`, do: (fx) => (fx.stat('hoc', 4), fx.stat('dao', 3)), note: () => 'Người ấy chặn liên lạc ngay. Một tài khoản ảo.' },
+        { t: (x) => `"Ừ, ${x.goi} chuyển ngay"`, do: (fx) => (fx.stat('tien', -15), fx.stat('tam', -10), fx.mid('quet')) },
         { t: '(Báo cáo tài khoản cho app rồi chặn)', do: (fx) => (fx.stat('tinh', 3), fx.stat('dao', 4)) },
       ],
     },
@@ -575,7 +579,7 @@ const SLOTS: Record<number, Ev[]> = {
       id: 'chungcu',
       from: 2013,
       to: 2100,
-      if: (x) => x.s.married,
+      if: (x) => x.s.married && !x.has('dr_muanha'),
       title: 'Căn hộ trả góp',
       bg: () => ({ place: 'pho', time: 'day' }),
       text: (x) => [

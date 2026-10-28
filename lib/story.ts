@@ -450,6 +450,8 @@ export function visibleChoices(scene: Scene, x: Ctx) {
 
 /** Những cảnh quan trọng không tự chọn hộ khi tua nhanh (cầu hôn, cưới, người cũ) */
 export const STOP_AT = ['y27_cauhon', 'y28_hethong', 'y29_quaylai', 'm40_nguoicu'];
+/** cảnh lớn theo tiền tố (cầu hôn, đêm trước cưới, đêm hẹn ngôi sao): không tự chọn hộ */
+export const isStop = (id: string) => STOP_AT.includes(id) || /^(ch|rv|st1|st3)@/.test(id);
 
 /** Tua nhanh hết thời kỳ hiện tại (kiểu Auto của 1 in 8 Billion): tự chọn ngẫu nhiên đến khi sang chương mới
  *  hoặc gặp một ngã rẽ lớn. Trả về trạng thái mới và các dòng tóm tắt đã trôi qua. */
@@ -459,7 +461,7 @@ export function fastForward(resolve: Resolve, c: Character, f: Family, s0: Story
   const lines: { age: number; year: number; t: string }[] = [];
   for (let k = 0; k < 300 && s.scene !== 'end'; k++) {
     const sc = resolve(s.scene, s);
-    if (!sc || sc.chapter !== start || (k > 0 && STOP_AT.includes(sc.id))) break;
+    if (!sc || sc.chapter !== start || (k > 0 && isStop(sc.id))) break;
     const x = ctxOf(c, f, s, sc.age);
     const opts = visibleChoices(sc, x);
     if (!opts.length) break;

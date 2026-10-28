@@ -534,7 +534,7 @@ const CUOI: Drama[] = [
     text: (x) => [`Con vào lớp ${x.year < 2005 ? 'chọn' : 'chuyên'}, ${sp(x)} đăng ký thêm năm lớp: Toán, Văn, Anh, Piano, Bơi. Mười giờ đêm con vẫn ngồi học.`],
     choices: [
       { t: 'Cho con nghỉ bớt, chơi nhiều hơn', do: (fx, x) => (fx.rel('con', 12), lv(fx, x, -4)) },
-      { t: 'Theo vợ/chồng, con người ta cũng thế cả', do: (fx, x) => (fx.rel('con', -6), lv(fx, x, 4), fx.stat('tien', -8)) },
+      { t: (x) => `Theo ${x.lg === 'm' ? 'chồng' : 'vợ'}, con người ta cũng thế cả`, do: (fx, x) => (fx.rel('con', -6), lv(fx, x, 4), fx.stat('tien', -8)) },
       { t: 'Hỏi con muốn gì', do: (fx, x) => (fx.rel('con', 15), fx.stat('tinh', 4)), note: () => 'Con bảo chỉ muốn được đi đá bóng với bố mẹ một buổi.' },
     ],
   },
@@ -542,10 +542,10 @@ const CUOI: Drama[] = [
     id: 'muoinam',
     pool: 'cuoi',
     if: (x) => x.s.marriedAge !== null && x.age - x.s.marriedAge >= 8,
-    title: 'Mười năm ngày cưới',
+    title: (x) => (ym(x) === 10 ? 'Mười năm ngày cưới' : `${ym(x)} năm ngày cưới`),
     bg: () => ({ place: 'quan', time: 'night' }),
     who,
-    text: (x) => [`Mười năm ngày cưới. ${sp(x)} hỏi: "Còn nhớ chỗ mình hẹn hò lần đầu không?"`],
+    text: (x) => [`${ym(x) === 10 ? 'Mười' : ym(x)} năm ngày cưới. ${sp(x)} hỏi: "Còn nhớ chỗ mình hẹn hò lần đầu không?"`],
     choices: [
       { t: (x) => (x.s.kids ? 'Gửi con cho ông bà, đi lại đúng chỗ cũ' : 'Đi lại đúng chỗ cũ'), do: (fx, x) => (lv(fx, x, 12), fx.stat('tam', 6)), note: () => 'Quán cũ đã đổi chủ, nhưng góc bàn vẫn còn.' },
       { t: 'Làm tiệc to, mời cả họ', do: (fx, x) => (fx.stat('tien', -10), fx.rel('bome', 6), lv(fx, x, 4)) },
@@ -673,10 +673,16 @@ const CUOI: Drama[] = [
     title: 'Ngày về',
     bg: () => ({ place: 'nha', time: 'dusk' }),
     who,
-    text: (x) => [`${sp(x)} về sau một năm. Con nấp sau lưng ${x.me}, không chịu gọi. ${sp(x)} ngồi xuống đất, cười mà mắt đỏ.`],
+    text: (x) => [
+      x.s.kids
+        ? `${sp(x)} về sau một năm. Con nấp sau lưng ${x.me}, không chịu gọi. ${sp(x)} ngồi xuống đất, cười mà mắt đỏ.`
+        : `${sp(x)} về sau một năm, gầy đi, đen đi. Đứng ở cửa mãi mới dám bước vào, như khách.`,
+    ],
     choices: [
-      { t: 'Kể cho con nghe bố/mẹ đi xa vì ai', do: (fx, x) => (fx.rel('con', 10), lv(fx, x, 8)) },
-      { t: 'Để con tự làm quen lại', do: (fx, x) => (fx.rel('con', 3), lv(fx, x, 2)) },
+      { t: (x) => `Kể cho con nghe ${x.lg === 'm' ? 'bố' : 'mẹ'} đi xa vì ai`, if: (x) => x.s.kids > 0, do: (fx, x) => (fx.rel('con', 10), lv(fx, x, 8)) },
+      { t: 'Để con tự làm quen lại', if: (x) => x.s.kids > 0, do: (fx, x) => (fx.rel('con', 3), lv(fx, x, 2)) },
+      { t: 'Ôm thật lâu, không hỏi gì', if: (x) => !x.s.kids, do: (fx, x) => lv(fx, x, 8) },
+      { t: 'Hỏi: "Bên ấy có ai không?"', if: (x) => !x.s.kids, do: (fx, x) => (lv(fx, x, -6), fx.stat('noi', 3)) },
     ],
   },
   {
@@ -906,8 +912,19 @@ function hash(s: string) {
 }
 
 const poolOf = (x: Ctx): Pool => (x.s.married ? 'cuoi' : x.s.partner ? 'yeu' : 'don');
+/** chuyện gắn với một giai đoạn hôn nhân: số năm sau cưới, có con hay chưa */
+const ym = (x: Ctx) => (x.s.marriedAge == null ? 0 : x.age - x.s.marriedAge);
+const STAGE: Record<string, (x: Ctx) => boolean> = {
+  giuluong: (x) => ym(x) <= 3,
+  oriengs: (x) => ym(x) <= 4,
+  nuoicon: (x) => x.s.kids > 0 && x.age <= 45,
+  muanha: (x) => !x.has('ev_chungcu') && x.age <= 45,
+  muoinam: (x) => ym(x) >= 9 && ym(x) <= 12,
+  dixa: (x) => x.age <= 50,
+};
 const fits = (d: Drama, x: Ctx) =>
   d.pool === poolOf(x) &&
+  (!STAGE[d.id] || STAGE[d.id](x)) &&
   !x.has(`dr_${d.id}`) &&
   x.year >= (d.from ?? 0) &&
   x.year <= (d.to ?? 9999) &&

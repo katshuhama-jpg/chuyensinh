@@ -17,9 +17,10 @@ import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEn
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { activeMission, ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
+import { STARS } from '@/lib/stars';
 import { commit } from '@/lib/board';
 import { AREAS, areasOf, doAction, lifePathOf, doneThisYear, optionsOf, tallyOf, type AreaKey } from '@/lib/actions';
-import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, fastForward, isStop, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -153,7 +154,7 @@ function Board({
   const [area, setArea] = useState<AreaKey | null>(null);
   const isFeed = sc?.kind === 'feed';
   const lines = useMemo(() => (isFeed && sc?.feed ? sc.feed(x) : []), [story.scene, story.path.length]); // eslint-disable-line react-hooks/exhaustive-deps
-  const stop = !!sc && STOP_AT.includes(sc.id);
+  const stop = !!sc && isStop(sc.id);
   const running = born && !paused && !menu && !area;
 
   useEffect(() => setShown(0), [story.scene, story.path.length]);
@@ -1012,7 +1013,7 @@ function PickCard({ id, x, on, onTap }: { id: LoveId; x: Ctx; on: boolean; onTap
       </span>
       <b>{x.L(id)}</b>
       <small>{jobOf(id, x.lg, x.age, x.year)}</small>
-      <small className="pk-st">{met ? statusOf(x.s, id) : 'Người mới'}</small>
+      <small className="pk-st">{STARS.includes(id) ? '★ Ngôi sao · ' : ''}{met ? statusOf(x.s, id) : 'Người mới'}</small>
       {on && <i className="pk-tick">♥</i>}
     </button>
   );

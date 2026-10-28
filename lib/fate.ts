@@ -26,8 +26,8 @@ export const PROPHECIES: { id: string; text: string; check: (s: StoryCore) => bo
 ];
 
 const BESTIES: Record<Gender, string[]> = {
-  f: ['Hà', 'Trang', 'Mai', 'Quỳnh', 'Hương'],
-  m: ['Tùng', 'Hùng', 'Dũng', 'Hiếu', 'Bình'],
+  f: ['Hà', 'Trang', 'Thủy', 'Quỳnh', 'Hương'],
+  m: ['Tùng', 'Thành', 'Dũng', 'Hiếu', 'Bình'],
 };
 
 /** Phần lớn sinh trong 1975-2015 (có thật), khoảng 1/7 rơi vào tương lai */

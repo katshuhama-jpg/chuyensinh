@@ -192,7 +192,7 @@ export function dateStep(step: 2 | 3 | 4, age: number, n: number, id: LoveId, af
           do: (fx: Fx, x: Ctx) => {
             if (oops(x) && k === fixAt(x)) return void (fx.love(id, 10), fx.say('Gỡ rối khéo. Người ấy nhìn mình khác hẳn.'));
             const a = pick3(x)[k];
-            if (a.k === like) (fx.love(id, 12), fx.say(`Đúng gu ${x.L(id)}: ${x.ay} vốn thích ${LOVES[id].likesName}.`));
+            if (a.k === like) (fx.love(id, 12), fx.say(`${x.L(id)} vui ra mặt. Đúng kiểu ${x.ay} thích.`));
             else fx.love(id, 4);
             fx.stat(a.k as 'tinh', 2);
           },
