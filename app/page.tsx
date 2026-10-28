@@ -57,7 +57,7 @@ export default function Home() {
           RẼ LỐI
         </h1>
         <p className="mute" style={{ marginTop: 8, fontSize: 22 }}>
-          Một đời ở Việt Nam, trăm lối rẽ. Mỗi lựa chọn hẹn hò đưa bạn tới một người, một kết cục khác.
+          Mỗi lựa chọn mở ra một dòng thời gian khác. Lần này, bạn sẽ rẽ lối nào?
         </p>
       </div>
 

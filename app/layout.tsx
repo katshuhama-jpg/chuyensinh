@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'Đường Tình Rẽ Lối', template: '%s · Đường Tình Rẽ Lối' },
-  description: "Love's Altered Lines - game pixel hẹn hò sống trọn một đời ở Việt Nam. Mỗi lựa chọn rẽ ra một lối tình, một kết cục khác.",
+  description: "Love's Altered Lines - mỗi lựa chọn mở ra một dòng thời gian khác. Lần này, bạn sẽ rẽ lối nào?",
   applicationName: 'Đường Tình Rẽ Lối',
 };
 
