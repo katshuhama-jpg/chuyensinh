@@ -190,16 +190,6 @@ function Board({
   const curFocus = fo.find((f) => f.k === story.focus) ?? fo[0];
   const span = Math.max(80, lifespanOf(char, story));
 
-  // đang mở ngã rẽ thì khóa cuộn trang phía sau
-  useEffect(() => {
-    if (!decide) return;
-    const el = document.documentElement;
-    const prev = el.style.overflow;
-    el.style.overflow = 'hidden';
-    return () => {
-      el.style.overflow = prev;
-    };
-  }, [decide]);
 
   if (!born) return <BirthCard char={char} family={family} story={story} onBegin={() => setBorn(true)} />;
 

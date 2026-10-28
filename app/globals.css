@@ -4154,3 +4154,40 @@ p {
 .lb-stats .ms-2 em { background: #4a9a90; }
 .lb-stats .ms-3 em { background: #b8455e; }
 .lb-stats .ms-4 em { background: var(--stat); }
+
+/* bottom sheet mượt: trượt lên một lần, không đổi chiều cao khi thanh Safari co giãn */
+.lb-veil {
+  animation: lb-fade 0.2s ease-out both;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+.lb-sheet {
+  height: auto;
+  align-self: stretch;
+  touch-action: pan-y;
+  animation: lb-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  will-change: transform;
+}
+@keyframes lb-fade {
+  from {
+    background: rgba(20, 14, 30, 0);
+  }
+}
+@keyframes lb-up {
+  from {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+/* trong sheet: bỏ hiệu ứng nhảy bậc của nút và chữ, hiện mượt một lần */
+.lb-play .choices .opt,
+.lb-play .tw,
+.lb-play .textbox p {
+  animation: lb-in 0.22s ease-out both !important;
+  animation-delay: 0s !important;
+}
+@keyframes lb-in {
+  from {
+    opacity: 0;
+  }
+}
