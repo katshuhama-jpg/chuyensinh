@@ -4196,3 +4196,23 @@ p {
 .stat .cells i .part {
   background: var(--c, var(--stat));
 }
+/* ô "+N Xem" và dòng "Xem tất cả" ở Bảng tình duyên */
+.slot.more {
+  justify-content: center;
+  color: var(--accent);
+}
+.slot.more span {
+  font-size: 30px;
+  line-height: 1;
+}
+.slot.more small {
+  font-size: 15px;
+}
+.hub-all {
+  align-self: center;
+  margin: 2px 4px 0;
+  color: var(--accent);
+  font-size: 17px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

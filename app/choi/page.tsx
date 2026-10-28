@@ -786,22 +786,18 @@ function HubBoard({ x, opts, onChoose }: { x: Ctx; opts: Choice[]; onChoose: (i:
     done.current = true;
     onChoose(opts.indexOf(c));
   };
-  const act = activeOf(x.s);
-  const slots: (LoveId | null)[] = [...act, ...Array(Math.max(0, MAX_ACTIVE - act.length)).fill(null)];
+  const [all, setAll] = useState(false);
+  // 4 người thân nhất ở hàng đầu; ô cuối là nút xem thêm
+  const act = [...activeOf(x.s)].sort((a, b) => x.s.love[b] - x.s.love[a]);
+  const top = act.slice(0, 4);
+  const rest = act.length - top.length;
+  const shown: (LoveId | null)[] = all ? act : [...top, ...Array(Math.max(0, 4 - top.length)).fill(null)];
   const global = opts.filter((o) => !o.loveId);
   const ICON: Record<string, string> = { chat: '✉', date: '♥', gift: '✦', confess: '❀', drop: '✕', quet: '⇆', explore: '✈', friends: '☺', work: '▣' };
   return (
     <div className="hub">
-      <div className="hub-top">
-        <span>
-          Đang có <b>{act.length}</b>/{MAX_ACTIVE} người
-        </span>
-        <span>
-          Đã gặp <b>{x.s.met.length}</b>/{MAX_LIFE} người trong đời
-        </span>
-      </div>
       <div className="hub-slots">
-        {slots.map((id, i) =>
+        {shown.map((id, i) =>
           id ? (
             <Slot key={id} id={id} x={x} open={open === id} onOpen={() => setOpen(open === id ? null : id)} />
           ) : (
@@ -811,7 +807,22 @@ function HubBoard({ x, opts, onChoose }: { x: Ctx; opts: Choice[]; onChoose: (i:
             </div>
           ),
         )}
+        {!all &&
+          (rest > 0 ? (
+            <button type="button" className="slot more" onClick={() => setAll(true)} aria-label={`Xem thêm ${rest} người`}>
+              <span>+{rest}</span>
+              <small>Xem</small>
+            </button>
+          ) : (
+            <div className="slot empty" aria-label="Ô trống">
+              <span>?</span>
+              <small>Ô trống</small>
+            </div>
+          ))}
       </div>
+      <button type="button" className="hub-all" onClick={() => setAll(!all)}>
+        {all ? 'Thu gọn ▴' : `Xem tất cả (${act.length}/${MAX_ACTIVE} người · đã gặp ${x.s.met.length}/${MAX_LIFE}) ▾`}
+      </button>
       {open && (
         <div className="hub-acts px-dim">
           <div className="hub-acts-h">Với {x.L(open)}:</div>
