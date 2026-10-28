@@ -115,9 +115,9 @@ export default function Choi() {
 
 /* ---------- bảng đời kiểu 1 in 8 Billion ---------- */
 const WEALTH_DOTS: Record<string, number> = { 'Mồ côi, ở với ông bà': 1, 'Nhà nông': 2, 'Lao động phổ thông': 2, 'Tiểu thương': 3, 'Công chức trung lưu': 3, 'Khá giả': 4, 'Hào môn': 5 };
-const SPEEDS = [1, 2, 4, 8];
-/** 1× = 1 năm mỗi 8 giây, tăng tốc thì chia ra (8× = 1 giây một năm) */
-const YEAR_SEC = 8;
+const SPEEDS = [1, 2, 4, 8, 12, 16];
+/** giống 1in8b: 1× = 1 năm khoảng 51 giây (sống hết đời mất chừng một tiếng), 16× = khoảng 3 giây */
+const YEAR_SEC = 51;
 
 function Board({
   char,
@@ -211,7 +211,7 @@ function Board({
           <b>{curAge}</b>
           <small>
             {year} · {x.me}
-             · 1 năm ≈ {YEAR_SEC / speed} giây
+             · 1 năm ≈ {Math.round(YEAR_SEC / speed)} giây
           </small>
           <Notebook x={x} story={story} />
         </div>

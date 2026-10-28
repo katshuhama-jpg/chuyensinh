@@ -4139,3 +4139,12 @@ p {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+/* đủ chỗ cho 6 mức tốc độ trên màn hình điện thoại */
+.lb-ctl {
+  gap: 4px;
+}
+.lb-ctl button {
+  padding: 0 6px;
+  font-size: 17px;
+  min-height: 38px;
+}
