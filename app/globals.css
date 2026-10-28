@@ -4060,3 +4060,53 @@ p {
   font-weight: 400;
   font-size: 19px;
 }
+
+/* khung ngã rẽ vừa một màn hình: không phải kéo trang, tránh chạm nhầm thanh địa chỉ */
+.lb-veil {
+  align-items: stretch;
+  padding: calc(6px + env(safe-area-inset-top)) 6px 0;
+  overscroll-behavior: contain;
+}
+.lb-sheet {
+  max-height: none;
+  height: calc(100dvh - 6px - env(safe-area-inset-top));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.lb-play {
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+}
+.lb-play .head {
+  padding: 6px 12px 0;
+}
+.lb-play .head .eyebrow {
+  display: none;
+}
+.lb-play .head h1 {
+  font-size: 26px;
+}
+.lb-play .body {
+  gap: 10px !important;
+  padding-top: 0 !important;
+}
+.lb-play .stage-ts.play .ts {
+  transform: scale(0.62);
+  transform-origin: top center;
+  margin-bottom: -110px;
+}
+.lb-play .stage-ts.play .news {
+  display: none;
+}
+.lb-play .choices {
+  gap: 10px;
+}
+.lb-play .choices .opt {
+  min-height: 46px;
+}
+.lb-auto {
+  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+/* bảng đời: chừa chỗ dưới cùng cho thanh công cụ của Safari */
+.lb-body {
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
