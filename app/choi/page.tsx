@@ -21,6 +21,7 @@ import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normali
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
+import { openerOf } from '@/lib/openers';
 import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -131,7 +132,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
         <div className="chc-in">
           <div className="chc-no">CHƯƠNG {CH_NO[sc.chapter]}</div>
           <h1 className="chc-title">{sc.chapter}</h1>
-          <p className="chc-line">{CH_LINE[sc.chapter]}</p>
+          <p className="chc-line">{openerOf(sc.chapter, x) || CH_LINE[sc.chapter]}</p>
           <p className="chc-year">
             {x.me} · {age} tuổi · năm {x.year}
             {x.year > 2026 ? ' (giả định)' : ''}
@@ -496,7 +497,17 @@ function Notebook({ x, story }: { x: Ctx; story: Story }) {
   );
 }
 
-const cells = (v: number, cls = '') => Array.from({ length: 10 }, (_, i) => <i key={i} className={i < Math.round(v / 10) ? `on ${cls}` : ''} />);
+/** 10 ô, mỗi ô 10 điểm; ô đang dở được tô theo phần tư (8 điểm khác hẳn 12 điểm) */
+const cells = (v: number, cls = '') =>
+  Array.from({ length: 10 }, (_, i) => {
+    const part = Math.max(0, Math.min(1, (v - i * 10) / 10));
+    const q = Math.round(part * 4) / 4;
+    return (
+      <i key={i} className={q >= 1 ? `on ${cls}` : ''}>
+        {q > 0 && q < 1 && <b className={`part ${cls}`} style={{ width: `${q * 100}%` }} />}
+      </i>
+    );
+  });
 
 /** Độ thân với những người đã gặp và chỉ số của bạn */
 function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
