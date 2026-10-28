@@ -266,7 +266,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
         ) : sc.kind === 'hub' ? (
           <HubBoard x={x} opts={opts} onChoose={onChoose} />
         ) : (
-          !chat && !swipe && !call && !tap && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
+          !chat && !swipe && !call && !tap && <Choices key={sc.id} opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
         )}
 
       </div>

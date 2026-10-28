@@ -26,6 +26,15 @@ const wall = (y: number) => (y < 2011 ? 'kể cho cả xóm' : y <= 2026 ? 'đă
 const passMark = (y: number) => (y < 2000 ? 64 : y < 2015 ? 55 : 50);
 const xemJob = (y: number) => (y < 2000 ? 'kế toán hợp tác xã' : y < 2015 ? 'nhân viên ngân hàng' : y <= 2026 ? 'kỹ sư phần mềm' : 'người huấn luyện AI');
 
+/** Nhà bạn thơ ấu chuyển đi đâu: miền Bắc lên Hà Nội, miền Trung và miền Nam thì vào Sài Gòn */
+const movedTo = (x: Ctx) => {
+  const p = x.f.province;
+  if (p === 'Hà Nội') return 'vào Sài Gòn';
+  if (p === 'TP. Hồ Chí Minh') return 'ra Hà Nội';
+  const south = ['Cần Thơ', 'Đồng Nai', 'Tây Ninh', 'Vĩnh Long', 'Đồng Tháp', 'Cà Mau', 'An Giang', 'Đà Nẵng', 'Huế', 'Quảng Trị', 'Quảng Ngãi', 'Khánh Hòa', 'Gia Lai', 'Đắk Lắk', 'Lâm Đồng'];
+  return south.includes(p) ? 'vào Sài Gòn' : 'lên Hà Nội';
+};
+
 /** "cậu bé" / "cô bé" theo giới người yêu */
 const be = (x: Ctx) => (x.lg === 'm' ? 'cậu bé' : 'cô bé');
 const co = (x: Ctx) => (x.lg === 'm' ? 'cậu' : 'cô');
@@ -398,7 +407,7 @@ const list: Scene[] = [
     who: () => 'khoi',
     title: 'Ngày chuyển nhà',
     text: (x) => [
-      `Nhà ${x.L('khoi')} chuyển vào ${x.f.province === 'TP. Hồ Chí Minh' ? 'Hà Nội' : x.f.province === 'Hà Nội' ? 'Sài Gòn' : 'Hà Nội'}. Xe tải đỗ đầu ngõ từ sáng sớm.`,
+      `Nhà ${x.L('khoi')} chuyển ${movedTo(x)}. Xe tải đỗ đầu ngõ từ sáng sớm.`,
       x.has('dieu')
         ? `${x.L('khoi')} dúi vào tay ${x.me} con diều giấy năm nào: "Giữ hộ tớ. Lớn lên tớ về lấy."`
         : `${x.L('khoi')} vẫy tay, ngập ngừng như muốn nói gì đó rồi lại thôi.`,
