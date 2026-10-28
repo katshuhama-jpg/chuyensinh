@@ -991,7 +991,7 @@ p {
     transform: translateY(6px);
   }
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
 .choices .opt:hover {
   background: var(--sel);
 }
@@ -1271,7 +1271,7 @@ p {
   border: 2px solid #c9a878;
   color: #3a2a1a;
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
 .lt-opt:hover {
   background: #fff;
 }
@@ -1342,7 +1342,7 @@ p {
   min-height: 36px;
   color: #0f380f;
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
 .nk-opt:hover,
 .nk-opt:focus-visible {
   background: #0f380f;
@@ -1507,7 +1507,7 @@ p {
   color: #2a1f3d;
   box-shadow: inset 0 0 0 2px #e8789f;
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
 .sm-opt:hover {
   background: #fde7ef;
 }
@@ -2634,7 +2634,7 @@ p {
   font-size: 15px;
   color: #1a1a1a;
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
 .pc-opt:hover,
 .pc-opt:focus-visible {
   background: #dfe8f6;
