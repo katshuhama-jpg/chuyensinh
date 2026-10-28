@@ -4,6 +4,7 @@
  * không có tình huống nào hợp thì bỏ qua ô ấy. Từ 2027 trở đi chỉ dùng những tình huống vẫn còn hợp (giả định).
  */
 
+import { xemmatName } from './names';
 import type { Bg } from '@/components/Backdrop';
 import { LOVE_IDS, type Choice, type Ctx, type LoveId, type Scene } from './story';
 import { HITS, LOL_WORLDS } from './world';
@@ -34,7 +35,7 @@ const closest = (x: Ctx): LoveId => {
   return ids[0] ?? 'khoi';
 };
 const firstLove = (x: Ctx): LoveId => (['khoi', 'long', 'minh'] as LoveId[]).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
-const sp = (x: Ctx) => (partnerOf(x) ? x.L(partnerOf(x)!) : x.lg === 'm' ? 'chồng' : 'vợ');
+const sp = (x: Ctx) => (partnerOf(x) ? x.L(partnerOf(x)!) : x.s.partner === 'xemmat' ? xemmatName(x) : x.lg === 'm' ? 'Chồng' : 'Vợ');
 
 
 /* ---------- yêu ngôi sao: bị chụp lén, bị fan soi ---------- */
@@ -621,7 +622,7 @@ const SLOTS: Record<number, Ev[]> = {
       choices: [
         { t: 'Gửi lời chào: "Cậu còn nhớ tớ không?"', do: (fx, x) => (fx.love(firstLove(x), 8), fx.stat('tam', 8)), note: (x) => `${x.L(firstLove(x))} trả lời bằng một tấm ảnh cũ: hai đứa trẻ trong ngõ năm nào.` },
         { t: 'Chỉ ngồi xem ảnh, không nhắn', do: (fx) => (fx.stat('tinh', 6), fx.stat('tam', 3)) },
-        { t: 'Gập máy, ra ngồi cạnh người bên cạnh mình', do: (fx, x) => (fx.stat('tam', 6), partnerOf(x) ? fx.love(partnerOf(x)!, 8) : fx.rel('con', 6)) },
+        { t: (x) => (partnerOf(x) || x.s.married ? `Gập máy, ra ngồi cạnh ${sp(x)}` : x.s.kids ? 'Gập máy, gọi cho con' : 'Gập máy, pha một ấm trà'), do: (fx, x) => (fx.stat('tam', 6), partnerOf(x) ? fx.love(partnerOf(x)!, 8) : fx.rel('con', 6)) },
       ],
     },
   ],

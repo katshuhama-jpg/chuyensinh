@@ -12,6 +12,7 @@ import { dramaAt } from './drama';
 import { dateStep, spotChoice } from './dates';
 import { newsOfLoves } from './lives';
 import { lyScene } from './life';
+import { xemmatName } from './names';
 import { AREA_PEOPLE, tallyOf, type AreaKey } from './actions';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
@@ -48,6 +49,7 @@ export const spouseWord = (x: Ctx) => (x.lg === 'm' ? 'chồng' : 'vợ');
 export const spouseName = (x: Ctx) => {
   const p = x.s.partner;
   if (p && p !== 'xemmat') return x.L(p);
+  if (p === 'xemmat') return xemmatName(x);
   return spouseWord(x);
 };
 const out = (x: Ctx, id: LoveId) => x.has(`${id}_out`);
@@ -769,11 +771,11 @@ const list: Scene[] = [
     who: () => 'xemmat',
     title: 'Buổi xem mắt',
     text: (x) => [
-      `Người xem mắt là con bạn ${x.mom}, làm ${xemJob(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
+      `Người xem mắt tên ${xemmatName(x)}, con bạn ${x.mom}, làm ${xemJob(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
       `Cuối buổi, ${x.lg === 'm' ? 'anh ta' : 'cô ta'} hỏi: "Mình thử tìm hiểu nhé?"`,
     ],
     choices: [
-      { t: 'Đồng ý, nửa năm sau cưới', do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
+      { t: (x) => `Đồng ý, nửa năm sau cưới ${xemmatName(x)}`, do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
       { t: 'Từ chối khéo', do: (fx) => (fx.loveEnd('docthan'), fx.rel('bome', -5)) },
     ],
     next: 'ev@30',
@@ -1003,7 +1005,7 @@ function reflectScene(age: number): Scene {
     kind: 'reflect',
     bg: () => ({ place: 'phong', time: 'night' }),
     title: `${age} tuổi, dừng lại một chút`,
-    text: () => ['Thời gian ngừng trôi. Một câu hỏi hiện ra, chỉ mình biết câu trả lời.'],
+    text: () => ['Thời gian ngừng trôi. Một câu hỏi hiện ra, chỉ mình biết câu trả lời:', `"${a.q}"`],
     ask: () => a.q,
     choices: [{ t: 'Ghi lại', do: (fx) => fx.stat('tam', 3) }, { t: 'Để sau' }],
     next: a.next,
@@ -1607,7 +1609,7 @@ function caughtScene(age: number, s: Story): Scene {
     timeout: 2,
     bg: () => ({ place: 'phong', time: 'night' }),
     title: 'Bị phát hiện!',
-    text: (x) => [`${x.L(a)} và ${x.L(b)} tình cờ biết nhau qua bạn chung, rồi cùng phát hiện ra ${x.me} đang nhắn tin với cả hai. Một nhóm chat ba người vừa được tạo.`],
+    text: (x) => [`${x.L(a)} và ${x.L(b)} tình cờ biết nhau qua bạn chung, rồi cùng phát hiện ra ${x.me} đang ${x.year < 1998 ? 'viết thư' : 'nhắn tin'} cho cả hai. Một nhóm chat ba người vừa được tạo.`],
     msgs: (x) => [
       { me: false, t: `${x.L(a)}: Giải thích đi.` },
       { me: false, t: `${x.L(b)}: Ừ, giải thích đi.` },

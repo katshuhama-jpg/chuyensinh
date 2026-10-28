@@ -1062,7 +1062,7 @@ type Auto = { id: string; min: number; max: number; from?: number; to?: number; 
 const kg = (x: Ctx) => (2.6 + (hash(`${x.s.seed ?? 0}kg`) % 11) / 10).toFixed(1).replace('.', ',');
 const AUTO: Auto[] = [
   // 0-2 tuổi
-  { id: 'sinh', min: 0, max: 0, t: (x) => `${x.c.name} chào đời ở ${x.f.urban ? 'bệnh viện tỉnh' : 'trạm xá xã'}${x.f.province ? `, ${x.f.province}` : ''}, nặng ${kg(x)} cân. ${x.f.siblings.some((s) => s.older) ? 'Anh chị ghé đầu vào nôi nhìn mãi.' : 'Cả nhà thay nhau bế.'}` },
+  { id: 'sinh', min: 0, max: 0, t: (x) => `${x.c.name} chào đời ở ${x.f.urban ? (['Hà Nội', 'TP. Hồ Chí Minh'].includes(x.f.province) ? 'bệnh viện phụ sản' : 'bệnh viện tỉnh') : 'trạm xá xã'}${x.f.province ? `, ${x.f.province}` : ''}, nặng ${kg(x)} cân. ${x.f.siblings.some((s) => s.older) ? 'Anh chị ghé đầu vào nôi nhìn mãi.' : 'Cả nhà thay nhau bế.'}` },
   { id: 'daythang', min: 0, max: 0, t: (x) => `Đầy tháng, ${x.bm === 'ông bà' ? 'bà' : 'bà nội'} đặt tên ở nhà là "${['Bống', 'Cún', 'Mít', 'Su', 'Bin', 'Tôm', 'Bơ', 'Na'][hash(`${x.s.seed ?? 0}ten`) % 8]}".` },
   { id: 'noi', min: 2, max: 2, t: (x) => `Nói được câu đầu tiên: "${['Bà ơi', 'Mẹ', 'Bố', 'Ăn', 'Không'][hash(`${x.s.seed ?? 0}noi`) % 5]}!". Cả nhà vỗ tay như đón Tết.`, do: (fx) => fx.stat('duyen', 2) },
   { id: 'di', min: 2, max: 2, t: () => 'Biết đi, ngã u đầu ba lần trong một buổi sáng.', do: (fx) => fx.stat('noi', 2) },

@@ -10,6 +10,7 @@
 
 import type { Bg } from '@/components/Backdrop';
 import { FLAVOR } from './dates';
+import { xemmatName } from './names';
 import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
 
 type Pool = 'yeu' | 'cuoi' | 'don';
@@ -37,7 +38,7 @@ type Drama = {
 
 /* ---------- tiện ích ---------- */
 const pid = (x: Ctx): LoveId | null => (x.s.partner && x.s.partner !== 'xemmat' ? x.s.partner : null);
-const sp = (x: Ctx) => (pid(x) ? x.L(pid(x)!) : x.lg === 'm' ? 'chồng' : 'vợ');
+const sp = (x: Ctx) => (pid(x) ? x.L(pid(x)!) : x.s.partner === 'xemmat' ? xemmatName(x) : x.lg === 'm' ? 'Chồng' : 'Vợ');
 const spw = (x: Ctx) => (x.lg === 'm' ? 'chồng' : 'vợ');
 const who = (x: Ctx) => (x.s.partner ?? null) as ReturnType<NonNullable<Scene['who']>>;
 /** thay đổi độ thân với người yêu / vợ chồng (người xem mắt thì tính vào Tâm lý) */
@@ -156,12 +157,12 @@ const YEU: Drama[] = [
   {
     id: 'chiaoi',
     pool: 'yeu',
-    title: '"Chị ơi, em là người yêu của anh ấy"',
+    title: (x) => (x.c.gender === 'f' ? `"Chị ơi, em là người yêu của ${x.lg === 'm' ? 'anh ấy' : 'chị ấy'}"` : `"Anh ơi, em là người yêu của ${x.lg === 'm' ? 'anh ấy' : 'chị ấy'}"`),
     bg: () => ({ place: 'phong', time: 'night' }),
     who,
     kind: 'chat',
     msgs: (x) => [
-      { me: false, t: x.lg === 'm' ? 'Chị ơi, em xin lỗi phải nhắn thế này.' : 'Anh ơi, em xin lỗi phải nhắn thế này.' },
+      { me: false, t: x.c.gender === 'f' ? 'Chị ơi, em xin lỗi phải nhắn thế này.' : 'Anh ơi, em xin lỗi phải nhắn thế này.' },
       { me: false, t: `Em yêu ${sp(x)} được một năm rồi. Em mới biết có ${x.c.gender === 'f' ? 'chị' : 'anh'}.` },
     ],
     timer: 15,
@@ -182,6 +183,7 @@ const YEU: Drama[] = [
   {
     id: 'yeuxa',
     pool: 'yeu',
+    if: (x) => !x.s.flags.some((g) => g.startsWith('route_')),
     title: (x) => (x.year >= 2010 ? 'Đơn hàng đi Nhật' : 'Đi làm xa'),
     bg: () => ({ place: 'pho', time: 'dusk' }),
     who,
@@ -376,6 +378,7 @@ const CUOI: Drama[] = [
     id: 'oriengs',
     pool: 'cuoi',
     maxAge: 36,
+    if: (x) => !x.has('ev_orieng'),
     title: 'Ở riêng hay ở chung?',
     bg: () => ({ place: 'nha', time: 'dusk' }),
     who,
@@ -562,7 +565,7 @@ const CUOI: Drama[] = [
     who,
     text: (x) => [`Mười năm ngày cưới. ${sp(x)} hỏi: "Còn nhớ chỗ mình hẹn hò lần đầu không?"`],
     choices: [
-      { t: 'Gửi con cho ông bà, đi lại đúng chỗ cũ', do: (fx, x) => (lv(fx, x, 12), fx.stat('tam', 6)), note: () => 'Quán cũ đã đổi chủ, nhưng góc bàn vẫn còn.' },
+      { t: (x) => (x.s.kids ? 'Gửi con cho ông bà, đi lại đúng chỗ cũ' : 'Đi lại đúng chỗ cũ'), do: (fx, x) => (lv(fx, x, 12), fx.stat('tam', 6)), note: () => 'Quán cũ đã đổi chủ, nhưng góc bàn vẫn còn.' },
       { t: 'Làm tiệc to, mời cả họ', do: (fx, x) => (fx.stat('tien', -10), fx.rel('bome', 6), lv(fx, x, 4)) },
       { t: '"Ừ... chỗ nào nhỉ?"', do: (fx, x) => lv(fx, x, -10), note: (x) => `${sp(x)} cười, mà mắt buồn.` },
     ],
@@ -673,7 +676,7 @@ const CUOI: Drama[] = [
     title: 'Một người đi xa',
     bg: () => ({ place: 'pho', time: 'night' }),
     who,
-    text: (x) => [`${sp(x)} được cử đi ${x.year >= 2010 ? 'dự án ở nước ngoài' : 'công trình trên núi'} một năm, lương gấp ba. Nhà còn con nhỏ.`],
+    text: (x) => [`${sp(x)} được cử đi ${x.year >= 2010 ? 'dự án ở nước ngoài' : 'công trình trên núi'} một năm, lương gấp ba.${x.s.kids ? ' Nhà còn con nhỏ.' : ''}`],
     choices: [
       { t: 'Đi đi, ở nhà có mình lo', do: (fx, x) => (fx.stat('tien', 12), fx.stat('tam', -6), lv(fx, x, 4), fx.flag('dr_xanha')), note: () => '🦋 Một năm xa nhà, nhiều chuyện có thể xảy ra.' },
       { t: 'Không đi, tiền nào cũng không bằng ở cạnh nhau', do: (fx, x) => (lv(fx, x, 8), fx.stat('tien', -4)) },
@@ -791,7 +794,7 @@ const CUOI: Drama[] = [
     title: 'Đám cưới bạc',
     bg: () => ({ place: 'vuon', time: 'dusk' }),
     who,
-    text: (x) => [`Hai mươi lăm năm. Con cái làm một bữa tiệc nhỏ ngoài vườn, chiếu lại ảnh cưới ngày xưa. ${sp(x)} hồi đó gầy nhom, ${x.me} thì để kiểu tóc không ai dám nhắc.`],
+    text: (x) => [`Hai mươi lăm năm. ${x.s.kids ? 'Con cái làm' : 'Bạn bè làm'} một bữa tiệc nhỏ ngoài vườn, chiếu lại ảnh cưới ngày xưa. ${sp(x)} hồi đó gầy nhom, ${x.me} thì để kiểu tóc không ai dám nhắc.`],
     choices: [
       { t: 'Đứng lên nói vài lời', do: (fx, x) => (lv(fx, x, 10), fx.rel('con', 6)), note: (x) => `${sp(x)} khóc trước cả lúc ${x.me} nói xong.` },
       { t: 'Kéo nhau ra nhảy một bài', do: (fx, x) => (lv(fx, x, 8), fx.stat('tam', 6)) },
@@ -862,9 +865,9 @@ const DON: Drama[] = [
     title: 'Người yêu qua mạng',
     bg: () => ({ place: 'phong', time: 'night' }),
     kind: 'chat',
-    msgs: () => [
-      { me: false, t: 'Anh/em đang ở nước ngoài, có gói quà gửi về cho mình nè.' },
-      { me: false, t: 'Hải quan giữ lại, mình chuyển giúp phí 15 triệu nha. Về anh/em trả gấp đôi.' },
+    msgs: (x) => [
+      { me: false, t: `${x.lg === 'm' ? 'Anh' : 'Em'} đang ở nước ngoài, có gói quà gửi về cho ${x.lg === 'm' ? 'em' : 'anh'} nè.` },
+      { me: false, t: `Hải quan giữ lại, chuyển giúp ${x.lg === 'm' ? 'anh' : 'em'} phí 15 triệu nha. Về trả gấp đôi.` },
     ],
     timer: 12,
     timeout: 1,

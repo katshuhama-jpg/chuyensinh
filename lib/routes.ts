@@ -176,7 +176,7 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
 
   if (step === 0)
     return scene(
-      'Buổi hẹn đầu',
+      'Hẹn riêng, kiểu khác hẳn',
       (cx) => [`Lần đầu hẹn riêng với ${L(cx)}. Đi đâu đây?`],
       [
         ...(p.past
