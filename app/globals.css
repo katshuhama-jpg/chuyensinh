@@ -3699,3 +3699,364 @@ p {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
+/* ---------- bảng đời (kiểu 1 in 8 Billion) ---------- */
+.lb-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-deep);
+  padding: 10px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 0 0 var(--dim);
+}
+.lb-age {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.lb-age > span {
+  font-size: 24px;
+  color: var(--mute);
+}
+.lb-age > b {
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 0.8;
+  color: var(--ink);
+}
+.lb-age > small {
+  flex: 1;
+  font-size: 17px;
+  color: var(--mute);
+  line-height: 1.1;
+}
+.lb-age .nb-btn {
+  transform: scale(0.8);
+  transform-origin: right bottom;
+}
+.lb-bar {
+  height: 6px;
+  background: var(--stat-empty);
+  overflow: hidden;
+}
+.lb-bar i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  background: var(--orange);
+  transform-origin: left;
+  animation: lb-fill linear both;
+}
+@keyframes lb-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.lb-ctl {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px;
+}
+.lb-ctl button {
+  flex: none;
+  min-height: 40px;
+  padding: 0 10px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 18px;
+}
+.lb-ctl button.on,
+.lb-ctl button[aria-pressed='true'] {
+  background: var(--orange);
+  color: var(--on-orange);
+}
+.lb-ctl button:disabled {
+  opacity: 0.4;
+}
+.lb-menu {
+  position: absolute;
+  right: 16px;
+  top: 100%;
+  margin-top: 6px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  z-index: 30;
+}
+.lb-menu button {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 19px;
+  color: var(--ink);
+  box-shadow: 0 2px 0 0 var(--dim);
+}
+.lb-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.lb-stats > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lb-stats span {
+  font-size: 14px;
+  color: var(--mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-stats b {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1;
+}
+.lb-stats i {
+  height: 6px;
+  background: var(--stat-empty);
+  margin-top: 3px;
+}
+.lb-stats em {
+  display: block;
+  height: 100%;
+  background: var(--stat);
+}
+.lb-body {
+  gap: 18px;
+  padding-top: 14px;
+}
+.card-d {
+  margin: 4px;
+  padding: 12px 14px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lb-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.lb-h b {
+  font-weight: 400;
+  font-size: 24px;
+}
+.lb-h small {
+  font-size: 14px;
+  color: var(--mute);
+  letter-spacing: 1px;
+}
+.lb-wait {
+  margin: 0;
+  color: var(--accent);
+  font-size: 18px;
+}
+.lb-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.lb-log li {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  box-shadow: 0 2px 0 0 var(--dim);
+  font-size: 19px;
+  line-height: 1.2;
+}
+.lb-log li.new {
+  animation: opt-in 0.3s steps(3) backwards;
+}
+.lb-y {
+  color: var(--mute);
+  font-size: 16px;
+}
+.lb-log li.k-pick span:last-child {
+  color: var(--accent);
+}
+.lb-log li.k-note span:last-child {
+  color: var(--mute);
+  font-size: 17px;
+}
+.lb-log li.k-ch {
+  grid-template-columns: 1fr;
+  text-align: center;
+  color: var(--orange);
+  letter-spacing: 2px;
+}
+.lb-log li.k-ch .lb-y {
+  display: none;
+}
+.lb-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.lb-chip {
+  margin: 4px;
+  padding: 6px 12px;
+  background: var(--bg-deep);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.lb-chip b {
+  font-weight: 400;
+  font-size: 20px;
+}
+.lb-chip small {
+  font-size: 15px;
+  color: var(--mute);
+}
+.lb-chip.on {
+  background: var(--orange);
+  color: var(--on-orange);
+}
+.lb-chip.on small {
+  color: var(--on-orange);
+}
+.lb-fam {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0;
+  font-size: 18px;
+}
+.lb-fam dt {
+  color: var(--mute);
+}
+.lb-fam dd {
+  margin: 0;
+  text-align: right;
+}
+.lb-map {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+}
+.lb-map i {
+  aspect-ratio: 1;
+  background: var(--stat-empty);
+}
+.lb-map i.now {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+.lb-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(20, 14, 30, 0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px 8px 0;
+}
+.lb-sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 94vh;
+  overflow-y: auto;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.lb-sh {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  box-shadow: 0 2px 0 0 var(--dim);
+}
+.lb-play .head {
+  padding-top: 8px;
+}
+.lb-auto {
+  padding: 8px 16px 20px;
+}
+.lb-auto .btn-sub {
+  min-height: 48px;
+  width: 100%;
+  font-size: 18px;
+}
+
+/* giấy khai sinh */
+.bc {
+  margin: 4px 4px 18px;
+  background: var(--card);
+  color: var(--card-ink);
+}
+.bc-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 16px;
+  background: var(--orange-d);
+  color: #fbeff2;
+}
+.bc-h b {
+  font-weight: 400;
+  font-size: 26px;
+}
+.bc-h small {
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+.bc-in {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bc-in .mute {
+  color: var(--card-mute);
+  letter-spacing: 1px;
+}
+.bc-in h1 {
+  margin: 0;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 1;
+}
+.bc-in p {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--card-mute);
+}
+.bc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+  margin-top: 6px;
+}
+.bc-row {
+  display: flex;
+  flex-direction: column;
+}
+.bc-row span {
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--card-mute);
+  text-transform: uppercase;
+}
+.bc-row b {
+  font-weight: 400;
+  font-size: 19px;
+}

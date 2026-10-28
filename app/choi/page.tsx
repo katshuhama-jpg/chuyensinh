@@ -13,12 +13,13 @@ import { CheerMeter, SlideUnlock } from '@/components/MiniActs';
 import Sprite from '@/components/Sprite';
 import SwipeDeck from '@/components/SwipeDeck';
 import { BESTIE, CAST, MOM } from '@/lib/cast';
-import type { Character, Family } from '@/lib/character';
+import { placeOf, siblingText, type Character, type Family } from '@/lib/character';
 import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEndOf, titlesOf } from '@/lib/endings';
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
-import { activeOf, choose, ctxOf, fastForward, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { commit, focusesOf } from '@/lib/board';
+import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -88,29 +89,23 @@ export default function Choi() {
   if (story.scene === 'end' && !fb) return <Ending char={char} family={family} story={story} onRewind={(i) => update(rewind(story, i))} />;
 
   return (
-    <Play
-      R={resolverOf(char, family)}
-      key={`${story.path.length}${fb ? "f" : "n"}`}
+    <Board
       char={char}
       family={family}
       story={story}
       fb={fb}
-      onChoose={(i, note) => {
-        const r = choose(resolverOf(char, family), char, family, story, i);
-        // cảnh ngẫm: lưu dòng người chơi tự viết
-        if (note) {
-          const sc = resolverOf(char, family)(story.scene, story);
-          const x0 = ctxOf(char, family, story, sc?.age ?? 0);
-          r.s.notes = [...(r.s.notes ?? []), { age: sc?.age ?? 0, q: sc?.ask?.(x0) ?? '', a: note }];
-        }
+      onCommit={(i, note) => {
+        const r = commit(resolverOf(char, family), char, family, story, i, note);
         update(r.s);
-        const has = r.fb.notes.length || r.fb.sys.length || r.fb.mids.length;
-        setFb(has ? r.fb : null);
+        const has = r.fb.notes.length || r.fb.sys.length || r.fb.mids.length || r.fb.met.length;
+        return has ? r.fb : null;
       }}
-      onNext={() => setFb(null)}
+      setFb={setFb}
+      onStory={(st) => update(st)}
       onFast={(ch) => {
         const r = fastForward(resolverOf(char, family), char, family, story);
-        update(r.s);
+        const add = r.lines.map((l) => ({ ...l, k: 'feed' as const }));
+        update({ ...r.s, log: [...(r.s.log ?? []), ...add].slice(-500) });
         setFb(null);
         setFf({ ch, lines: r.lines.length ? r.lines : [{ age: 0, year: char.birthYear, t: 'Không có gì để tua.' }] });
       }}
@@ -118,7 +113,328 @@ export default function Choi() {
   );
 }
 
+
+/* ---------- bảng đời kiểu 1 in 8 Billion ---------- */
+const WEALTH_DOTS: Record<string, number> = { 'Mồ côi, ở với ông bà': 1, 'Nhà nông': 2, 'Lao động phổ thông': 2, 'Tiểu thương': 3, 'Công chức trung lưu': 3, 'Khá giả': 4, 'Hào môn': 5 };
+const SPEEDS = [1, 2, 4, 8];
+
+function Board({
+  char,
+  family,
+  story,
+  fb,
+  onCommit,
+  setFb,
+  onStory,
+  onFast,
+}: {
+  char: Character;
+  family: Family;
+  story: Story;
+  fb: Feedback | null;
+  onCommit: (i: number, note?: string) => Feedback | null;
+  setFb: (f: Feedback | null) => void;
+  onStory: (s: Story) => void;
+  onFast: (chapter: string) => void;
+}) {
+  const R = useMemo(() => resolverOf(char, family), [char, family]);
+  const sc = story.scene !== 'end' ? R(story.scene, story) : undefined;
+  const age = sc?.age ?? 0;
+  const x = ctxOf(char, family, story, age);
+  const [speed, setSpeed] = useState(1);
+  const [paused, setPaused] = useState(false);
+  const [auto, setAuto] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [shown, setShown] = useState(0);
+  const [more, setMore] = useState(24);
+  const [born, setBorn] = useState(story.path.length > 0);
+  const isFeed = sc?.kind === 'feed';
+  const lines = useMemo(() => (isFeed && sc?.feed ? sc.feed(x) : []), [story.scene, story.path.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stop = !!sc && STOP_AT.includes(sc.id);
+  const running = born && !paused && !menu;
+
+  useEffect(() => setShown(0), [story.scene, story.path.length]);
+
+  const go = useCallback(
+    (i: number, note?: string, quiet = false) => {
+      const f = onCommit(i, note);
+      setFb(quiet ? null : f);
+    },
+    [onCommit, setFb],
+  );
+
+  // đồng hồ: mỗi nhịp hiện một năm; hết các năm thì sang cảnh tiếp
+  useEffect(() => {
+    if (!isFeed || !running || fb) return;
+    const t = setTimeout(() => (shown < lines.length ? setShown(shown + 1) : go(0, undefined, true)), (shown === 0 ? 500 : 2400) / speed);
+    return () => clearTimeout(t);
+  }, [isFeed, running, fb, shown, lines.length, speed, go]);
+
+  // tự chọn hộ (trừ những ngã rẽ lớn)
+  useEffect(() => {
+    if (!sc || isFeed || !auto || stop || fb || !running) return;
+    const t = setTimeout(() => {
+      const opts = visibleChoices(sc, x);
+      go(sc.kind === 'reflect' ? opts.length - 1 : Math.floor(Math.random() * opts.length), undefined, true);
+    }, 1400 / speed);
+    return () => clearTimeout(t);
+  }); // chạy lại mỗi lần vẽ là đủ: đã có điều kiện chặn
+
+  const curAge = isFeed ? (lines[Math.max(0, shown - 1)]?.age ?? age) : age;
+  const year = char.birthYear + curAge;
+  const pending = isFeed ? lines.slice(0, shown) : [];
+  const log = [...(story.log ?? []), ...pending.map((l) => ({ ...l, k: 'feed' as const }))].reverse();
+  const decide = !!sc && born && ((!isFeed && (!auto || stop)) || !!fb);
+  const fo = focusesOf(curAge);
+  const curFocus = fo.find((f) => f.k === story.focus) ?? fo[0];
+  const span = Math.max(80, lifespanOf(char, story));
+
+  if (!born) return <BirthCard char={char} family={family} story={story} onBegin={() => setBorn(true)} />;
+
+  return (
+    <main className="app dither lb">
+      <div className="lb-top">
+        <div className="lb-age">
+          <span>Tuổi</span>
+          <b>{curAge}</b>
+          <small>
+            {year} · {x.me}
+            {isFeed && lines.length > 1 ? ` · 1 năm ≈ ${(2.4 / speed).toFixed(1)} giây` : ''}
+          </small>
+          <Notebook x={x} story={story} />
+        </div>
+        <div className="lb-bar" aria-hidden="true">
+          <i key={`${story.path.length}-${shown}`} style={{ animationDuration: `${2.4 / speed}s`, animationPlayState: running && isFeed ? 'running' : 'paused' }} />
+        </div>
+        <div className="lb-ctl" role="toolbar" aria-label="Điều khiển thời gian">
+          <button type="button" className="px" onClick={() => setPaused(!paused)} aria-pressed={paused}>
+            {paused ? '▶ Chạy' : '❚❚ Dừng'}
+          </button>
+          {SPEEDS.map((v) => (
+            <button key={v} type="button" className={`px ${speed === v ? 'on' : ''}`} onClick={() => (setSpeed(v), setPaused(false))}>
+              {v}×
+            </button>
+          ))}
+          <button type="button" className="px" onClick={() => (isFeed ? (shown < lines.length ? setShown(lines.length) : go(0, undefined, true)) : undefined)} disabled={!isFeed}>
+            Tiếp »
+          </button>
+          <button type="button" className="px" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Thêm">
+            ⋯
+          </button>
+        </div>
+        {menu && (
+          <div className="lb-menu px">
+            <button type="button" onClick={() => (setAuto(!auto), setMenu(false))}>
+              {auto ? '✓ Đang tự chọn hộ (bấm để tắt)' : 'Để game tự chọn hộ'}
+            </button>
+            {sc && (
+              <button type="button" onClick={() => (setMenu(false), onFast(sc.chapter))}>
+                ⏭ Tua hết {sc.chapter.toLowerCase()}
+              </button>
+            )}
+            <button type="button" onClick={() => setMenu(false)}>
+              Đóng
+            </button>
+          </div>
+        )}
+        <div className="lb-stats">
+          {RADAR.map((r) => (
+            <div key={r.label}>
+              <span>{r.label}</span>
+              <b>{Math.round(r.of(story.stats))}</b>
+              <i>
+                <em style={{ width: `${r.of(story.stats)}%` }} />
+              </i>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="body lb-body">
+        <section className="card-d px-dim">
+          <div className="lb-h">
+            <b>Nhật ký đời</b>
+            <small>MỚI NHẤT Ở TRÊN</small>
+          </div>
+          {isFeed && shown < lines.length && <p className="lb-wait">{paused ? '❚❚ Đang dừng' : '… năm tháng đang trôi'}</p>}
+          <ol className="lb-log">
+            {log.slice(0, more).map((l, i) => (
+              <li key={`${log.length - i}`} className={`k-${l.k} ${i < pending.length ? 'new' : ''}`}>
+                <span className="lb-y">{l.k === 'ch' ? '' : `${l.age} tuổi`}</span>
+                <span>{l.t}</span>
+              </li>
+            ))}
+          </ol>
+          {log.length > more && (
+            <button type="button" className="btn-sub px" onClick={() => setMore(more + 40)}>
+              Xem những năm trước
+            </button>
+          )}
+        </section>
+
+        <section className="card-d px-dim">
+          <div className="lb-h">
+            <b>Trọng tâm năm nay</b>
+            <small>ĐỔI LÚC NÀO CŨNG ĐƯỢC</small>
+          </div>
+          <div className="lb-chips">
+            {fo.map((f) => (
+              <button key={f.k} type="button" className={`lb-chip px ${curFocus.k === f.k ? 'on' : ''}`} onClick={() => onStory({ ...story, focus: f.k })}>
+                <b>{f.t}</b>
+                <small>{f.d}</small>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <FamilyPanel char={char} family={family} story={story} age={curAge} x={x} />
+
+        <section className="card-d px-dim">
+          <div className="lb-h">
+            <b>Bản đồ đời</b>
+            <small>1 Ô = 1 NĂM</small>
+          </div>
+          <div className="lb-map">
+            {Array.from({ length: Math.ceil(span / 10) * 10 }, (_, a) => {
+              const m = story.mood?.[a];
+              return <i key={a} className={a === curAge ? 'now' : ''} style={m !== undefined && a < curAge ? { background: `color-mix(in srgb, var(--stat) ${Math.max(15, m)}%, var(--stat-empty))` } : undefined} title={`${a} tuổi`} />;
+            })}
+          </div>
+          <p className="mt-hint">Màu càng đậm là năm càng vui. Ô viền sáng là năm đang sống.</p>
+        </section>
+      </div>
+
+      {decide && (
+        <div className="lb-veil">
+          <div className="lb-sheet px" role="dialog" aria-modal="true" aria-label="Một ngã rẽ">
+            <div className="lb-sh">
+              <span>{fb ? 'CHUYỆN VỪA XẢY RA' : 'MỘT NGÃ RẼ'}</span>
+              <span>
+                {age} tuổi · {char.birthYear + age}
+              </span>
+            </div>
+            <Play
+              R={R}
+              key={`${story.path.length}${fb ? 'f' : 'n'}`}
+              char={char}
+              family={family}
+              story={story}
+              fb={fb}
+              embedded
+              onChoose={(i, note) => go(i, note)}
+              onNext={() => setFb(null)}
+              onFast={onFast}
+            />
+            {!fb && !stop && (
+              <div className="lb-auto">
+                <button type="button" className="btn-sub px" onClick={() => setAuto(true)}>
+                  Từ giờ để game tự chọn hộ
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+
+function BirthCard({ char, family, story, onBegin }: { char: Character; family: Family; story: Story; onBegin: () => void }) {
+  const dots = WEALTH_DOTS[family.wealth] ?? 3;
+  const h = story.seed ?? 0;
+  const mom = 20 + (h % 11);
+  const dad = mom + 1 + ((h >>> 4) % 6);
+  const orphan = family.parents === 'Không còn bố mẹ';
+  const row = (k: string, v: ReactNode) => (
+    <div className="bc-row">
+      <span>{k}</span>
+      <b>{v}</b>
+    </div>
+  );
+  return (
+    <main className="app dither">
+      <div className="body" style={{ paddingTop: 24 }}>
+        <div className="bc px">
+          <div className="bc-h">
+            <b>Giấy khai sinh</b>
+            <small>Số {String((h % 9000000) + 1000000)}</small>
+          </div>
+          <div className="bc-in">
+            <small className="mute">HỌ VÀ TÊN</small>
+            <h1>{char.name}</h1>
+            <p>
+              Năm {char.birthYear}, {char.gender === 'f' ? 'một bé gái' : 'một bé trai'} chào đời ở {placeOf(family).long}, trong một gia đình {family.wealth.toLowerCase()}.{' '}
+              {family.siblings.length ? `Trong nhà có ${siblingText(family.siblings)}.` : 'Là con một.'}
+            </p>
+            <div className="bc-grid">
+              {row('Giới tính', char.gender === 'f' ? 'Nữ' : 'Nam')}
+              {row('Nơi sinh', placeOf(family).short)}
+              {row('Gia cảnh', `${'●'.repeat(dots)}${'○'.repeat(5 - dots)}`)}
+              {row(orphan ? 'Người nuôi' : 'Bố mẹ', orphan ? 'Ông bà' : `Mẹ ${mom} tuổi · Bố ${dad} tuổi`)}
+              {row('Không khí gia đình', family.parents)}
+              {row('Bạn thân sau này', story.bestie)}
+            </div>
+          </div>
+        </div>
+        <button type="button" className="btn-main" onClick={onBegin}>
+          ▶ BẮT ĐẦU ĐỜI NÀY
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function FamilyPanel({ char, family, story, age, x }: { char: Character; family: Family; story: Story; age: number; x: Ctx }) {
+  const h = story.seed ?? 0;
+  const mom = 20 + (h % 11);
+  const dad = mom + 1 + ((h >>> 4) % 6);
+  const orphan = family.parents === 'Không còn bố mẹ';
+  const old = age >= 60;
+  const sib = family.siblings.map((s, i) => `${s.older ? (s.gender === 'm' ? 'Anh trai' : 'Chị gái') : s.gender === 'm' ? 'Em trai' : 'Em gái'}, ${Math.max(0, age + (s.older ? 2 + i * 2 : -2 - i * 2))} tuổi`).filter((t) => !t.endsWith(', 0 tuổi') || true);
+  const p = story.partner && story.partner !== 'xemmat' ? story.partner : null;
+  return (
+    <section className="card-d px-dim">
+      <div className="lb-h">
+        <b>Gia đình và cuộc đời</b>
+      </div>
+      <dl className="lb-fam">
+        {orphan ? (
+          <>
+            <dt>Ông bà</dt>
+            <dd>{old ? 'Đã đi xa' : 'Nuôi mình từ bé'}</dd>
+          </>
+        ) : (
+          <>
+            <dt>Mẹ</dt>
+            <dd>{age + mom >= 85 ? 'Đã đi xa' : `${age + mom} tuổi`}</dd>
+            <dt>Bố</dt>
+            <dd>{age + dad >= 82 ? 'Đã đi xa' : `${age + dad} tuổi`}</dd>
+          </>
+        )}
+        <dt>Anh chị em</dt>
+        <dd>{sib.length ? sib.join(' · ') : 'Con một'}</dd>
+        <dt>Bạn thân</dt>
+        <dd>{story.bestie}</dd>
+        <dt>{story.married ? (x.lg === 'm' ? 'Chồng' : 'Vợ') : 'Người yêu'}</dt>
+        <dd>{p ? `${x.L(p)} · ${statusOf(story, p)}` : story.partner === 'xemmat' ? 'Người xem mắt' : 'Chưa có'}</dd>
+        {story.kids > 0 && (
+          <>
+            <dt>Con</dt>
+            <dd>{story.kids} đứa</dd>
+          </>
+        )}
+        <dt>Đã gặp</dt>
+        <dd>
+          {story.met.length}/{MAX_LIFE} người trong đời
+        </dd>
+      </dl>
+    </section>
+  );
+}
+
 /* ---------- một cảnh ---------- */
+const Shell = ({ embedded, children }: { embedded?: boolean; children: ReactNode }) => (embedded ? <div className="lb-play">{children}</div> : <main className="app dither">{children}</main>);
+
 const CH_NO: Record<string, number> = { 'Tuổi thơ': 1, 'Tuổi teen': 2, 'Tuổi trẻ': 3, 'Lập gia đình': 4, 'Tuổi già': 5 };
 const CH_ID: Record<string, string> = { 'Tuổi thơ': 'tho', 'Tuổi teen': 'teen', 'Tuổi trẻ': 'tre', 'Lập gia đình': 'nha', 'Tuổi già': 'gia' };
 const CH_LINE: Record<string, string> = {
@@ -129,7 +445,7 @@ const CH_LINE: Record<string, string> = {
   'Tuổi già': 'Những người còn ở lại',
 };
 
-function Play({ R, char, family, story, fb, onChoose, onNext, onFast }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number, note?: string) => void; onNext: () => void; onFast: (chapter: string) => void }) {
+function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number, note?: string) => void; onNext: () => void; onFast: (chapter: string) => void; embedded?: boolean }) {
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
   const last = story.path[story.path.length - 1];
   const shownId = fb ? last.scene : story.scene;
@@ -142,7 +458,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast }: { R: Res
   const who = sc.who?.(x) ?? null;
   // sang chương mới thì hiện màn chương
   const prevCh = !fb && last ? R(last.scene, story.hist[story.hist.length - 1] ? { ...story.hist[story.hist.length - 1], hist: [] } : story)?.chapter : undefined;
-  const [card, setCard] = useState(!fb && (story.path.length === 0 || prevCh !== sc.chapter));
+  const [card, setCard] = useState(!embedded && !fb && (story.path.length === 0 || prevCh !== sc.chapter));
 
   const meLayers = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
   const whoLayers = useMemo(() => {
@@ -177,18 +493,20 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast }: { R: Res
     );
 
   return (
-    <main className="app dither">
+    <Shell embedded={embedded}>
       <div className="head">
-        <Link href="/" className="back" aria-label="Về trang đầu">
-          ‹
-        </Link>
+        {!embedded && (
+          <Link href="/" className="back" aria-label="Về trang đầu">
+            ‹
+          </Link>
+        )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="eyebrow" style={{ fontSize: 18 }}>
             {sc.chapter.toUpperCase()} · {age} TUỔI · {x.year}
           </div>
           <h1>{txt(sc.title, x)}</h1>
         </div>
-        <Notebook x={x} story={story} />
+        {!embedded && <Notebook x={x} story={story} />}
       </div>
 
       <div className="body" style={{ paddingTop: 4, gap: 16 }}>
@@ -303,13 +621,13 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast }: { R: Res
           !chat && !swipe && !call && !tap && <Choices key={sc.id} opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} timer={sc.timer} timeout={sc.timeout} />
         )}
 
-        {!fb && (
+        {!fb && !embedded && (
           <button type="button" className="ff-btn" onClick={() => onFast(sc.chapter)}>
             ⏩ Tua nhanh hết {sc.chapter.toLowerCase()}
           </button>
         )}
       </div>
-    </main>
+    </Shell>
   );
 }
 

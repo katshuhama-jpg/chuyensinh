@@ -96,6 +96,20 @@ export interface StoryCore {
   endAt?: number;
   /** hạt ngẫu nhiên riêng của đời này: cùng tên, cùng năm sinh vẫn ra chuyện khác */
   seed?: number;
+  /** nhật ký đời (mới nhất ở cuối), kiểu "Life record" */
+  log?: LogLine[];
+  /** tâm trạng từng năm (theo Tâm lý), để vẽ bản đồ đời */
+  mood?: number[];
+  /** trọng tâm đang chọn, đổi lúc nào cũng được */
+  focus?: string;
+}
+
+export interface LogLine {
+  age: number;
+  year: number;
+  t: string;
+  /** feed: năm trôi qua; pick: lựa chọn; note: hệ quả; ch: sang chương */
+  k: 'feed' | 'pick' | 'note' | 'ch';
 }
 
 export interface Photo {
@@ -400,7 +414,7 @@ export function visibleChoices(scene: Scene, x: Ctx) {
 }
 
 /** Những cảnh quan trọng không tự chọn hộ khi tua nhanh (cầu hôn, cưới, người cũ) */
-const STOP_AT = ['y27_cauhon', 'y28_hethong', 'y29_quaylai', 'm40_nguoicu'];
+export const STOP_AT = ['y27_cauhon', 'y28_hethong', 'y29_quaylai', 'm40_nguoicu'];
 
 /** Tua nhanh hết thời kỳ hiện tại (kiểu Auto của 1 in 8 Billion): tự chọn ngẫu nhiên đến khi sang chương mới
  *  hoặc gặp một ngã rẽ lớn. Trả về trạng thái mới và các dòng tóm tắt đã trôi qua. */
@@ -445,6 +459,8 @@ export function normalizeStory(s: Story): Story {
       peak: c.peak ?? 0,
       album: c.album ?? [],
       notes: c.notes ?? [],
+      log: c.log ?? [],
+      mood: c.mood ?? [],
     };
   };
   return { ...fix(s), hist: (s.hist ?? []).map(fix) };
