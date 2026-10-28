@@ -124,7 +124,7 @@ export interface Choice {
   /** cảnh quẹt: lựa chọn này ứng với Match người nào; Bảng tình duyên: việc này làm với ai */
   loveId?: LoveId;
   /** Bảng tình duyên: loại việc (nhắn tin, hẹn hò, tỏ tình, buông, quẹt, đi chỗ mới...) */
-  act?: 'chat' | 'date' | 'confess' | 'drop' | 'quet' | 'explore' | 'friends' | 'work';
+  act?: 'chat' | 'date' | 'confess' | 'drop' | 'quet' | 'explore' | 'friends' | 'work' | 'gift' | 'gold';
 }
 
 export interface Scene {
@@ -133,7 +133,13 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat' | 'swipe' | 'hub';
+  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer';
+  /** cảnh chat: máy dùng (mặc định theo năm); 'pc' là phần mềm chat ở quán net */
+  device?: (x: Ctx) => 'letter' | 'nokia' | 'pc' | 'smart' | 'ai';
+  /** cảnh gọi điện: chiều gọi, gọi video, tên người kia, dòng phụ, câu người kia nói khi thông máy */
+  call?: (x: Ctx) => { dir: 'in' | 'out'; video?: boolean; name: string; sub?: string; lines?: string[] };
+  /** cảnh trò chơi chạm: đạt mục tiêu thì chọn lựa chọn đầu, không thì lựa chọn thứ hai */
+  tap?: { goal: number };
   title: string | ((x: Ctx) => string);
   text: (x: Ctx) => string[];
   /** cảnh tin nhắn: tin hiện trong khung chat */

@@ -6,6 +6,9 @@ import type { Bg } from '@/components/Backdrop';
 import TileStage from '@/components/TileStage';
 import Feed from '@/components/Feed';
 import Phone, { skinOf } from '@/components/Phone';
+import CallScreen, { callSkinOf } from '@/components/CallScreen';
+import TapGame from '@/components/TapGame';
+import { CheerMeter, SlideUnlock } from '@/components/MiniActs';
 import Sprite from '@/components/Sprite';
 import SwipeDeck from '@/components/SwipeDeck';
 import { BESTIE, CAST, MOM } from '@/lib/cast';
@@ -17,6 +20,8 @@ import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
+import { newsOf } from '@/lib/world';
+import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
 
@@ -116,6 +121,9 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
   const post = sc.post?.(x);
   const chat = sc.kind === 'chat' && sc.msgs;
   const swipe = sc.kind === 'swipe' && sc.cards;
+  const call = sc.kind === 'call' && sc.call ? sc.call(x) : null;
+  const tap = sc.kind === 'tap' && sc.tap;
+
 
   if (card)
     return (
@@ -203,7 +211,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
         {chat && (
           <Phone
             key={shownId + String(!!fb)}
-            skin={skinOf(x.year)}
+            skin={sc.device?.(x) ?? skinOf(x.year)}
             me={x.me}
             name={whoName}
             year={x.year}
@@ -217,12 +225,33 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           />
         )}
 
+        {call && (
+          <CallScreen
+            key={shownId + String(!!fb)}
+            skin={callSkinOf(x.year)}
+            dir={call.dir}
+            video={call.video}
+            name={call.name}
+            sub={call.sub}
+            lines={call.lines}
+            avatar={whoLayers ? <Sprite layers={whoLayers} scale={1} anim="idle" dir={2} label="" /> : undefined}
+            opts={fb ? undefined : opts.map((o) => txt(o.t, x))}
+            picked={fb ? last.choice : undefined}
+            onChoose={onChoose}
+          />
+        )}
+
+        {tap && !fb && <TapGame goal={tap.goal} onEnd={(n) => onChoose(n >= tap.goal ? 0 : Math.min(1, opts.length - 1))} />}
+
         {swipe && !fb && (
           <SwipeDeck
             cards={sc.cards!(x)}
             year={x.year}
-            onDone={(id) => {
-              const k = opts.findIndex((o) => o.loveId === id);
+            gold={x.year >= 2015 ? { can: x.s.stats.tien >= 30, price: 8 } : undefined}
+            onDone={(id, gold) => {
+              const isGold = (o: Choice) => o.act === 'gold';
+              let k = opts.findIndex((o) => (id ? o.loveId === id : !o.loveId) && isGold(o) === gold);
+              if (k < 0) k = opts.findIndex((o) => !o.loveId && !isGold(o));
               onChoose(k >= 0 ? k : opts.length - 1);
             }}
           />
@@ -230,14 +259,53 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
 
         {fb ? (
           <FeedbackBox fb={fb} x={x} after={story} onNext={onNext} />
+        ) : sc.kind === 'cheer' ? (
+          <CheerMeter goal={sc.tap?.goal ?? 24} alt={opts.slice(2).map((o) => txt(o.t, x))} onChoose={onChoose} />
+        ) : sc.kind === 'unlock' ? (
+          <SlideUnlock>
+            <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
+          </SlideUnlock>
+        ) : sc.kind === 'gift' ? (
+          <GiftShelf opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
         ) : sc.kind === 'hub' ? (
           <HubBoard x={x} opts={opts} onChoose={onChoose} />
         ) : (
-          !chat && !swipe && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
+          !chat && !swipe && !call && !tap && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
         )}
 
       </div>
     </main>
+  );
+}
+
+/** Kệ quà: mỗi món một ô có biểu tượng, giá; ô cuối là "để lần sau" */
+function GiftShelf({ opts, onChoose }: { opts: string[]; onChoose: (i: number) => void }) {
+  const done = useRef(false);
+  return (
+    <div className="gifts">
+      {opts.map((t, i) => {
+        const [name, price] = t.split(' · ');
+        const icon = name.charAt(0);
+        const last = i === opts.length - 1;
+        return (
+          <button
+            key={i}
+            type="button"
+            className={`gift px ${last ? 'skip' : ''}`}
+            style={{ animationDelay: `${0.1 + i * 0.07}s` }}
+            onClick={() => {
+              if (done.current) return;
+              done.current = true;
+              onChoose(i);
+            }}
+          >
+            {!last && <i aria-hidden="true">{icon}</i>}
+            <b>{last ? t : name.slice(2)}</b>
+            {price && <small>{price}</small>}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -327,7 +395,7 @@ function HubBoard({ x, opts, onChoose }: { x: Ctx; opts: Choice[]; onChoose: (i:
   const act = activeOf(x.s);
   const slots: (LoveId | null)[] = [...act, ...Array(Math.max(0, MAX_ACTIVE - act.length)).fill(null)];
   const global = opts.filter((o) => !o.loveId);
-  const ICON: Record<string, string> = { chat: '✉', date: '♥', confess: '❀', drop: '✕', quet: '⇆', explore: '✈', friends: '☺', work: '▣' };
+  const ICON: Record<string, string> = { chat: '✉', date: '♥', gift: '✦', confess: '❀', drop: '✕', quet: '⇆', explore: '✈', friends: '☺', work: '▣' };
   return (
     <div className="hub">
       <div className="hub-top">
@@ -476,6 +544,15 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
         <small>
           {LOVES[id].job[x.lg === 'm' ? 0 : 1]} · thích {LOVES[id].likesName}
         </small>
+        <small className="nb-gift">
+          {(() => {
+            const cats = Object.keys(GIFT_CAT) as GiftCat[];
+            const yes = cats.filter((c) => story.flags.includes(`qua_${id}_${c}`)).map((c) => GIFT_CAT[c].label);
+            const no = cats.filter((c) => story.flags.includes(`ghet_${id}_${c}`)).map((c) => GIFT_CAT[c].label);
+            if (!yes.length && !no.length) return '✦ Quà: chưa biết gu, thử tặng xem';
+            return `✦ Quà: ${yes.length ? `thích ${yes.join(', ')}` : ''}${yes.length && no.length ? ' · ' : ''}${no.length ? `không thích ${no.join(', ')}` : ''}`;
+          })()}
+        </small>
         <div className="stat">
           <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
             {cells(story.love[id], 'looks')}
@@ -492,11 +569,20 @@ const stg = (bg: Bg | null, id: string) => bgStage(bg ?? { place: 'nha', time: '
 /** Sân khấu: nền LPC ghép sẵn, đổi theo nơi, giờ, mùa; không viền */
 function Stage({ x, bg, sceneId, children }: { x: Ctx; bg: Bg; sceneId: string; children: ReactNode }) {
   const st = bgStage(bg, sceneId, x.year);
+  const news = newsOf(x.year);
   return (
     <div className="stage-ts play">
       <TileStage src={st.src} time={bg.time} season={st.season} lights={st.lights}>
         {children}
       </TileStage>
+      {news && (
+        <div className="news" role="note" aria-label={`Tin năm ${x.year}: ${news}`}>
+          <b>TIN NÓNG {x.year}</b>
+          <span className="news-run">
+            <span>{news}</span>
+          </span>
+        </div>
+      )}
     </div>
   );
 }

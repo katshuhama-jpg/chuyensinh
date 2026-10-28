@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-export type PhoneSkin = 'letter' | 'nokia' | 'smart' | 'ai';
+export type PhoneSkin = 'letter' | 'nokia' | 'pc' | 'smart' | 'ai';
 
 export const skinOf = (year: number): PhoneSkin => (year < 2004 ? 'letter' : year < 2012 ? 'nokia' : year <= 2026 ? 'smart' : 'ai');
 
@@ -133,6 +133,53 @@ export default function Phone({
         </div>
       </div>
     );
+
+  // máy tính quán net, phần mềm chat thời 2004-2011 ("Chat Vàng"): cửa sổ, BUZZ làm rung cả khung
+  if (skin === 'pc') {
+    const buzz = msgs.some((m) => m.t.includes('BUZZ'));
+    return (
+      <div className={`pc ${buzz ? 'buzz' : ''}`}>
+        <div className="pc-title">
+          <span>☺ Chat Vàng - {name}</span>
+          <span aria-hidden="true">_ □ ✕</span>
+        </div>
+        <div className="pc-buddy">
+          <span className="pc-dot" aria-hidden="true" />
+          <b>{name}</b>
+          <small>{msgs.find((m) => m.t.startsWith('*'))?.t.replace(/^\*|\*$/g, '') ?? 'Đang trực tuyến'}</small>
+        </div>
+        <div className="pc-log">
+          {msgs
+            .filter((m) => !m.t.startsWith('*'))
+            .map((m, i) => (
+              <p key={i} className={`${m.me ? 'me' : ''} ${m.t.includes('BUZZ') ? 'pc-buzz' : ''}`} style={{ animationDelay: `${0.2 + i * 0.7}s` }}>
+                <b>{m.me ? me : name}:</b> {m.t}
+              </p>
+            ))}
+          {sent && !silent && (
+            <p className="me">
+              <b>{me}:</b> {sent.replace(/^"|"$/g, '')}
+            </p>
+          )}
+          {sent && silent && <p className="pc-sys">({me} đã chuyển sang chế độ ẩn)</p>}
+          {live && <p className="pc-sys pc-typing">{name} đang gõ chữ...</p>}
+        </div>
+        {live && (
+          <div className="pc-input">
+            {bar}
+            {opts!.map((t, i) => (
+              <button key={i} type="button" className="pc-opt" onClick={() => pick(i)}>
+                {t}
+              </button>
+            ))}
+            <div className="pc-send" aria-hidden="true">
+              ☺ ♫ BUZZ! <span>Gửi</span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // smartphone và tương lai
   const ai = skin === 'ai';

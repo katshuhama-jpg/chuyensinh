@@ -6,7 +6,7 @@ import { lpcLayers } from '@/lib/look';
 import type { SwipeCard } from '@/lib/story';
 
 export type DeckSkin = 'paper' | 'forum' | 'app' | 'ai';
-export const deckSkinOf = (year: number): DeckSkin => (year < 2010 ? 'paper' : year < 2014 ? 'forum' : year <= 2026 ? 'app' : 'ai');
+export const deckSkinOf = (year: number): DeckSkin => (year < 2005 ? 'paper' : year < 2015 ? 'forum' : year <= 2026 ? 'app' : 'ai');
 
 const TITLE: Record<DeckSkin, string> = {
   paper: 'MỤC TÌM BẠN BỐN PHƯƠNG',
@@ -20,8 +20,22 @@ const TITLE: Record<DeckSkin, string> = {
  * thích nhầm hồ sơ ảo thì bật ra một chuyện dở khóc dở cười rồi quẹt tiếp.
  * Hết thẻ mà không match thì gọi onDone(null).
  */
-export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[]; year: number; onDone: (loveId: string | null) => void }) {
+export default function SwipeDeck({
+  cards,
+  year,
+  gold,
+  onDone,
+}: {
+  cards: SwipeCard[];
+  year: number;
+  /** gói Vàng: can = đủ Tài chính để mua */
+  gold?: { can: boolean; price: number };
+  onDone: (loveId: string | null, gold: boolean) => void;
+}) {
   const skin = deckSkinOf(year);
+  const [vip, setVip] = useState(false);
+  const [shop, setShop] = useState(false);
+  const likedMe = cards.filter((c) => c.loveId).length;
   const [i, setI] = useState(0);
   const [dx, setDx] = useState(0);
   const [fly, setFly] = useState<0 | -1 | 1>(0);
@@ -43,7 +57,7 @@ export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[];
   }
   function advance() {
     setPop(null);
-    if (i + 1 >= cards.length) onDone(null);
+    if (i + 1 >= cards.length) onDone(null, vip);
     else setI(i + 1);
   }
 
@@ -68,10 +82,38 @@ export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[];
     <div className={`deck deck-${skin}`}>
       <div className="dk-bar">
         <b>{TITLE[skin]}</b>
+        {gold && (skin === 'app' || skin === 'ai') && (
+          <button type="button" className={`dk-gold ${vip ? 'on' : ''}`} onClick={() => !vip && setShop(true)} aria-label="Gói Vàng">
+            ★ {vip ? 'VÀNG' : `${likedMe} người thích bạn`}
+          </button>
+        )}
         <span>
           {Math.min(i + 1, cards.length)}/{cards.length}
         </span>
       </div>
+      {shop && (
+        <div className="dk-pop gold" role="dialog" aria-label="Mua gói Vàng">
+          <div className="dk-match">★ QUẸT VÀNG</div>
+          <p>Xem ngay ai đã thích bạn, match chắc chắn hơn. Giá: -{gold!.price} Tài chính.</p>
+          <div className="dk-goldrow">
+            {Array.from({ length: Math.max(1, likedMe) }, (_, k) => (
+              <i key={k} className="dk-blur" aria-hidden="true">
+                ♥
+              </i>
+            ))}
+          </div>
+          {gold!.can ? (
+            <button type="button" className="btn-main" onClick={() => (setVip(true), setShop(false))}>
+              MUA GÓI VÀNG
+            </button>
+          ) : (
+            <p className="dk-poor">Tài chính chưa đủ. Đi làm thêm rồi quay lại nhé.</p>
+          )}
+          <button type="button" className="btn-sub px" onClick={() => setShop(false)}>
+            Để sau
+          </button>
+        </div>
+      )}
       <div className="dk-stack">
         {nextCard && <Card c={nextCard} skin={skin} under />}
         {card && (
@@ -83,7 +125,7 @@ export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[];
             onPointerUp={onUp}
             onPointerCancel={onUp}
           >
-            <Card c={card} skin={skin} />
+            <Card c={card} skin={skin} liked={vip && !!card.loveId} />
             <span className="dk-stamp like" style={{ opacity: Math.max(0, Math.min(1, x / 90)) }}>
               {skin === 'paper' ? 'VIẾT THƯ' : 'THÍCH'}
             </span>
@@ -109,7 +151,7 @@ export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[];
             <>
               <div className="dk-match">{skin === 'paper' ? 'CÓ THƯ HỒI ÂM!' : 'MATCH!'}</div>
               <p>{pop.text}</p>
-              <button type="button" className="btn-main" onClick={() => onDone(pop.id ?? null)}>
+              <button type="button" className="btn-main" onClick={() => onDone(pop.id ?? null, vip)}>
                 {skin === 'paper' ? 'ĐỌC THƯ ▶' : 'NHẮN TIN ▶'}
               </button>
             </>
@@ -128,7 +170,7 @@ export default function SwipeDeck({ cards, year, onDone }: { cards: SwipeCard[];
   );
 }
 
-function Card({ c, skin, under }: { c: SwipeCard; skin: DeckSkin; under?: boolean }) {
+function Card({ c, skin, under, liked }: { c: SwipeCard; skin: DeckSkin; under?: boolean; liked?: boolean }) {
   const layers = useMemo(() => lpcLayers(c.look, c.gender, 'adult'), [c]);
   return (
     <div className={`dk-card ${under ? 'under' : ''}`}>
@@ -136,6 +178,7 @@ function Card({ c, skin, under }: { c: SwipeCard; skin: DeckSkin; under?: boolea
         <div className="dk-photo" style={{ background: c.bg }}>
           <Sprite layers={layers} scale={3} anim="idle" dir={2} label={`Ảnh của ${c.name}`} />
           {skin === 'ai' && <span className="dk-score">Độ hợp {c.score ?? 70}%</span>}
+          {liked && <span className="dk-liked">★ Đã thích bạn</span>}
         </div>
       ) : (
         <div className="dk-clip">Hộp thư số {c.box ?? 128}</div>

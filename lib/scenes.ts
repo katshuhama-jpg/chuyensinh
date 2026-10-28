@@ -9,6 +9,7 @@ import type { Bg } from '@/components/Backdrop';
 import { activeOf, ctxOf, isOut, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, type Choice, type Ctx, type Fx, type LoveId, type Post, type Resolve, type Scene, type Story, type SwipeCard } from './story';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
+import { GIFT_CAT, GIFT_PREF, shelfOf } from './gifts';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -1019,9 +1020,11 @@ function chatScene(age: number, n: number, id: LoveId): Scene {
     who: () => id,
     timer: 12,
     timeout: 2,
-    bg: () => ({ place: 'phong', time: 'night' }),
-    title: (x) => `Nhắn tin với ${x.L(id)}`,
-    text: (x) => [x.year < 2004 ? `Có thư của ${x.L(id)}.` : `${x.L(id)} vừa nhắn.`],
+    // 2004-2011: lượt chẵn chat ở quán net (Chat Vàng), lượt lẻ nhắn tin điện thoại
+    device: (x) => (x.year >= 2004 && x.year < 2012 && n % 2 === 1 ? 'pc' : x.year < 2004 ? 'letter' : x.year < 2012 ? 'nokia' : x.year <= 2026 ? 'smart' : 'ai'),
+    bg: (x) => (x.year >= 2004 && x.year < 2012 && n % 2 === 1 ? { place: 'net', time: 'night' } : { place: 'phong', time: 'night' }),
+    title: (x) => (x.year >= 2004 && x.year < 2012 && n % 2 === 1 ? `Chat với ${x.L(id)} ở quán net` : `Nhắn tin với ${x.L(id)}`),
+    text: (x) => [x.year < 2004 ? `Có thư của ${x.L(id)}.` : x.year < 2012 && n % 2 === 1 ? `Nick của ${x.L(id)} vừa sáng đèn.` : `${x.L(id)} vừa nhắn.`],
     msgs: (x) => TALKS[id][(age + n) % 2].msgs(x).map((t) => ({ me: false, t })),
     choices: [
       {
@@ -1156,6 +1159,56 @@ function meetScene(age: number, n: number, id: LoveId): Scene {
   };
 }
 
+/* ---------- tặng quà: đúng gu thì thân hẳn, trúng thứ người ấy ghét thì giảm ---------- */
+function giftScene(age: number, n: number, id: LoveId): Scene {
+  const shelf = shelfOf(id, age, n);
+  const pref = GIFT_PREF[id];
+  return {
+    id: `gift@${age}#${n}:${id}`,
+    age,
+    chapter: CH.tre,
+    kind: 'gift',
+    who: () => id,
+    bg: () => ({ place: 'pho', time: 'day' }),
+    title: (x) => `Chọn quà cho ${x.L(id)}`,
+    text: (x) => [
+      `${x.me} đi một vòng phố, ví còn ${x.s.stats.tien >= 60 ? 'rủng rỉnh' : x.s.stats.tien >= 30 ? 'vừa đủ' : 'mỏng dính'}.`,
+      x.has(`qua_${id}_${pref.likes[0]}`) || x.has(`qua_${id}_${pref.likes[1]}`)
+        ? `${x.L(id)} là người ${pref.why}.`
+        : `${x.L(id)} là ${LOVES[id].kind.toLowerCase()}. Không biết ${x.ay} thích gì nhỉ?`,
+    ],
+    choices: [
+      ...shelf.map(
+        (cat): Choice => ({
+          t: (x) => `${GIFT_CAT[cat].icon} ${GIFT_CAT[cat].name(x.year)}${GIFT_CAT[cat].price ? ` · -${GIFT_CAT[cat].price} Tài chính` : ' · tự tay làm'}`,
+          act: 'gift',
+          // quà đắt cần đủ tiền; quà tự làm cần đủ khéo và tình cảm
+          if: (x) => (cat === 'handmade' ? x.s.stats.tinh >= 35 : x.s.stats.tien >= GIFT_CAT[cat].price * 3),
+          do: (fx, x) => {
+            if (GIFT_CAT[cat].price) fx.stat('tien', -GIFT_CAT[cat].price);
+            const again = x.has(`qua_${id}_${cat}`);
+            if (pref.likes.includes(cat)) {
+              fx.love(id, again ? 8 : 15);
+              fx.flag(`qua_${id}_${cat}`);
+              fx.say(again ? `${x.L(id)} vẫn thích, nhưng lần này không còn bất ngờ như lần đầu.` : `${x.L(id)} sáng cả mắt: "Sao biết ${x.xung === 'anh' ? 'anh' : 'em'} thích cái này?" (Đã ghi vào Sổ tay: ${x.L(id)} thích ${GIFT_CAT[cat].label}.)`);
+            } else if (pref.hates === cat) {
+              fx.love(id, -8);
+              fx.flag(`ghet_${id}_${cat}`);
+              fx.say(`${x.L(id)} cười gượng, cảm ơn rất lịch sự. Có vẻ trúng đúng thứ ${x.ay} không ưa. (Sổ tay: ${x.L(id)} không thích ${GIFT_CAT[cat].label}.)`);
+            } else {
+              fx.love(id, 4);
+              fx.say(`${x.L(id)} nhận quà, vui vẻ. Nhưng chưa phải món ${x.ay} mong nhất.`);
+            }
+            if (x.s.partner && x.s.partner !== id) fx.flag(`len_${age}_${n}`);
+          },
+        }),
+      ),
+      { t: 'Thôi, để lần sau', act: 'gift', do: (fx) => fx.stat('tien', 1) },
+    ],
+    next: afterTurn(age, n),
+  };
+}
+
 function quetScene(age: number, n: number): Scene {
   return {
     id: `quet@${age}#${n}`,
@@ -1165,11 +1218,11 @@ function quetScene(age: number, n: number): Scene {
     bg: () => ({ place: 'phong', time: 'night' }),
     title: (x) => (x.year > 2026 ? 'Quẹt AI' : x.year >= 2015 ? 'Quẹt' : x.year >= 2010 ? 'Diễn đàn kết bạn' : 'Tìm bạn bốn phương'),
     text: (x) =>
-      x.year < 2012
+      x.year < 2005
         ? [`Tờ báo cuối tuần có cả trang "Tìm bạn bốn phương". ${x.me} cầm bút, đọc từng mẩu nhắn.`]
-        : x.year < 2014
+        : x.year < 2015
           ? [`${x.me} lập nick trên diễn đàn kết bạn, lướt từng hồ sơ trong mục "Tìm một nửa".`]
-          : [`${x.me} mở app hẹn hò. Quẹt phải là thích, quẹt trái là bỏ qua.`],
+          : [`${x.me} mở app hẹn hò. Quẹt phải là thích, quẹt trái là bỏ qua. Gói Vàng cho xem trước ai đã thích mình.`],
     cards: (x) => deckOf(x),
     choices: [
       ...LOVE_IDS.map(
@@ -1180,7 +1233,18 @@ function quetScene(age: number, n: number): Scene {
           do: (fx) => (fx.meet(id), fx.love(id, 14)),
         }),
       ),
+      // mua gói Vàng: tốn Tài chính, biết trước ai thích mình nên match chắc hơn
+      ...LOVE_IDS.map(
+        (id): Choice => ({
+          t: (x) => `Mua gói Vàng, match với ${x.L(id)}`,
+          loveId: id,
+          act: 'gold',
+          if: (x) => !x.s.met.includes(id) && !isOut(x.s, id),
+          do: (fx, x) => (fx.stat('tien', -8), fx.meet(id), fx.love(id, 20), fx.say(`Gói Vàng cho biết ${x.L(id)} đã thích ${x.me} từ trước. Câu chào đầu tiên trúng ngay.`)),
+        }),
+      ),
       { t: 'Không hợp ai', do: (fx) => (fx.mid('quet'), fx.stat('tam', -4)) },
+      { t: 'Mua gói Vàng mà vẫn không hợp ai', act: 'gold', do: (fx) => (fx.stat('tien', -8), fx.mid('quet'), fx.stat('tam', -6)) },
     ],
     next: afterTurn(age, n),
   };
@@ -1190,6 +1254,7 @@ function hubScene(age: number, n: number): Scene {
   const per = (id: LoveId): Choice[] => [
     { t: (x) => `Nhắn tin với ${x.L(id)}`, loveId: id, act: 'chat', if: (x) => activeOf(x.s).includes(id), to: `chat@${age}#${n}:${id}` },
     { t: (x) => `Hẹn hò với ${x.L(id)}`, loveId: id, act: 'date', if: (x) => activeOf(x.s).includes(id), to: `date@${age}#${n}:${id}` },
+    { t: (x) => `Tặng quà cho ${x.L(id)}`, loveId: id, act: 'gift', if: (x) => activeOf(x.s).includes(id), to: `gift@${age}#${n}:${id}` },
     {
       t: (x) => `Tỏ tình với ${x.L(id)}`,
       loveId: id,
@@ -1358,6 +1423,8 @@ export function resolverOf(c: Character, f: Family): Resolve {
     switch (kind) {
       case 'ev':
         return eraScene(age, ctxOf(c, f, s, age));
+      case 'gift':
+        return giftScene(age, n, who as LoveId);
       case 'hub':
         return hubScene(age, n);
       case 'chat':

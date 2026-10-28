@@ -1,11 +1,12 @@
 /**
- * 20 tình huống theo thời kỳ, lấy từ research bối cảnh xã hội Việt Nam 1975-2026
+ * 20 tình huống theo thời kỳ và 3 chuyện thế giới (CKTG LMHT, game chim vỗ cánh, iPhone), lấy từ research bối cảnh xã hội Việt Nam 1975-2026
  * (Project: research-boi-canh-xa-hoi-vn.md). Mỗi "ô" ở một tuổi chọn tình huống hợp với năm đó;
  * không có tình huống nào hợp thì bỏ qua ô ấy. Từ 2027 trở đi chỉ dùng những tình huống vẫn còn hợp (giả định).
  */
 
 import type { Bg } from '@/components/Backdrop';
 import { LOVE_IDS, type Choice, type Ctx, type LoveId, type Scene } from './story';
+import { LOL_WORLDS } from './world';
 
 type Ev = {
   id: string;
@@ -18,6 +19,13 @@ type Ev = {
   who?: Scene['who'];
   text: (x: Ctx) => string[];
   choices: Choice[];
+  /** giao diện tương tác: gọi điện, chat (điện thoại / quán net), bài trên Tường, trò chạm */
+  kind?: Scene['kind'];
+  msgs?: Scene['msgs'];
+  device?: Scene['device'];
+  call?: Scene['call'];
+  post?: Scene['post'];
+  tap?: Scene['tap'];
 };
 
 const partnerOf = (x: Ctx): LoveId | null => (x.s.partner && x.s.partner !== 'xemmat' ? x.s.partner : null);
@@ -27,6 +35,78 @@ const closest = (x: Ctx): LoveId => {
 };
 const firstLove = (x: Ctx): LoveId => (['khoi', 'long', 'minh'] as LoveId[]).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
 const sp = (x: Ctx) => (partnerOf(x) ? x.L(partnerOf(x)!) : x.lg === 'm' ? 'chồng' : 'vợ');
+
+
+/* ---------- chuyện thế giới chen vào đời (dùng chung cho các ô 14, 16, 21, 26) ---------- */
+const crushOf = (x: Ctx): LoveId => partnerOf(x) ?? (x.age < 18 ? (x.s.love.long >= x.s.love.minh ? 'long' : 'minh') : closest(x));
+const WORLD: Ev[] = [
+  {
+    id: 'cktg',
+    from: 2013,
+    to: 2025,
+    if: (x) => LOL_WORLDS.includes(x.year),
+    title: 'Đêm chung kết LMHT',
+    bg: () => ({ place: 'net', time: 'night' }),
+    kind: 'cheer',
+    tap: { goal: 24 },
+    who: (x) => crushOf(x),
+    post: (x) => ({
+      author: x.s.bestie,
+      time: 'Vừa xong',
+      text: x.year >= 2023 ? `T1 VÔ ĐỊCH CHUNG KẾT THẾ GIỚI ${x.year}!!! Faker không bao giờ già 😭🏆` : `SKT T1 VÔ ĐỊCH CKTG ${x.year}!!! Cả quán net hét ầm lên`,
+      likes: 1240,
+      comments: [
+        { who: 'Tuấn', t: 'Thức trắng đáng lắm' },
+        { who: 'Linh', t: 'Mai thi mà vẫn xem 🫠' },
+      ],
+    }),
+    text: (x) => [
+      `Chung kết Thế giới Liên Minh Huyền Thoại ${x.year}. ${x.age < 18 ? 'Quán net' : 'Phòng trọ'} chật kín người, ai cũng dán mắt vào màn chiếu.`,
+      `${x.L(crushOf(x))} ngồi cạnh ${x.me}, tay cầm cốc ${x.year < 2015 ? 'nước ngọt' : 'trà sữa'}, hét khàn cả giọng.`,
+    ],
+    choices: [
+      { t: 'Hét khản cổ đến phút cuối, ăn mừng cùng nhau', do: (fx, x) => (fx.love(crushOf(x), 12), fx.stat('noi', 4), fx.stat('hoc', -3)), note: (x) => `Lúc chiếc cúp được nâng lên, ${x.L(crushOf(x))} ôm chầm lấy ${x.me}.` },
+      { t: 'Xem đến cuối nhưng ngủ gật giữa trận', do: (fx, x) => (fx.love(crushOf(x), 4), fx.stat('tam', 2)), note: (x) => `Tỉnh dậy thì ${x.L(crushOf(x))} đã đắp áo khoác cho ${x.me}.` },
+      { t: 'Cá cược với cả hội', do: (fx) => (fx.stat('tien', 5), fx.rel('banthan', 5)) },
+      { t: 'Về ngủ sớm, mai còn đi học, đi làm', do: (fx) => (fx.stat('hoc', 4), fx.stat('tinh', 2)) },
+    ],
+  },
+  {
+    id: 'flappy',
+    from: 2014,
+    to: 2014,
+    title: 'Cơn sốt chim vỗ cánh',
+    bg: (x) => ({ place: x.age < 18 ? 'lop' : 'vanphong', time: 'day' }),
+    who: (x) => crushOf(x),
+    kind: 'tap',
+    tap: { goal: 5 },
+    text: (x) => [
+      `Đầu năm 2014, cả thế giới chơi một game chim vỗ cánh do một lập trình viên Việt làm ra. ${x.age < 18 ? 'Giờ ra chơi' : 'Giờ nghỉ trưa'}, ${x.L(crushOf(x))} thách: "Qua được 5 ống là tớ khao!"`,
+    ],
+    choices: [
+      { t: 'Qua 5 ống', do: (fx, x) => (fx.love(crushOf(x), 8), fx.stat('duyen', 5)), note: (x) => `${x.L(crushOf(x))} phải khao ${x.me} một chầu ${x.year < 2015 ? 'chè' : 'trà sữa'}.` },
+      { t: 'Rơi giữa chừng', do: (fx) => (fx.stat('noi', 3), fx.stat('tam', -2)), note: () => 'Cả nhóm cười lăn, rồi ai cũng thử và ai cũng rơi.' },
+    ],
+  },
+  {
+    id: 'iphone',
+    from: 2007,
+    to: 2009,
+    title: 'Chiếc điện thoại cảm ứng',
+    bg: () => ({ place: 'quan', time: 'day' }),
+    kind: 'unlock',
+    who: () => 'bestie',
+    text: (x) => [
+      `${x.s.bestie} khoe chiếc iPhone xách tay vừa mua, giá bằng mấy tháng lương. Cả bàn chuyền tay nhau, vuốt màn hình mà không cần bút.`,
+      `Trong túi ${x.me} là chiếc điện thoại bàn phím đã tróc sơn.`,
+    ],
+    choices: [
+      { t: 'Xin chụp chung một kiểu', do: (fx) => (fx.rel('banthan', 6), fx.stat('duyen', 4)) },
+      { t: '"Máy của tớ rơi không vỡ, pin một tuần!"', do: (fx) => (fx.stat('noi', 5), fx.stat('tam', 3)) },
+      { t: 'Về nhà dành dụm tiền mua một chiếc', do: (fx) => (fx.stat('tien', -6), fx.stat('dao', 4)) },
+    ],
+  },
+];
 
 /** ô tình huống: tuổi → các tình huống theo thứ tự ưu tiên */
 const SLOTS: Record<number, Ev[]> = {
@@ -55,16 +135,19 @@ const SLOTS: Record<number, Ev[]> = {
       to: 2100,
       title: (x) => (x.year <= 2026 ? 'Mẹ đi Nhật' : 'Mẹ đi làm xa'),
       bg: () => ({ place: 'nha', time: 'night' }),
+      who: () => 'mom',
+      kind: 'call',
+      call: (x) => ({ dir: 'in', video: true, name: 'Mẹ', sub: x.year <= 2026 ? 'Gọi từ Nhật Bản' : 'Gọi từ thành phố nổi', lines: ['"Con ăn cơm chưa? Bài kiểm tra thế nào?"', '"Mẹ nhớ con lắm."'] }),
       text: (x) => [
         x.year <= 2026
           ? `Mẹ sang Nhật làm thực tập sinh ba năm, ${x.me} ở với ông bà. Tối nào cũng gọi video, mẹ hỏi bài, rồi khóc ở đầu bên kia.`
           : `Mẹ ký hợp đồng làm việc ba năm ở một thành phố nổi ngoài khơi (giả định). Tối nào ${x.me} cũng gọi hình ba chiều cho mẹ.`,
-        `Hôm nay ${x.me} được mười điểm Toán, nhưng mạng chập chờn mãi không gọi được.`,
+        `Hôm nay ${x.me} được mười điểm Toán. Đúng lúc ấy, điện thoại rung: mẹ gọi video.`,
       ],
       choices: [
-        { t: 'Chụp bài kiểm tra gửi mẹ, đợi mẹ xem', do: (fx) => (fx.rel('bome', 10), fx.stat('hoc', 5)), note: () => 'Gần sáng mẹ mới nhắn lại một trái tim.' },
-        { t: 'Giận mẹ, tắt máy đi ngủ', do: (fx) => (fx.rel('bome', -8), fx.stat('tam', -5), fx.stat('noi', 5)) },
-        { t: 'Kể cho ông bà nghe trước', do: (fx) => (fx.stat('tinh', 6), fx.stat('tam', 5)) },
+        { t: 'Nghe máy, giơ bài kiểm tra lên camera', do: (fx) => (fx.rel('bome', 10), fx.stat('hoc', 5)), note: () => 'Mẹ khóc, rồi cười, rồi bắt giơ lại lần nữa để chụp màn hình.' },
+        { t: 'Đưa máy cho ông bà nói trước', do: (fx) => (fx.stat('tinh', 6), fx.stat('tam', 5)) },
+        { t: 'Giận mẹ, không nghe máy', do: (fx) => (fx.rel('bome', -8), fx.stat('tam', -5), fx.stat('noi', 5)) },
       ],
     },
   ],
@@ -105,6 +188,7 @@ const SLOTS: Record<number, Ev[]> = {
   ],
   /* ---------- tuổi teen ---------- */
   14: [
+    ...WORLD,
     {
       id: 'dienthoaiban',
       from: 1993,
@@ -112,6 +196,8 @@ const SLOTS: Record<number, Ev[]> = {
       title: 'Cuộc gọi đến nhà',
       bg: () => ({ place: 'nha', time: 'night' }),
       who: (x) => (x.s.love.long >= x.s.love.minh ? 'long' : 'minh'),
+      kind: 'call',
+      call: (x) => ({ dir: 'out', name: x.L(x.s.love.long >= x.s.love.minh ? 'long' : 'minh'), lines: ['(Giọng đàn ông trầm trầm) "Alô, ai đấy?"'] }),
       text: (x) => {
         const c = x.s.love.long >= x.s.love.minh ? 'long' : 'minh';
         return [`Nhà ${x.L(c)} vừa lắp điện thoại bàn. ${x.me} lấy hết can đảm quay số, tim đập thình thịch.`, `Đầu dây bên kia, một giọng đàn ông trầm trầm: "Alô, ai đấy?" - bố ${x.L(c)}.`];
@@ -126,33 +212,40 @@ const SLOTS: Record<number, Ev[]> = {
           },
           note: (x) => `Bố gọi to: "Có bạn hỏi bài này!" - và ${x.me} nghe tiếng cười khúc khích ở đầu dây.`,
         },
+        { t: 'Đưa máy cho bạn thân nói hộ', do: (fx) => (fx.rel('banthan', 6), fx.stat('noi', 3)) },
         { t: 'Hoảng quá, cúp máy', do: (fx) => fx.stat('tam', -4) },
-        { t: 'Nhờ bạn thân gọi hộ', do: (fx) => (fx.rel('banthan', 6), fx.stat('noi', 3)) },
       ],
     },
     {
       id: 'yahoo',
       from: 2004,
       to: 2011,
-      title: 'Dòng trạng thái Yahoo',
+      title: 'Dòng trạng thái lúc nửa đêm',
       bg: () => ({ place: 'net', time: 'night' }),
       who: (x) => (x.s.love.long >= x.s.love.minh ? 'long' : 'minh'),
+      kind: 'chat',
+      device: () => 'pc',
+      msgs: () => [
+        { me: false, t: '*Có ai hiểu tớ không...*' },
+        { me: false, t: 'Ơ, cậu cũng online à?' },
+        { me: false, t: 'BUZZ!!!' },
+      ],
       text: (x) => {
         const c = x.s.love.long >= x.s.love.minh ? 'long' : 'minh';
-        return [`Ở quán net, ${x.me} vừa đăng nhập Yahoo thì thấy nick ${x.L(c)} sáng đèn. Dòng trạng thái mới: "Có ai hiểu tớ không..."`];
+        return [`Ở quán net, ${x.me} vừa đăng nhập phần mềm chat (thời ấy ai cũng dùng Yahoo Messenger) thì thấy nick ${x.L(c)} sáng đèn. Dòng trạng thái mới: "Có ai hiểu tớ không..."`];
       },
       choices: [
         {
-          t: 'Đổi trạng thái thành "Tớ hiểu mà"',
+          t: '"Tớ hiểu mà. Kể tớ nghe đi"',
           do: (fx, x) => {
             const c = x.s.love.long >= x.s.love.minh ? 'long' : 'minh';
             fx.love(c, 9);
             fx.stat('duyen', 4);
           },
-          note: () => 'Năm phút sau, khung chat nháy cam: "BUZZ!!!"',
+          note: () => 'Hai đứa chat đến khi chủ quán net tắt máy.',
         },
-        { t: 'Nhắn hỏi thẳng "Cậu sao thế?"', do: (fx, x) => fx.love(x.s.love.long >= x.s.love.minh ? 'long' : 'minh', 6) },
-        { t: 'Để chế độ ẩn, chỉ ngồi nhìn', do: (fx) => (fx.stat('tinh', 3), fx.stat('tam', -3)) },
+        { t: '"BUZZ lại! Sao thế, ai bắt nạt à?"', do: (fx, x) => fx.love(x.s.love.long >= x.s.love.minh ? 'long' : 'minh', 6) },
+        { t: '(Chuyển sang chế độ ẩn, chỉ ngồi nhìn)', do: (fx) => (fx.stat('tinh', 3), fx.stat('tam', -3)) },
       ],
     },
     {
@@ -162,6 +255,17 @@ const SLOTS: Record<number, Ev[]> = {
       title: 'Trang confession của trường',
       bg: () => ({ place: 'phong', time: 'night' }),
       who: () => 'bestie',
+      post: (x) => ({
+        author: 'Confession THCS',
+        time: '2 giờ',
+        text: `#${x.year % 1000}${x.age} Gửi bạn tóc ngắn lớp ${x.year % 2 ? '9A' : '9B'}, tớ thích cậu lâu rồi. Mai ra cổng trường lúc tan học nhé.`,
+        likes: 312,
+        comments: [
+          { who: 'Hùng', t: `Ai chứ ${x.me} thì chắc rồi 😂` },
+          { who: 'Mai', t: 'Ôi dễ thương thế' },
+          { who: 'Tuấn', t: 'Ảo tưởng à' },
+        ],
+      }),
       text: (x) => [
         `Trang confession của trường đăng bài ẩn danh: "Gửi bạn tóc ngắn lớp ${x.year % 2 ? '9A' : '9B'}, tớ thích cậu lâu rồi."`,
         `Cả lớp đoán là ${x.me}. Bình luận nhảy lên vài trăm, có cả những câu chế giễu.`,
@@ -174,6 +278,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
   ],
   16: [
+    ...WORLD,
     {
       id: 'dibao',
       from: 2008,
@@ -202,14 +307,16 @@ const SLOTS: Record<number, Ev[]> = {
       title: 'Hết tiền điện thoại',
       bg: () => ({ place: 'phong', time: 'night' }),
       who: (x) => (x.s.love.long >= x.s.love.minh ? 'long' : 'minh'),
+      kind: 'call',
+      call: (x) => ({ dir: 'out', name: x.L(x.s.love.long >= x.s.love.minh ? 'long' : 'minh'), sub: 'Tài khoản chính: 300đ' }),
       text: (x) => {
         const c = x.s.love.long >= x.s.love.minh ? 'long' : 'minh';
         return [`Tài khoản còn đúng 300 đồng, không đủ nhắn một tin. Điện thoại "cục gạch" của ${x.L(c)} vẫn chờ câu trả lời.`];
       },
       choices: [
-        { t: '"Nháy máy" một hồi rồi tắt', do: (fx, x) => fx.love(x.s.love.long >= x.s.love.minh ? 'long' : 'minh', 6), note: (x) => `${x.L(x.s.love.long >= x.s.love.minh ? 'long' : 'minh')} hiểu ngay, gọi lại.` },
-        { t: 'Chạy ra đầu ngõ mua thẻ cào', do: (fx) => (fx.stat('tien', -4), fx.stat('noi', 4)) },
-        { t: 'Thôi, mai lên lớp nói', do: (fx) => fx.stat('tinh', 4) },
+        { t: 'Để đổ một hồi rồi tắt ("nháy máy")', do: (fx, x) => fx.love(x.s.love.long >= x.s.love.minh ? 'long' : 'minh', 6), note: (x) => `${x.L(x.s.love.long >= x.s.love.minh ? 'long' : 'minh')} hiểu ngay, gọi lại.` },
+        { t: 'Cúp, chạy ra đầu ngõ mua thẻ cào', do: (fx) => (fx.stat('tien', -4), fx.stat('noi', 4)) },
+        { t: 'Cúp máy, mai lên lớp nói', do: (fx) => fx.stat('tinh', 4) },
       ],
     },
     {
@@ -232,20 +339,26 @@ const SLOTS: Record<number, Ev[]> = {
   ],
   /* ---------- tuổi trẻ ---------- */
   21: [
+    ...WORLD,
     {
       id: 'luadao',
       from: 2016,
       to: 2100,
       title: 'Người lạ trên app',
       bg: () => ({ place: 'quan', time: 'dusk' }),
+      kind: 'chat',
+      msgs: (x) => [
+        { me: false, t: 'Em ơi, anh đang kẹt ở sân bay, thẻ bị khóa 😭' },
+        { me: false, t: x.year <= 2026 ? 'Em chuyển giúp anh mười triệu, mai anh trả gấp đôi nhé' : 'Cho anh mượn tạm điểm tín dụng AI, mai trả liền' },
+      ],
       text: (x) => [
         `Một hồ sơ trên app nhắn với ${x.me} suốt hai tuần: ảnh đẹp, nói chuyện ngọt, nhưng chưa bao giờ chịu gọi video.`,
         `Hôm nay người ấy nhắn: "${x.year <= 2026 ? 'Anh đang kẹt tiền ở sân bay, em chuyển giúp anh mười triệu' : 'Em mượn tạm điểm tín dụng AI của anh nhé'}, mai trả liền."`,
       ],
       choices: [
-        { t: 'Đòi gọi video trước', do: (fx) => (fx.stat('hoc', 4), fx.stat('dao', 3)), note: () => 'Người ấy chặn liên lạc ngay. Một tài khoản ảo.' },
-        { t: 'Chuyển tiền cho người ta', do: (fx) => (fx.stat('tien', -15), fx.stat('tam', -10), fx.mid('quet')) },
-        { t: 'Báo cáo tài khoản cho app', do: (fx) => (fx.stat('tinh', 3), fx.stat('dao', 4)) },
+        { t: '"Gọi video cho em xem mặt đã"', do: (fx) => (fx.stat('hoc', 4), fx.stat('dao', 3)), note: () => 'Người ấy chặn liên lạc ngay. Một tài khoản ảo.' },
+        { t: '"Dạ, em chuyển ngay"', do: (fx) => (fx.stat('tien', -15), fx.stat('tam', -10), fx.mid('quet')) },
+        { t: '(Báo cáo tài khoản cho app rồi chặn)', do: (fx) => (fx.stat('tinh', 3), fx.stat('dao', 4)) },
       ],
     },
     {
@@ -266,6 +379,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
   ],
   26: [
+    ...WORLD,
     {
       id: 'nguoiyeudixa',
       from: 2000,
@@ -420,11 +534,12 @@ const SLOTS: Record<number, Ev[]> = {
 export const SLOT_NEXT: Record<number, string> = { 9: 'c10_he', 11: 'c12_chuyennha', 14: 't15', 16: 't17_thi', 21: 'hub@21#1', 26: 'hub@26#1', 30: 'm32_tet', 35: 'm40_nguoicu', 42: 'm45_viec', 65: 'o75' };
 const chapterOf = (age: number) => (age <= 12 ? 'Tuổi thơ' : age <= 17 ? 'Tuổi teen' : age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già');
 
-export const ERA_EVENT_IDS = Object.values(SLOTS).flat().map((e) => e.id);
+export const ERA_EVENT_IDS = Array.from(new Set(Object.values(SLOTS).flat().map((e) => e.id)));
 
 /** Cảnh của ô tuổi `age`: tình huống đầu tiên hợp năm và điều kiện; không có thì bỏ qua */
 export function eraScene(age: number, x: Ctx): Scene {
-  const ev = (SLOTS[age] ?? []).find((e) => x.year >= e.from && x.year <= e.to && (!e.if || e.if(x)));
+  // mỗi tình huống chỉ gặp một lần trong đời
+  const ev = (SLOTS[age] ?? []).find((e) => !x.has(`ev_${e.id}`) && x.year >= e.from && x.year <= e.to && (!e.if || e.if(x)));
   const next = SLOT_NEXT[age] ?? 'end';
   if (!ev) return { id: `ev@${age}`, age, chapter: chapterOf(age), title: '', text: () => [], choices: [], next, skip: () => true };
   return {
@@ -435,7 +550,13 @@ export function eraScene(age: number, x: Ctx): Scene {
     bg: ev.bg,
     who: ev.who,
     text: ev.text,
-    choices: ev.choices,
+    choices: ev.choices.map((c) => ({ ...c, do: (fx, cx) => (fx.flag(`ev_${ev.id}`), c.do?.(fx, cx)) })),
+    kind: ev.kind,
+    msgs: ev.msgs,
+    device: ev.device,
+    call: ev.call,
+    post: ev.post,
+    tap: ev.tap,
     next,
   };
 }

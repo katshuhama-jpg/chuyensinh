@@ -2480,3 +2480,796 @@ p {
   position: absolute;
   inset: 0;
 }
+
+/* ---------- tin nóng theo năm (dải chạy dưới khung cảnh) ---------- */
+.news {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  background: #211833;
+  color: #fbeff2;
+  overflow: hidden;
+  font-size: 17px;
+  box-shadow: inset 0 2px 0 #4f3d6b;
+}
+.news b {
+  flex: none;
+  padding: 0 8px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  background: #c4302a;
+  color: #fff;
+  letter-spacing: 1px;
+  z-index: 1;
+}
+.news-run {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.news-run span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: news-run 14s linear infinite;
+}
+@keyframes news-run {
+  to {
+    transform: translateX(-100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-run span {
+    animation: none;
+    padding-left: 8px;
+    white-space: normal;
+  }
+}
+
+/* ---------- Chat Vàng ở quán net (2004-2011) ---------- */
+.pc {
+  margin: 4px auto;
+  width: 100%;
+  max-width: 360px;
+  background: #ece9d8;
+  color: #1a1a1a;
+  font-family: Tahoma, 'Patrick Hand', sans-serif;
+  box-shadow: 0 0 0 2px #0a246a, 6px 6px 0 rgba(0, 0, 0, 0.35);
+  animation: phone-up 0.35s steps(4) both;
+}
+.pc.buzz {
+  animation: phone-up 0.35s steps(4) both, buzz 0.08s steps(2) 1.6s 10;
+}
+@keyframes buzz {
+  0% {
+    transform: translate(-5px, 2px);
+  }
+  50% {
+    transform: translate(5px, -2px);
+  }
+}
+.pc-title {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: linear-gradient(#3a6fd8, #0a246a);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+.pc-buddy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #fff7c0;
+  border-bottom: 1px solid #b8b090;
+  font-size: 15px;
+}
+.pc-buddy small {
+  color: #7a5a00;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ffd200;
+  box-shadow: 0 0 0 1px #8a6a00;
+  flex: none;
+}
+.pc-log {
+  min-height: 110px;
+  margin: 6px;
+  padding: 6px 8px;
+  background: #fff;
+  box-shadow: inset 1px 1px 0 #808080;
+  font-size: 15px;
+  line-height: 1.35;
+}
+.pc-log p {
+  animation: tw-in 0.3s steps(3) both;
+}
+.pc-log b {
+  color: #c4302a;
+}
+.pc-log .me b {
+  color: #0a246a;
+}
+.pc-buzz {
+  color: #c4302a;
+  font-weight: 700;
+  font-size: 18px;
+}
+.pc-sys {
+  color: #808080;
+  font-style: italic;
+}
+.pc-typing {
+  animation: blink 1.2s steps(2) infinite !important;
+}
+.pc-input {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 6px 6px;
+}
+.pc-opt {
+  text-align: left;
+  padding: 6px 8px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #7f9db9;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+.pc-opt:hover,
+.pc-opt:focus-visible {
+  background: #dfe8f6;
+}
+.pc-send {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 13px;
+  color: #555;
+}
+.pc-send span {
+  padding: 1px 10px;
+  background: #ece9d8;
+  box-shadow: inset 0 0 0 1px #003c74;
+  color: #1a1a1a;
+}
+
+/* ---------- màn hình cuộc gọi ---------- */
+.call {
+  margin: 4px auto;
+  width: 100%;
+  max-width: 340px;
+  animation: phone-up 0.4s steps(5) both;
+}
+.cl-who {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.cl-who b {
+  font-size: 24px;
+}
+.cl-who small {
+  font-size: 16px;
+  opacity: 0.8;
+}
+.cl-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 8px;
+}
+.cl-lines p {
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 18px;
+  animation: tw-in 0.35s steps(3) both;
+}
+.cl-picked {
+  text-align: center;
+  font-size: 17px;
+  opacity: 0.85;
+}
+.cl-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 6px;
+}
+.cl-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 18px;
+  color: #fff;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+.cl-btn i {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.cl-btn.ok {
+  background: #2f9a4a;
+}
+.cl-btn.mid {
+  background: #4f5a7a;
+}
+.cl-btn.no {
+  background: #c4302a;
+}
+.cl-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+.ring .cl-btn.ok i {
+  animation: cl-wiggle 0.5s steps(2) infinite;
+}
+@keyframes cl-wiggle {
+  50% {
+    transform: rotate(-18deg) scale(1.1);
+  }
+}
+
+/* điện thoại bàn: máy quay số màu kem, reo thì rung lên */
+.cl-ban {
+  padding: 14px 10px 12px;
+  background: #5a3a24;
+  color: #fbeff2;
+  box-shadow: inset 0 0 0 4px #3a2414, 6px 6px 0 rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.cl-desk {
+  position: relative;
+  height: 120px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.cl-base {
+  width: 150px;
+  height: 80px;
+  background: #e8dcc0;
+  border-radius: 24px 24px 8px 8px;
+  box-shadow: inset 0 -8px 0 #c8b890, inset 0 0 0 3px #8a7a5a, 4px 4px 0 rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cl-dial {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #d0c4a4;
+  box-shadow: inset 0 0 0 3px #8a7a5a;
+}
+.cl-dial i {
+  position: absolute;
+  left: 25px;
+  top: 25px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a2a1a;
+}
+.cl-handset {
+  position: absolute;
+  top: 6px;
+  width: 170px;
+  height: 30px;
+  background: #e8dcc0;
+  border-radius: 14px;
+  box-shadow: inset 0 -6px 0 #c8b890, inset 0 0 0 3px #8a7a5a, 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+.cl-ban.ring .cl-handset {
+  animation: cl-jump 0.18s steps(2) infinite;
+}
+.cl-ban.ring .cl-base {
+  animation: buzz 0.12s steps(2) infinite;
+}
+@keyframes cl-jump {
+  50% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+}
+.cl-reng {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  color: #ffd24a;
+  font-size: 18px;
+  animation: blink 0.6s steps(2) infinite;
+}
+
+/* cục gạch: màn xanh, rung bần bật */
+.cl-nokia {
+  display: flex;
+  justify-content: center;
+}
+.cl-nokia.ring .nk-body {
+  animation: buzz 0.1s steps(2) infinite;
+}
+.cl-nkscreen {
+  text-align: center;
+  gap: 6px;
+}
+.cl-nkname {
+  font-size: 24px;
+  font-weight: 700;
+}
+.cl-nkstat {
+  font-size: 17px;
+}
+.cl-nkwave {
+  font-size: 22px;
+  animation: blink 0.5s steps(2) infinite;
+}
+.cl-nokia .cl-lines p {
+  background: rgba(15, 56, 15, 0.12);
+  color: #0f380f;
+}
+.cl-nokia .cl-btn {
+  font-size: 16px;
+  padding: 6px 10px;
+}
+
+/* smartphone: nền mờ, ảnh đại diện có vòng sóng, gọi video có ô "Bạn" */
+.cl-smart {
+  position: relative;
+  overflow: hidden;
+  min-height: 380px;
+  padding: 34px 12px 16px;
+  border-radius: 34px;
+  color: #fff;
+  background: #2a1f3d;
+  box-shadow: 0 0 0 8px #211833, 0 0 0 10px #4f3d6b, 8px 10px 0 10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.cl-smart.holo {
+  background: #1a2a40;
+  box-shadow: 0 0 0 8px #0f1a2a, 0 0 0 10px #7fd1b9, 0 0 30px #7fd1b9;
+}
+.cl-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 30%, #b48ad9 0%, #4f3d6b 45%, #211833 100%);
+  opacity: 0.85;
+}
+.cl-smart.video .cl-bg {
+  background: repeating-linear-gradient(0deg, #3a2a4a 0 4px, #43325a 4px 8px);
+}
+.cl-smart > *:not(.cl-bg) {
+  position: relative;
+}
+.cl-self {
+  position: absolute !important;
+  top: 40px;
+  right: 18px;
+  width: 64px;
+  height: 84px;
+  border-radius: 10px;
+  background: #4f3d6b;
+  box-shadow: 0 0 0 2px #fff;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-size: 14px;
+  padding-bottom: 4px;
+}
+.cl-avwrap {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cl-av {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #fbeff2;
+  box-shadow: 0 0 0 4px #fff;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+.cl-av > * {
+  transform: scale(1.6);
+  transform-origin: 50% 25%;
+  margin-top: 6px;
+}
+.cl-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6);
+  animation: cl-pulse 1.6s ease-out infinite;
+}
+.cl-pulse.d2 {
+  animation-delay: 0.8s;
+}
+@keyframes cl-pulse {
+  from {
+    transform: scale(0.85);
+    opacity: 1;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.cl-smart.ring .cl-avwrap {
+  animation: buzz 0.12s steps(2) 6;
+}
+.cl-smart .cl-btns {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ---------- trò chim vỗ cánh ---------- */
+.tap {
+  margin: 4px;
+  padding: 10px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.tap-head {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+.tap-cv {
+  width: 320px;
+  height: 240px;
+  image-rendering: pixelated;
+  touch-action: manipulation;
+  cursor: pointer;
+  box-shadow: 0 0 0 3px #211833;
+}
+.tap-hint {
+  font-size: 17px;
+  text-align: center;
+  color: var(--mute);
+}
+
+/* ---------- PIXEL: bỏ bo tròn và chuyển màu mượt cho máy, chat, quẹt, cuộc gọi; viền bậc 4px ---------- */
+.letter2 *, .nokia, .nokia *, .smart, .smart *, .pc, .pc *, .call, .call *, .deck, .deck *, .feed, .feed *, .tap, .tap *, .cheer, .cheer *, .unlock, .unlock *, .gifts, .gifts * {
+  border-radius: 0 !important;
+}
+.nk-body {
+  background: #2f3f66;
+  box-shadow: 0 -4px 0 0 #141a30, 0 4px 0 0 #141a30, -4px 0 0 0 #141a30, 4px 0 0 0 #141a30, 8px 8px 0 0 rgba(0, 0, 0, 0.3), inset 0 4px 0 #4a5f90;
+  clip-path: polygon(0 12px, 12px 12px, 12px 0, calc(100% - 12px) 0, calc(100% - 12px) 12px, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 12px calc(100% - 12px), 0 calc(100% - 12px));
+}
+.smart,
+.cl-smart {
+  box-shadow: 0 -8px 0 0 #211833, 0 8px 0 0 #211833, -8px 0 0 0 #211833, 8px 0 0 0 #211833, 0 -12px 0 0 #4f3d6b, 0 12px 0 0 #4f3d6b, -12px 0 0 0 #4f3d6b, 12px 0 0 0 #4f3d6b, 14px 16px 0 0 rgba(0, 0, 0, 0.25);
+}
+.smart.holo,
+.deck-ai {
+  background: #e3ecff repeating-conic-gradient(#e8d9ff 0% 25%, #d6f5ff 0% 50%) 0 0 / 8px 8px;
+}
+.cl-smart.holo {
+  box-shadow: 0 -8px 0 0 #0f1a2a, 0 8px 0 0 #0f1a2a, -8px 0 0 0 #0f1a2a, 8px 0 0 0 #0f1a2a, 0 -12px 0 0 #7fd1b9, 0 12px 0 0 #7fd1b9, -12px 0 0 0 #7fd1b9, 12px 0 0 0 #7fd1b9;
+}
+.fd-photo {
+  background: #bfe0f0 repeating-conic-gradient(#bfe0f0 0% 25%, #cfe8f4 0% 50%) 0 0 / 8px 8px;
+}
+.deck {
+  background: #fbeff2 repeating-conic-gradient(#fde7ef 0% 25%, #fbeff2 0% 50%) 0 0 / 8px 8px;
+}
+.dk-pop.match,
+.dk-pop.gold {
+  background: #b48ad9;
+}
+.dk-pop.gold {
+  background: #e0b54a;
+  color: #211833;
+}
+.sm-av,
+.fd-av,
+.dk-btns button,
+.pc-dot,
+.cl-btn i,
+.cl-av {
+  border-radius: 0 !important;
+  clip-path: polygon(0 25%, 25% 25%, 25% 0, 75% 0, 75% 25%, 100% 25%, 100% 75%, 75% 75%, 75% 100%, 25% 100%, 25% 75%, 0 75%);
+}
+.cl-av {
+  clip-path: none;
+  box-shadow: 0 -4px 0 #fff, 0 4px 0 #fff, -4px 0 0 #fff, 4px 0 0 #fff;
+}
+.pc-title {
+  background: #2a4fa8;
+  box-shadow: inset 0 -4px 0 #0a246a;
+}
+.pc {
+  font-family: inherit;
+  box-shadow: 0 -4px 0 0 #0a246a, 0 4px 0 0 #0a246a, -4px 0 0 0 #0a246a, 4px 0 0 0 #0a246a, 8px 8px 0 0 rgba(0, 0, 0, 0.35);
+}
+.pc-log,
+.pc-buddy,
+.pc-opt {
+  font-size: 17px;
+}
+.cl-bg {
+  background: #4f3d6b repeating-conic-gradient(#4f3d6b 0% 25%, #5a4778 0% 50%) 0 0 / 8px 8px;
+  opacity: 1;
+}
+.cl-smart.video .cl-bg {
+  background: #3a2a4a repeating-conic-gradient(#3a2a4a 0% 25%, #43325a 0% 50%) 0 0 / 8px 8px;
+}
+.cl-pulse {
+  border-radius: 0 !important;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.6);
+  animation: cl-pulse 1.6s steps(4) infinite;
+}
+.cl-desk {
+  height: auto;
+  min-height: 110px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cl-ban.ring .cl-phone {
+  animation: buzz 0.12s steps(2) infinite;
+}
+.cl-lift {
+  animation: cl-jump 0.6s steps(2) 2;
+}
+.ts-shadow {
+  border-radius: 0;
+  clip-path: polygon(0 25%, 20% 25%, 20% 0, 80% 0, 80% 25%, 100% 25%, 100% 75%, 80% 75%, 80% 100%, 20% 100%, 20% 75%, 0 75%);
+}
+.ts-light {
+  border-radius: 0;
+  background: radial-gradient(circle, rgba(255, 220, 140, 0.45) 0 30%, rgba(255, 210, 130, 0.25) 30% 50%, rgba(255, 200, 120, 0.12) 50% 68%, transparent 68%);
+}
+
+/* ---------- gói Vàng trong app quẹt ---------- */
+.dk-gold {
+  padding: 2px 8px;
+  font-size: 15px;
+  background: #e0b54a;
+  color: #211833;
+  box-shadow: 0 -2px 0 #8a6a00, 0 2px 0 #8a6a00, -2px 0 0 #8a6a00, 2px 0 0 #8a6a00;
+  animation: blink 1.4s steps(2) 3;
+}
+.dk-gold.on {
+  animation: none;
+  background: #ffd24a;
+}
+.dk-goldrow {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.dk-blur {
+  width: 44px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+  font-size: 22px;
+  color: #fff;
+  background: #c4a0e0 repeating-conic-gradient(#c4a0e0 0% 25%, #d8b8f0 0% 50%) 0 0 / 4px 4px;
+  box-shadow: 0 0 0 3px #211833;
+}
+.dk-liked {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  padding: 2px 8px;
+  font-size: 15px;
+  background: #e0b54a;
+  color: #211833;
+  box-shadow: 0 0 0 2px #211833;
+}
+.dk-poor {
+  font-size: 16px;
+}
+
+/* ---------- kệ quà ---------- */
+.gifts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 4px;
+}
+.gift {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  min-height: 112px;
+  background: var(--panel);
+  color: var(--ink);
+  text-align: center;
+  animation: tw-in 0.3s steps(3) both;
+}
+.gift i {
+  font-style: normal;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--orange);
+  text-shadow: 3px 3px 0 #211833;
+}
+.gift b {
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.15;
+}
+.gift small {
+  font-size: 14px;
+  color: var(--mute);
+}
+.gift.skip {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+.gift:active {
+  transform: translateY(3px);
+}
+
+/* ---------- mở khóa trượt ---------- */
+.unlock {
+  margin: 4px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.ul-screen {
+  width: 280px;
+  padding: 26px 14px 18px;
+  background: #1a2a40 repeating-conic-gradient(#1a2a40 0% 25%, #22344e 0% 50%) 0 0 / 8px 8px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 -8px 0 #211833, 0 8px 0 #211833, -8px 0 0 #211833, 8px 0 0 #211833, 0 -12px 0 #c9d2dc, 0 12px 0 #c9d2dc, -12px 0 0 #c9d2dc, 12px 0 0 #c9d2dc;
+}
+.ul-time {
+  font-size: 56px;
+  line-height: 1;
+}
+.ul-date {
+  font-size: 15px;
+  opacity: 0.8;
+  margin-bottom: 40px;
+}
+.ul-track {
+  position: relative;
+  width: 252px;
+  height: 52px;
+  background: #0f1a2a;
+  box-shadow: inset 0 0 0 3px #4a5a70;
+  touch-action: none;
+}
+.ul-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 40px;
+  font-size: 18px;
+  animation: blink 2s steps(2) infinite;
+}
+.ul-knob {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 52px;
+  height: 44px;
+  background: #c9d2dc;
+  color: #211833;
+  font-size: 24px;
+  box-shadow: inset 0 -4px 0 #8a96a6;
+  touch-action: none;
+}
+
+/* ---------- thanh cổ vũ ---------- */
+.cheer {
+  margin: 4px;
+  padding: 12px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ch-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 18px;
+}
+.ch-bar {
+  height: 24px;
+  background: #211833;
+  box-shadow: inset 0 0 0 3px #4f3d6b;
+  padding: 4px;
+}
+.ch-bar i {
+  display: block;
+  height: 100%;
+  background: #e8789f repeating-linear-gradient(90deg, #e8789f 0 8px, #ffd24a 8px 16px);
+  transition: width 0.1s steps(2);
+}
+.ch-btn {
+  min-height: 72px;
+  font-size: 30px;
+  letter-spacing: 2px;
+  background: #c4302a;
+  color: #fff;
+  box-shadow: 0 -4px 0 #211833, 0 4px 0 #211833, -4px 0 0 #211833, 4px 0 0 #211833, 0 8px 0 #7a1e1a;
+}
+.ch-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 -4px 0 #211833, 0 4px 0 #211833, -4px 0 0 #211833, 4px 0 0 #211833;
+}
+.ch-btn.full {
+  background: #e0b54a;
+  color: #211833;
+  animation: buzz 0.1s steps(2) 6;
+}
+.ch-alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dk-pop.gold .dk-match {
+  font-size: 40px;
+  color: #211833;
+  text-shadow: 3px 3px 0 #fbeff2;
+}
+.nb-gift {
+  color: var(--orange) !important;
+}
+.stage-ts.play {
+  height: auto;
+  flex-direction: column;
+  align-items: center;
+}
+.stage-ts.play .ts {
+  height: 288px;
+}
+.stage-ts.play .news {
+  align-self: stretch;
+}
