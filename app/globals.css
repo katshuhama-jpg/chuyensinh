@@ -3357,3 +3357,55 @@ p {
   font-size: 15px;
   line-height: 1.15;
 }
+/* ---------- hồ sơ chi tiết người yêu ---------- */
+.nb-row.tap {
+  cursor: pointer;
+}
+.nb-open {
+  color: var(--accent) !important;
+  font-size: 15px;
+}
+.ld-veil {
+  z-index: 60;
+}
+.ld-top {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ld-photo {
+  flex: none;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--scene);
+}
+.ld-id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ld-id b {
+  font-size: 28px;
+  font-weight: 400;
+}
+.ld-id small {
+  font-size: 15px;
+  color: var(--mute);
+}
+.ld-id .yeu {
+  color: var(--orange);
+}
+.ld-facts {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 17px;
+}

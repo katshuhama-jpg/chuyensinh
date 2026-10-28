@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
 import { openerOf } from '@/lib/openers';
-import { profileOf } from '@/lib/profiles';
+import { PERSONA, PERSONA_AXES, profileOf } from '@/lib/profiles';
 import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -553,11 +553,20 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
 }
 
 function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
+  const [open, setOpen] = useState(false);
   const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
   const lost = story.flags.includes(`${id}_out`);
   const st = story.partner === id ? (story.married ? '♥ Bạn đời' : '♥ Người yêu') : lost ? 'Đã lỡ nhau' : statusOf(story, id);
   return (
-    <div className={`nb-row ${lost ? 'lost' : ''}`}>
+    <>
+    <div
+      role="button"
+      tabIndex={0}
+      className={`nb-row tap ${lost ? 'lost' : ''}`}
+      onClick={() => setOpen(true)}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setOpen(true)}
+      aria-label={`Xem hồ sơ ${x.L(id)}`}
+    >
       <span className="nb-photo">
         <Sprite layers={layers} scale={1} anim="idle" dir={2} label={x.L(id)} />
       </span>
@@ -586,6 +595,53 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
             {cells(story.love[id], 'looks')}
           </span>
           <span>{lost ? '-' : story.love[id]}</span>
+        </div>
+        <small className="nb-open">Xem hồ sơ ▸</small>
+      </div>
+    </div>
+    {open && <LoveDetail id={id} x={x} story={story} st={st} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+/** Hồ sơ chi tiết một người: ảnh, nghề, nhà, xe, chỉ số của người ấy (mạng nhện), độ thân, gu */
+function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: Story; st: string; onClose: () => void }) {
+  const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
+  const pf = profileOf(id, x);
+  const p = PERSONA[id];
+  return (
+    <div className="nb-veil ld-veil" onClick={(e) => (e.stopPropagation(), onClose())}>
+      <div className="nb-sheet px" role="dialog" aria-modal="true" aria-label={`Hồ sơ ${x.L(id)}`} onClick={(e) => e.stopPropagation()}>
+        <div className="nb-h">
+          <b>HỒ SƠ</b>
+          <button type="button" className="nb-x" onClick={onClose} aria-label="Đóng">
+            ✕
+          </button>
+        </div>
+        <div className="ld-top">
+          <span className="ld-photo">
+            <Sprite layers={layers} scale={2} anim="idle" dir={2} label={x.L(id)} />
+          </span>
+          <div className="ld-id">
+            <b>{x.L(id)}</b>
+            <span>{LOVES[id].job[x.lg === 'm' ? 0 : 1]}</span>
+            <small>{LOVES[id].kind}</small>
+            <small className="yeu">{st}</small>
+          </div>
+        </div>
+        <ul className="ld-facts">
+          <li>⌂ {pf.home}</li>
+          <li>➤ {pf.ride}</li>
+          <li>♥ Thích {LOVES[id].likesName}</li>
+        </ul>
+        <div className="mt-h">CHỈ SỐ CỦA {x.L(id).toUpperCase()}</div>
+        <Radar axes={PERSONA_AXES.map((label, i) => ({ label, value: p[i] }))} />
+        <div className="mt-h">ĐỘ THÂN VỚI BẠN</div>
+        <div className="stat">
+          <span className="cells" role="meter" aria-label={`Độ thân với ${x.L(id)}`} aria-valuenow={story.love[id]} aria-valuemin={0} aria-valuemax={100}>
+            {cells(story.love[id], 'looks')}
+          </span>
+          <span>{story.love[id]}</span>
         </div>
       </div>
     </div>

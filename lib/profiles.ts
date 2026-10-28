@@ -69,3 +69,21 @@ export function profileOf(id: LoveId, x: Ctx) {
   const ride = x.age < 16 ? (x.year < 1995 ? 'đi bộ đến trường' : 'ngồi sau xe bố mẹ đi học') : p.ride(x.year, f);
   return { home: p.home(x.year, f), ride };
 }
+
+/** Chỉ số của từng người yêu (cố định theo tính cách), cùng 5 trục với biểu đồ của người chơi */
+export const PERSONA: Record<LoveId, [number, number, number, number, number]> = {
+  // Nhan sắc, Thông minh, Nổi loạn, Tài chính, Tâm lý
+  khoi: [60, 55, 30, 40, 80],
+  long: [72, 40, 90, 35, 55],
+  minh: [65, 95, 20, 50, 45],
+  phong: [68, 85, 25, 70, 85],
+  hai: [70, 60, 75, 15, 60],
+  tuananh: [75, 85, 35, 95, 50],
+  kai: [78, 65, 70, 55, 85],
+  quan: [95, 55, 50, 90, 40],
+  bao: [55, 60, 45, 45, 95],
+  duy: [70, 70, 60, 35, 70],
+  hung: [92, 70, 65, 95, 45],
+  tai: [80, 50, 80, 40, 75],
+};
+export const PERSONA_AXES = ['Nhan sắc', 'Thông minh', 'Nổi loạn', 'Tài chính', 'Tâm lý'];
