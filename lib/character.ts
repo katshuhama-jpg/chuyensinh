@@ -154,7 +154,7 @@ export function defaultCharacter(g: Gender): Character {
       nose: 'button',
       extra: 'none',
       style: 'nangdong',
-      color: CLOTH_COLORS[1],
+      color: g === 'f' ? CLOTH_COLORS[1] : CLOTH_COLORS[3],
     },
   };
 }

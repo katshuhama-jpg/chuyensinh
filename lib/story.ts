@@ -4,7 +4,7 @@
  * Nội dung cảnh nằm ở lib/scenes.ts.
  */
 
-import type { Character, Family, Gender } from './character';
+import type { Character, Family, Gender, Look } from './character';
 
 export type StatKey = 'hoc' | 'noi' | 'duyen' | 'tinh' | 'tien' | 'tam' | 'dao';
 export const STAT_LABEL: Record<StatKey, string> = {
@@ -101,6 +101,8 @@ export interface Choice {
   sys?: string | ((x: Ctx) => string);
   /** cảnh kế tiếp riêng của lựa chọn này */
   to?: string | ((x: Ctx) => string);
+  /** cảnh quẹt: lựa chọn này ứng với Match người nào */
+  loveId?: LoveId;
 }
 
 export interface Scene {
@@ -109,7 +111,7 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat';
+  kind?: 'talk' | 'chat' | 'swipe';
   title: string | ((x: Ctx) => string);
   text: (x: Ctx) => string[];
   /** cảnh tin nhắn: tin hiện trong khung chat */
@@ -117,10 +119,43 @@ export interface Scene {
   /** cảnh chat có đồng hồ: hết giờ thì tính là lựa chọn thứ timeout */
   timer?: number;
   timeout?: number;
+  /** cảnh quẹt: các thẻ hồ sơ; thẻ có loveId là người thật, Match thì chọn lựa chọn mang cùng loveId */
+  cards?: (x: Ctx) => SwipeCard[];
+  /** bài đăng trên Tường hiện trong cảnh */
+  post?: (x: Ctx) => Post;
   choices: Choice[];
   next: string | ((x: Ctx) => string);
   /** bỏ qua cảnh này nếu điều kiện đúng */
   skip?: (x: Ctx) => boolean;
+}
+
+export interface SwipeCard {
+  name: string;
+  age: number;
+  gender: Gender;
+  look: Look;
+  where: string;
+  bio: string;
+  tags?: string[];
+  bg?: string;
+  /** người thật trong dàn người yêu */
+  loveId?: LoveId;
+  /** dòng hiện khi Match */
+  match?: string;
+  /** chuyện xảy ra nếu thích nhầm hồ sơ ảo */
+  result?: string;
+  score?: number;
+  box?: number;
+}
+
+export interface Post {
+  author: string;
+  time: string;
+  text: string;
+  likes: number;
+  comments: { who: string; t: string }[];
+  /** ảnh trong bài: ai đứng trong ảnh */
+  photo?: LoveId[];
 }
 
 /** Thao tác lên trạng thái, dùng trong Choice.do */

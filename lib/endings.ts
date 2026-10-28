@@ -68,7 +68,10 @@ export function loveTypeOf(s: Story) {
 export function funeralOf(c: Character, f: Family, s: Story) {
   const x = ctxOf(c, f, s, 80);
   const list: string[] = [];
-  if (s.married && !(s.flags.includes('ngoaitinh') && s.loveEnd === 'nguoicu')) list.push(`${spouseName(x)}, người nắm tay đến phút cuối`);
+  if (s.married && !(s.flags.includes('ngoaitinh') && s.loveEnd === 'nguoicu')) {
+    const sp = spouseName(x);
+    list.push(`${sp.charAt(0).toUpperCase() + sp.slice(1)}, người nắm tay đến phút cuối`);
+  }
   if (s.kids) list.push(s.kids > 1 ? 'Hai đứa con và các cháu' : 'Đứa con và các cháu');
   if (s.rel.banthan >= 40) list.push(`${s.bestie}, bạn thân từ thuở nhỏ`);
   for (const id of LOVE_IDS) if (id !== s.partner && s.love[id] >= 45) list.push(`${x.L(id)}, đứng lặng ở cuối hàng`);

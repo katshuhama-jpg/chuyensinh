@@ -3,7 +3,9 @@
  * Cờ cắm từ bé bung ra nhiều năm sau. Bối cảnh đổi theo năm (đến hết 2026 là thật, sau đó giả định).
  */
 
-import { LOVE_IDS, LOVES, type Choice, type Ctx, type Fx, type LoveId, type Scene } from './story';
+import { defaultCharacter, type Gender, type Look } from './character';
+import { CAST } from './cast';
+import { LOVE_IDS, LOVES, type Choice, type Ctx, type Fx, type LoveId, type Post, type Scene, type SwipeCard } from './story';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -90,7 +92,7 @@ const proposeChoices: Choice[] = [
 ];
 
 /* ---------- drama theo thời kỳ, lúc 22 tuổi ---------- */
-function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[] } {
+function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[]; post?: Post } {
   const y = x.year;
   const p = () => P(x);
   const n = hasPartner(x) ? x.L(P(x)) : 'người ấy';
@@ -135,6 +137,20 @@ function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[] } 
       text: u23
         ? [`Đội U23 Việt Nam về nước sau giải châu Á. Cả phố đi đón, kẹt xe từ sân bay vào trung tâm.`, `${n} đứng ngay cạnh, tay cầm lá cờ nhỏ.`]
         : [`Một tấm ảnh cũ của ${n} với người yêu cũ bỗng nổi lên trên Tường, kèm hàng trăm bình luận.`],
+      post: u23
+        ? undefined
+        : {
+            author: n,
+            time: 'Kỷ niệm 3 năm trước',
+            text: `Ngày này năm ${y - 3}: đi Đà Lạt với người ấy ♥ Mãi bên nhau nhé!`,
+            likes: 213,
+            comments: [
+              { who: x.s.bestie, t: 'Ơ ai đào ảnh này lên đây vậy' },
+              { who: 'Thu Trang', t: 'Đẹp đôi thế mà...' },
+              { who: n, t: '(bình luận đã bị xóa)' },
+            ],
+            photo: [P(x)],
+          },
       choices: u23
         ? [
             { t: `Nắm tay ${n} giữa đám đông`, do: (fx) => fx.love(p(), 12), note: `${n} sẽ nhớ cái nắm tay ấy.` },
@@ -187,6 +203,105 @@ function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[] } 
       { t: 'Cũng nhờ AI viết lại một bức dài hơn', do: (fx) => (fx.love(p(), -3), fx.stat('noi', 5)) },
     ],
   };
+}
+
+/* ---------- thẻ hồ sơ cho màn quẹt ---------- */
+const look = (g: Gender, p: Partial<Look>): Look => ({ ...defaultCharacter(g).look, ...p });
+function deckOf(x: Ctx): SwipeCard[] {
+  const g = x.lg;
+  const y = x.year;
+  const paper = y < 2010;
+  const where = (km: number) => (paper ? `Hộp thư báo, ${x.f.province}` : `Cách ${km} km`);
+  const he = g === 'm' ? 'anh ấy' : 'cô ấy';
+  const fakes = {
+    anhao: {
+      name: g === 'm' ? 'Hoàng' : 'Linh',
+      age: x.age + 2,
+      gender: g,
+      look: look(g, { hair: g === 'm' ? 'curtains_long' : 'long_straight', hairColor: '#d9b26a', style: 'thanhlich', color: '#e8e1d0' }),
+      where: where(3),
+      bio: 'Thích du lịch, cà phê sáng, sống chân thành. Không tìm người chơi bời.',
+      tags: ['Du lịch', 'Cà phê', 'Chân thành'],
+      bg: '#f3c6d6',
+      box: 214,
+      result: paper ? 'Thư hồi âm kèm một tấm ảnh chụp studio. Gặp ngoài đời thì không nhận ra.' : `Gặp ngoài đời: ${he} khác ảnh mười tuổi. Ảnh đã qua ba lớp chỉnh.`,
+    },
+    cogd: {
+      name: g === 'm' ? 'Tuấn' : 'Hằng',
+      age: x.age + 8,
+      gender: g,
+      look: look(g, { hair: g === 'm' ? 'buzzcut' : 'half_up', style: 'nhenhang', color: '#7fb3d9' }),
+      where: where(5),
+      bio: 'Đang tìm một người thật sự hiểu mình.',
+      tags: ['Trưởng thành', 'Hiểu chuyện'],
+      bg: '#c9d9f0',
+      box: 87,
+      result: `Nhắn được ba câu thì ${g === 'm' ? 'vợ' : 'chồng'} người ta nhắn vào.`,
+    },
+    vay: {
+      name: g === 'm' ? 'Đạt' : 'Ngân',
+      age: x.age + 4,
+      gender: g,
+      look: look(g, { hair: g === 'm' ? 'unkempt' : 'loose', style: 'thanhlich', color: '#30343f', extra: 'earrings' }),
+      where: where(1),
+      bio: `Doanh nhân trẻ, đầu tư ${y < 2008 ? 'vàng' : y < 2018 ? 'chứng khoán' : y <= 2026 ? 'tiền ảo' : 'cổ phiếu AI'}. Thu nhập thụ động.`,
+      tags: ['Doanh nhân', 'Tự do tài chính'],
+      bg: '#e0d39a',
+      box: 302,
+      result: 'Câu thứ hai: "Cho mình vay 5 triệu, mai trả nhé."',
+    },
+    la: {
+      name: g === 'm' ? 'Phúc' : 'Yến',
+      age: x.age + 1,
+      gender: g,
+      look: look(g, { hair: g === 'm' ? 'unkempt' : 'ponytail', style: 'nangdong', color: '#7fd1b9' }),
+      where: where(40),
+      bio: 'Làm y tá ca đêm. Nuôi hai con mèo. Thích người hay cười.',
+      tags: ['Mèo', 'Ca đêm'],
+      bg: '#cfe8df',
+      box: 45,
+      result: `Nói chuyện vui cả tuần, rồi ${he} chuyển công tác vào Nam. Thôi đành.`,
+    },
+    tongtai: {
+      name: g === 'm' ? 'Kiên' : 'Diệp',
+      age: x.age + 10,
+      gender: g,
+      look: look(g, { hair: g === 'm' ? 'buzzcut' : 'bangs_bun', style: 'thanhlich', color: '#30343f', eyes: 'gray' }),
+      where: where(2),
+      bio: 'CEO, cao 1m80, có biệt thự ven sông. Tìm người thật lòng.',
+      tags: ['CEO', 'Biệt thự'],
+      bg: '#d9c4ef',
+      box: 9,
+      result: 'Là tài khoản lừa đảo, bị khóa sau hai ngày.',
+    },
+  } satisfies Record<string, SwipeCard>;
+  const bio: Record<LoveId, string> = {
+    khoi: x.has('dieu') ? 'Hay thả diều. Đang tìm người từng giữ hộ mình một thứ.' : 'Thích những buổi chiều trong ngõ nhỏ.',
+    long: x.has('danh_long') ? 'Hồi lớp ba từng bị một đứa đánh cho một trận. Nhớ mãi.' : 'Bán xe độ rồi. Đi xe buýt. Hỏi gì cũng trả lời thật.',
+    minh: 'Không giỏi nói chuyện. Giỏi giải đề. Đang học cách nói chuyện.',
+  };
+  const reals: SwipeCard[] = LOVE_IDS.filter((id) => !out(x, id) && x.s.love[id] > 0).map((id, k) => ({
+    name: x.L(id),
+    age: x.age,
+    gender: g,
+    look: CAST[id][g],
+    where: where(2 + k),
+    bio: bio[id],
+    tags: [LOVES[id].kind.split(',')[0]],
+    bg: ['#f6d5a8', '#f3b7b7', '#bfe0d0'][k % 3],
+    box: 51 + k,
+    loveId: id,
+    score: 60 + Math.min(39, x.s.love[id]),
+    match: paper ? `Thư hồi âm ký tên ${x.L(id)}. Là người quen cũ!` : `${x.L(id)} cũng vừa thích ${x.me}. Hóa ra là người quen cũ!`,
+  }));
+  const deck: SwipeCard[] = [fakes.anhao, fakes.cogd];
+  if (reals[0]) deck.push(reals[0]);
+  deck.push(fakes.vay);
+  if (reals[1]) deck.push(reals[1]);
+  deck.push(fakes.la);
+  if (reals[2]) deck.push(reals[2]);
+  deck.push(fakes.tongtai);
+  return deck;
 }
 
 /* ---------- các cảnh ---------- */
@@ -333,14 +448,15 @@ const list: Scene[] = [
       },
       { t: '"Ừ, để mai tính"', do: (fx, x) => fx.love(crush(x), 3) },
       {
-        t: (x) => (x.year < 2000 ? '(Cất thư đi, không hồi âm)' : '(Để "Đã xem", không trả lời)'),
+        t: (x) => (x.year < 2000 ? '(Cất thư đi, không hồi âm)' : x.year < 2010 ? '(Đọc xong, không nhắn lại)' : '(Để "Đã xem", không trả lời)'),
         do: (fx, x) => {
           const c = crush(x);
           fx.love(c, -10);
           fx.flag(`seen_${c}`);
           if (x.s.love[c] < 15) fx.mid('seen');
         },
-        note: (x) => (x.year < 2000 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`),
+        note: (x) =>
+          x.year < 2000 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : x.year < 2010 ? `${x.L(crush(x))} cầm điện thoại đợi tin nhắn cả đêm.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`,
       },
     ],
     next: 't17_thi',
@@ -434,14 +550,39 @@ const list: Scene[] = [
         }),
       ),
       {
-        t: (x) => (x.year >= 2014 ? 'Thử app hẹn hò Quẹt' : `Nhờ ${x.s.bestie} giới thiệu người mới`),
-        do: (fx, x) => {
-          fx.stat('dao', 8);
-          if (x.year >= 2014) (fx.say('Quẹt cả tháng toàn gặp ảnh ảo, người đã có gia đình, và một người mở lời là vay tiền.'), fx.mid('quet'));
-          else fx.say('Buổi gặp mặt chán tới mức cả hai cùng nhìn đồng hồ.');
-        },
+        t: (x) =>
+          x.year > 2026 ? 'Thử app ghép đôi AI' : x.year >= 2014 ? 'Thử app hẹn hò Quẹt' : x.year >= 2010 ? 'Lên diễn đàn kết bạn' : 'Gửi thư vào mục Tìm bạn bốn phương trên báo',
+        do: (fx) => fx.stat('dao', 5),
+        to: 'y20_quet',
       },
       { t: 'Chưa yêu ai, lo sự nghiệp trước', do: (fx) => (fx.stat('tien', 10), fx.stat('hoc', 5)), sys: 'Đinh! Bản Hệ Thống thở dài.' },
+    ],
+    next: 'y21_hen',
+  },
+  {
+    id: 'y20_quet',
+    age: 20,
+    chapter: CH.tre,
+    kind: 'swipe',
+    title: (x) => (x.year > 2026 ? 'Quẹt AI' : x.year >= 2014 ? 'Quẹt' : x.year >= 2010 ? 'Diễn đàn kết bạn' : 'Tìm bạn bốn phương'),
+    text: (x) =>
+      x.year < 2010
+        ? [`Tờ báo cuối tuần có cả trang "Tìm bạn bốn phương". ${x.me} cầm bút, đọc từng mẩu nhắn.`]
+        : x.year < 2014
+          ? [`${x.me} lập nick trên diễn đàn kết bạn, lướt từng hồ sơ trong mục "Tìm một nửa".`]
+          : [`${x.me} tải app hẹn hò về. Quẹt phải là thích, quẹt trái là bỏ qua.`],
+    cards: (x) => deckOf(x),
+    choices: [
+      ...LOVE_IDS.map(
+        (id): Choice => ({
+          t: (x) => `Match với ${x.L(id)}`,
+          loveId: id,
+          if: (x) => !out(x, id) && x.s.love[id] > 0,
+          do: (fx) => (fx.partner(id), fx.love(id, 12), fx.flag(`date_${id}`)),
+          note: (x) => `${x.L(id)} và ${x.me} chính thức hẹn hò.`,
+        }),
+      ),
+      { t: 'Không hợp ai', do: (fx) => (fx.mid('quet'), fx.stat('tam', -5)) },
     ],
     next: 'y21_hen',
   },
@@ -804,7 +945,10 @@ export const FIRST_SCENE = 'c6_dieu';
 /** Cảnh với lựa chọn đã dựng theo năm (cảnh drama đổi theo thời kỳ) */
 export function getScene(id: string, x: Ctx): Scene {
   const s = SCENES[id];
-  if (id === 'y22_drama') return { ...s, choices: eraDrama(x).choices };
+  if (id === 'y22_drama') {
+    const d = eraDrama(x);
+    return { ...s, choices: d.choices, post: d.post ? () => d.post! : undefined };
+  }
   return s;
 }
 

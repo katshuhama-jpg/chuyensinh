@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Feed from '@/components/Feed';
+import Phone, { skinOf } from '@/components/Phone';
 import Sprite from '@/components/Sprite';
+import SwipeDeck from '@/components/SwipeDeck';
 import { BESTIE, CAST, MOM } from '@/lib/cast';
 import type { Character, Family } from '@/lib/character';
 import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEndOf } from '@/lib/endings';
@@ -62,7 +65,7 @@ export default function Choi() {
 
   return (
     <Play
-      key={story.path.length}
+      key={`${story.path.length}${fb ? "f" : "n"}`}
       char={char}
       family={family}
       story={story}
@@ -80,23 +83,60 @@ export default function Choi() {
 }
 
 /* ---------- một cảnh ---------- */
+const CH_NO: Record<string, number> = { 'Tuổi thơ': 1, 'Tuổi teen': 2, 'Tuổi trẻ': 3, 'Lập gia đình': 4, 'Tuổi già': 5 };
+const CH_ID: Record<string, string> = { 'Tuổi thơ': 'tho', 'Tuổi teen': 'teen', 'Tuổi trẻ': 'tre', 'Lập gia đình': 'nha', 'Tuổi già': 'gia' };
+const CH_LINE: Record<string, string> = {
+  'Tuổi thơ': 'Những mùa hè trong ngõ nhỏ',
+  'Tuổi teen': 'Cảm nắng, thi cử và một giọng nói lạ',
+  'Tuổi trẻ': 'Yêu, hẹn hò, và những ngã rẽ',
+  'Lập gia đình': 'Cơm áo, nhà chồng nhà vợ, con cái',
+  'Tuổi già': 'Những người còn ở lại',
+};
+
 function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number) => void; onNext: () => void }) {
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
-  const shownId = fb ? story.path[story.path.length - 1].scene : story.scene;
+  const last = story.path[story.path.length - 1];
+  const shownId = fb ? last.scene : story.scene;
   const age = SCENES[shownId].age;
-  const x = ctxOf(char, family, story, age);
+  // lúc xem phản hồi, vẽ cảnh bằng trạng thái ngay trước lựa chọn (người yêu có thể vừa chia tay)
+  const before = fb && story.hist.length ? { ...story.hist[story.hist.length - 1], hist: [] } : story;
+  const x = ctxOf(char, family, before, age);
   const sc = getScene(shownId, x);
   const opts = visibleChoices(sc, x);
   const who = sc.who?.(x) ?? null;
+  // sang chương mới thì hiện màn chương
+  const prevCh = !fb && last ? SCENES[last.scene]?.chapter : undefined;
+  const [card, setCard] = useState(!fb && (story.path.length === 0 || prevCh !== sc.chapter));
 
   const meLayers = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
   const whoLayers = useMemo(() => {
     if (!who || who === 'he_thong') return null;
     if (who === 'mom') return lpcLayers(MOM, 'f', age >= 30 ? 'elder' : 'adult');
     if (who === 'bestie') return lpcLayers(BESTIE[char.gender], char.gender, stageOf(age));
-    return lpcLayers(CAST[who][x.lg], who === 'xemmat' ? x.lg : x.lg, stageOf(age));
+    return lpcLayers(CAST[who][x.lg], x.lg, stageOf(age));
   }, [who, age, char.gender, x.lg]);
   const whoName = !who ? '' : who === 'he_thong' ? 'Hệ Thống' : who === 'mom' ? (x.mom === 'mẹ' ? 'Mẹ' : 'Bà') : who === 'bestie' ? story.bestie : who === 'xemmat' ? 'Người xem mắt' : x.L(who);
+  const post = sc.post?.(x);
+  const chat = sc.kind === 'chat' && sc.msgs;
+  const swipe = sc.kind === 'swipe' && sc.cards;
+
+  if (card)
+    return (
+      <main className={`app chcard ch-${CH_ID[sc.chapter]}`} onClick={() => setCard(false)}>
+        <div className="chc-in">
+          <div className="chc-no">CHƯƠNG {CH_NO[sc.chapter]}</div>
+          <h1 className="chc-title">{sc.chapter}</h1>
+          <p className="chc-line">{CH_LINE[sc.chapter]}</p>
+          <p className="chc-year">
+            {x.me} · {age} tuổi · năm {x.year}
+            {x.year > 2026 ? ' (giả định)' : ''}
+          </p>
+          <button type="button" className="btn-main" onClick={() => setCard(false)}>
+            ▶ VÀO CHƯƠNG
+          </button>
+        </div>
+      </main>
+    );
 
   return (
     <main className="app dither">
@@ -114,44 +154,82 @@ function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; 
       </div>
 
       <div className="body" style={{ paddingTop: 4, gap: 16 }}>
-        <div className="stage px">
-          <span className="stars" aria-hidden="true" />
-          <div className="actors">
-            <figure>
-              <Sprite layers={meLayers} scale={2} anim="idle" dir={who ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
-              <figcaption>{x.me}</figcaption>
-            </figure>
-            {who === 'he_thong' && (
+        {!swipe && (
+          <div className={`stage px ch-${CH_ID[sc.chapter]}`}>
+            <span className="stars" aria-hidden="true" />
+            <div className="actors">
               <figure>
-                <div className="ht-box" aria-hidden="true">
-                  ◆
-                </div>
-                <figcaption>Hệ Thống</figcaption>
+                <Sprite layers={meLayers} scale={2} anim="idle" dir={who ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
+                <figcaption>{x.me}</figcaption>
               </figure>
-            )}
-            {whoLayers && (
-              <figure>
-                <Sprite layers={whoLayers} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={whoName} />
-                <figcaption>{whoName}</figcaption>
-              </figure>
-            )}
+              {who && <span className="spark" aria-hidden="true">{who === 'he_thong' ? '!' : '♥'}</span>}
+              {who === 'he_thong' && (
+                <figure>
+                  <div className="ht-box" aria-hidden="true">
+                    <span>◆</span>
+                  </div>
+                  <figcaption>Hệ Thống</figcaption>
+                </figure>
+              )}
+              {whoLayers && (
+                <figure>
+                  <Sprite layers={whoLayers} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={whoName} />
+                  <figcaption>{whoName}</figcaption>
+                </figure>
+              )}
+            </div>
+            <span className="ground" aria-hidden="true" />
           </div>
-          <span className="ground" aria-hidden="true" />
-        </div>
+        )}
 
         <div className="textbox px-dim">
           {sc.text(x).map((p, i) => (
-            <p key={i}>{p}</p>
+            <p key={i} className={`tw ${who === 'he_thong' && p.startsWith('"') ? 'ht-line' : ''}`} style={{ animationDelay: `${i * 0.35}s` }}>
+              {p}
+            </p>
           ))}
         </div>
 
-        {sc.kind === 'chat' && sc.msgs && <Phone x={x} title={whoName} msgs={sc.msgs(x)} />}
-
-        {fb ? (
-          <FeedbackBox fb={fb} onNext={onNext} />
-        ) : (
-          <Choices opts={opts.map((o) => txt(o.t, x))} timer={sc.kind === 'chat' ? sc.timer : undefined} timeout={sc.timeout} onChoose={onChoose} />
+        {post && (
+          <Feed
+            post={post}
+            photo={
+              post.photo ? (
+                <Sprite layers={lpcLayers(CAST[post.photo[0]][x.lg], x.lg, 'adult')} scale={2} anim="idle" dir={2} label={`Ảnh của ${post.author}`} />
+              ) : undefined
+            }
+          />
         )}
+
+        {chat && (
+          <Phone
+            key={shownId + String(!!fb)}
+            skin={skinOf(x.year)}
+            me={x.me}
+            name={whoName}
+            year={x.year}
+            avatar={whoLayers ? <Sprite layers={whoLayers} scale={1} anim="idle" dir={2} label="" /> : undefined}
+            msgs={sc.msgs!(x)}
+            opts={fb ? undefined : opts.map((o) => txt(o.t, x))}
+            sent={fb && /^["(]/.test(last.choice) ? last.choice : undefined}
+            timer={sc.timer}
+            timeout={sc.timeout}
+            onChoose={onChoose}
+          />
+        )}
+
+        {swipe && !fb && (
+          <SwipeDeck
+            cards={sc.cards!(x)}
+            year={x.year}
+            onDone={(id) => {
+              const k = opts.findIndex((o) => o.loveId === id);
+              onChoose(k >= 0 ? k : opts.length - 1);
+            }}
+          />
+        )}
+
+        {fb ? <FeedbackBox fb={fb} onNext={onNext} /> : !chat && !swipe && <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />}
 
         <Meters x={x} story={story} />
       </div>
@@ -159,50 +237,17 @@ function Play({ char, family, story, fb, onChoose, onNext }: { char: Character; 
   );
 }
 
-function Phone({ x, title, msgs }: { x: Ctx; title: string; msgs: { me: boolean; t: string }[] }) {
-  const letter = x.year < 2000;
-  return (
-    <div className={`phone px ${letter ? 'letter' : ''}`}>
-      <div className="phone-top">{letter ? `Thư của ${title}` : title}</div>
-      <div className="phone-msgs">
-        {msgs.map((m, i) => (
-          <div key={i} className={`bubble ${m.me ? 'me' : ''}`} style={{ animationDelay: `${i * 0.6}s` }}>
-            {m.t}
-          </div>
-        ))}
-        {!letter && <div className="typing">đang chờ trả lời...</div>}
-      </div>
-    </div>
-  );
-}
-
-function Choices({ opts, timer, timeout, onChoose }: { opts: string[]; timer?: number; timeout?: number; onChoose: (i: number) => void }) {
-  const [left, setLeft] = useState(timer ?? 0);
+function Choices({ opts, onChoose }: { opts: string[]; onChoose: (i: number) => void }) {
   const done = useRef(false);
   const pick = (i: number) => {
     if (done.current) return;
     done.current = true;
     onChoose(i);
   };
-  useEffect(() => {
-    if (!timer) return;
-    const t = setInterval(() => setLeft((n) => n - 1), 1000);
-    return () => clearInterval(t);
-  }, [timer]);
-  useEffect(() => {
-    if (timer && left <= 0) pick(timeout ?? opts.length - 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [left]);
   return (
     <div className="choices">
-      {timer ? (
-        <div className="timer" role="timer" aria-label={`Còn ${Math.max(0, left)} giây`}>
-          <i style={{ width: `${(Math.max(0, left) / timer) * 100}%` }} />
-          <span>{Math.max(0, left)}s</span>
-        </div>
-      ) : null}
       {opts.map((t, i) => (
-        <button key={i} type="button" className="opt px" onClick={() => pick(i)}>
+        <button key={i} type="button" className="opt px" style={{ animationDelay: `${0.3 + i * 0.08}s` }} onClick={() => pick(i)}>
           <b>{t}</b>
         </button>
       ))}
@@ -212,22 +257,24 @@ function Choices({ opts, timer, timeout, onChoose }: { opts: string[]; timer?: n
 
 function FeedbackBox({ fb, onNext }: { fb: Feedback; onNext: () => void }) {
   return (
-    <div className="fb px" role="status">
+    <div className="fb" role="status">
+      {fb.sys.map((n, i) => (
+        <div key={`s${i}`} className="ht-pop">
+          <div className="ht-pop-h">◆ HỆ THỐNG</div>
+          <p>{n}</p>
+        </div>
+      ))}
       {fb.notes.map((n, i) => (
         <p key={`n${i}`} className="fb-note">
           ✦ {n}
         </p>
       ))}
-      {fb.sys.map((n, i) => (
-        <p key={`s${i}`} className="fb-sys">
-          {n}
-        </p>
-      ))}
       {fb.mids.map((id) => (
-        <div key={id} className="fb-mid">
-          <span>KẾT CỤC GIỮA CHỪNG</span>
+        <div key={id} className="stamp-card">
+          <span className="stamp-mark">KẾT CỤC GIỮA CHỪNG</span>
           <b>{MIDS[id]?.name}</b>
           <small>{MIDS[id]?.desc}</small>
+          <small className="stamp-sub">Đã ghi vào Sổ Tình · đời vẫn tiếp tục</small>
         </div>
       ))}
       <button type="button" className="btn-main" onClick={onNext} style={{ fontSize: 26, minHeight: 52 }}>
