@@ -233,7 +233,7 @@ const SLOTS: Record<number, Ev[]> = {
       text: (x) => [
         x.year <= 2026
           ? `Mẹ sang Nhật làm thực tập sinh ba năm, ${x.me} ở với ông bà. Tối nào cũng gọi video, mẹ hỏi bài, rồi khóc ở đầu bên kia.`
-          : `Mẹ ký hợp đồng làm việc ba năm ở một thành phố nổi ngoài khơi (giả định). Tối nào ${x.me} cũng gọi hình ba chiều cho mẹ.`,
+          : `Mẹ ký hợp đồng làm việc ba năm ở một thành phố nổi ngoài khơi. Tối nào ${x.me} cũng gọi hình ba chiều cho mẹ.`,
         `Hôm nay ${x.me} được mười điểm Toán. Đúng lúc ấy, điện thoại rung: mẹ gọi video.`,
       ],
       choices: [

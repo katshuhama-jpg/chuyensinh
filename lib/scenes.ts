@@ -215,7 +215,7 @@ function eraDrama(x: Ctx): { title: string; text: string[]; choices: Choice[]; p
     };
   }
   return {
-    title: 'Tin nhắn do AI viết (giả định)',
+    title: 'Tin nhắn do AI viết',
     text: [`${x.me} phát hiện mấy tin nhắn ngọt ngào nhất của ${n} đều do trợ lý AI viết hộ.`],
     choices: [
       { t: 'Cười, bảo lần sau tự viết', do: (fx) => fx.love(p(), 10) },

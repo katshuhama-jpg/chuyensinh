@@ -137,7 +137,6 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           <p className="chc-line">{openerOf(sc.chapter, x) || CH_LINE[sc.chapter]}</p>
           <p className="chc-year">
             {x.me} · {age} tuổi · năm {x.year}
-            {x.year > 2026 ? ' (giả định)' : ''}
           </p>
           <button type="button" className="btn-main" onClick={() => setCard(false)}>
             ▶ VÀO CHƯƠNG

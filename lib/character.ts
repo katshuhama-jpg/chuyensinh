@@ -118,9 +118,9 @@ export function deviceAt(year: number) {
   if (year < 2004) return 'thư tay, điện thoại bàn, đài cassette';
   if (year < 2012) return 'điện thoại "cục gạch", chat Yahoo ở quán net';
   if (year <= REAL_UNTIL) return 'smartphone, mạng xã hội, app hẹn hò';
-  if (year <= 2045) return 'điện thoại có trợ lý AI nhắn hộ (giả định)';
-  if (year <= 2080) return 'kính thực tế ảo (giả định)';
-  return 'thiết bị đeo đọc cảm xúc (giả định)';
+  if (year <= 2045) return 'điện thoại có trợ lý AI nhắn hộ';
+  if (year <= 2080) return 'kính thực tế ảo';
+  return 'thiết bị đeo đọc cảm xúc';
 }
 
 /** Đời này có bao nhiêu phần là thật (đến hết 2026), bao nhiêu là giả định */

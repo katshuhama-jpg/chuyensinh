@@ -1,7 +1,7 @@
 /**
  * Tin thời sự theo năm: hiện thành dải "TIN NÓNG" trên khung cảnh.
  * Đến 2026 là tin thật (chỉ nêu sự kiện, không gán lời hay chuyện tình cảm cho người thật).
- * Từ 2027 là tin giả định, ghi rõ "(giả định)".
+ * Từ 2027 là tin tương lai do game tự nghĩ.
  */
 
 const REAL: Record<number, string> = {
@@ -66,7 +66,7 @@ const FUTURE = [
 
 export function newsOf(year: number): string | null {
   if (year <= 2026) return [REAL[year], CELEB[year]].filter(Boolean).join(' · ') || null;
-  return `(giả định) ${FUTURE[year % FUTURE.length]}.`;
+  return `${FUTURE[year % FUTURE.length]}.`;
 }
 
 /** Ca sĩ, bài hit có thật theo năm, dùng cho cảnh làm fan */

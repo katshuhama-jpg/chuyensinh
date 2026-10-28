@@ -42,7 +42,7 @@ const PROFILE: Record<LoveId, P> = {
   },
   quan: {
     home: () => 'biệt thự cổng kín, có bảo vệ trực đêm',
-    ride: (y) => (y < 2003 ? 'Dream, đeo khẩu trang kín mặt' : y < 2010 ? 'SH đen, đi cùng quản lý' : fut(y) ? 'ô tô bay riêng (giả định)' : 'ô tô 7 chỗ kính tối màu'),
+    ride: (y) => (y < 2003 ? 'Dream, đeo khẩu trang kín mặt' : y < 2010 ? 'SH đen, đi cùng quản lý' : fut(y) ? 'ô tô bay riêng' : 'ô tô 7 chỗ kính tối màu'),
   },
   bao: {
     home: () => 'nhà thuê ở chung với hai đồng nghiệp, tủ lạnh dán đầy giấy nhắn',
