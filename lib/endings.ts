@@ -20,6 +20,10 @@ export const MIDS: Record<string, { name: string; desc: string }> = {
   traxanh: { name: 'Trà Xanh Thắng Thế', desc: 'Bạn thân và người yêu, mất cả hai trong một tối.' },
   bocphot: { name: 'Bóc Phốt', desc: 'Kể hết cho thiên hạ, và người ấy không quay lại nữa.' },
   nguoicu: { name: 'Người Cũ Quay Lại', desc: 'Một ly cà phê với người cũ làm rạn cả một gia đình.' },
+  thachcuoi: { name: 'Đám Cưới Đổ Vì Sính Lễ', desc: 'Hai nhà mặc cả mâm quả, và đám cưới không bao giờ diễn ra.' },
+  danhghen: { name: 'Đánh Ghen Lên Mạng', desc: 'Một clip đánh ghen triệu view, và không ai thắng cả.' },
+  lyhon: { name: 'Đường Ai Nấy Đi', desc: 'Ký đơn ly hôn ở tòa, mỗi người một ngả.' },
+  luadao: { name: 'Người Yêu Qua Mạng', desc: 'Yêu một tài khoản chưa từng gặp, và mất trắng tiền tiết kiệm.' },
   cacahaitay: { name: 'Bắt Cá Hai Tay', desc: 'Bị phát hiện trong nhóm chat ba người, mất cả hai.' },
 };
 
@@ -34,8 +38,23 @@ const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = 
   cuoivoi: () => ({ name: 'Cưới Vội', desc: 'Cưới khi còn chưa hiểu nhau, rồi cả đời tập hiểu.' }),
   bimeep: () => ({ name: 'Bị Mẹ Ép Cưới', desc: 'Cưới người xem mắt. Không ồn ào, không cổ tích.' }),
   docthan: () => ({ name: 'Độc Thân Vui Vẻ', desc: 'Không cưới ai, và sống vui theo cách của mình.' }),
+  lyhon: (n) => ({ name: 'Đường Ai Nấy Đi', desc: n ? `Từng cưới ${n}, rồi ly hôn. Nửa sau cuộc đời mỗi người một ngả.` : 'Từng cưới, rồi ly hôn. Nửa sau cuộc đời tự đi một mình.' }),
   nguoicu: () => ({ name: 'Người Cũ Quay Lại', desc: 'Gia đình rạn vỡ sau một lần gặp lại người cũ.' }),
 };
+
+/** Các kết cục của một người (cho Bản đồ tình duyên) */
+export const ROUTE_ENDS = ['hanhphuc', 'dodang', 'chilaban', 'lohen', 'muon', 'lyhon'] as const;
+/** Kết cục chung không gắn với ai */
+export const SOLO_ENDS = ['bimeep', 'cuoivoi', 'docthan', 'nguoicu'] as const;
+
+/** Tên và mô tả một kết cục theo mã, lg là giới người yêu */
+export function endingInfo(id: string, lg: 'm' | 'f') {
+  const [kind, who] = id.split('_') as [string, LoveId | undefined];
+  const n = who && LOVES[who] ? LOVES[who][lg] : '';
+  if (kind === 'hanhphuc' && who && !LOVE_END[id]) return { name: LOVES[who].happy, desc: `Cưới ${n} và hạnh phúc đến tận già.` };
+  const f = LOVE_END[id] ?? LOVE_END[kind];
+  return f ? f(n) : MIDS[id] ?? { name: id, desc: '' };
+}
 
 export function loveEndOf(c: Character, s: Story) {
   const lg = c.gender === 'f' ? 'm' : 'f';

@@ -113,6 +113,8 @@ export function newStory(f: Fate, first: string): Story {
     pending: null,
     resume: null,
     peak: 0,
+    album: [],
+    notes: [],
     hist: [],
   };
 }

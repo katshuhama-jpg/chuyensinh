@@ -88,6 +88,21 @@ export interface StoryCore {
   resume: string | null;
   /** số người thân (độ thân từ 50) cùng lúc nhiều nhất từng có */
   peak: number;
+  /** album kỷ niệm: mỗi buổi hẹn để lại một tấm ảnh */
+  album: Photo[];
+  /** câu trả lời ở các mốc tuổi (người chơi tự gõ) */
+  notes: { age: number; q: string; a: string }[];
+  /** ngã rẽ (số thứ tự trong path) đã chốt kết cục tình yêu */
+  endAt?: number;
+}
+
+export interface Photo {
+  age: number;
+  year: number;
+  who: LoveId;
+  place: string;
+  bg: Bg;
+  line: string;
 }
 
 export interface Story extends StoryCore {
@@ -145,7 +160,9 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer';
+  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer' | 'reflect';
+  /** cảnh ngẫm (kiểu 1 in 8 Billion): câu hỏi để người chơi tự viết */
+  ask?: (x: Ctx) => string;
   /** cảnh chat: máy dùng (mặc định theo năm); 'pc' là phần mềm chat ở quán net */
   device?: (x: Ctx) => 'letter' | 'nokia' | 'pc' | 'smart' | 'ai';
   /** cảnh gọi điện: chiều gọi, gọi video, tên người kia, dòng phụ, câu người kia nói khi thông máy */
@@ -209,7 +226,11 @@ export interface Fx {
   unflag: (f: string) => void;
   partner: (p: StoryCore['partner']) => void;
   marry: () => void;
+  /** ly hôn: hết vợ chồng, người kia rời khỏi đời mình */
+  divorce: () => void;
   kids: (n: number) => void;
+  /** chụp một tấm ảnh vào album kỷ niệm */
+  photo: (p: Omit<Photo, 'age' | 'year'>) => void;
   loveEnd: (id: string) => void;
   /** mở một kết cục giữa chừng */
   mid: (id: string) => void;
@@ -301,8 +322,17 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
       s.married = true;
       s.marriedAge = scene.age;
     },
+    divorce: () => {
+      if (s.partner && s.partner !== 'xemmat') fx.flag(`${s.partner}_out`);
+      s.married = false;
+      s.partner = null;
+      fx.flag('lyhon');
+    },
     kids: (n) => (s.kids = n),
-    loveEnd: (id) => (s.loveEnd = id),
+    photo: (p) => {
+      s.album = [...(s.album ?? []), { ...p, age: scene.age, year: c.birthYear + scene.age }];
+    },
+    loveEnd: (id) => ((s.loveEnd = id), (s.endAt = s.path.length)),
     mid: (id) => {
       if (!s.mids.includes(id)) s.mids.push(id);
       fb.mids.push(id);
@@ -382,6 +412,8 @@ export function normalizeStory(s: Story): Story {
       pending: c.pending ?? null,
       resume: c.resume ?? null,
       peak: c.peak ?? 0,
+      album: c.album ?? [],
+      notes: c.notes ?? [],
     };
   };
   return { ...fix(s), hist: (s.hist ?? []).map(fix) };

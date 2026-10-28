@@ -93,14 +93,14 @@ export default function Home() {
           </>
         )}
         <div className="grid3">
-          <button type="button" className="tile px is-soon" disabled>
+          <Link href="/so-tinh" className="tile px">
             Sổ Tình
-            <small>sắp có</small>
-          </button>
-          <button type="button" className="tile px is-soon" disabled>
-            Ngã rẽ
-            <small>sắp có</small>
-          </button>
+            <small>{meta.endings?.length ?? 0} kết cục</small>
+          </Link>
+          <Link href="/so-tinh#tuong-niem" className="tile px">
+            Tưởng niệm
+            <small>{meta.memorials?.length ?? 0} đời</small>
+          </Link>
           <Link href="/choi" className="tile px">
             Chơi tiếp
           </Link>

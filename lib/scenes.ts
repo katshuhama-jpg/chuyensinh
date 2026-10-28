@@ -8,6 +8,9 @@ import { CAST } from './cast';
 import type { Bg } from '@/components/Backdrop';
 import { activeOf, ctxOf, isOut, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, type Choice, type Ctx, type Fx, type LoveId, type Post, type Resolve, type Scene, type Story, type SwipeCard } from './story';
 import { jobOf } from './profiles';
+import { dramaAt } from './drama';
+import { dateStep, spotChoice } from './dates';
+import { newsOfLoves } from './lives';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -436,7 +439,7 @@ const list: Scene[] = [
       { t: 'Đi chơi cho biết đời', do: (fx) => (fx.stat('noi', 15), fx.love('long', 10), fx.rel('bome', -8), fx.stat('hoc', -5)) },
       { t: 'Theo đuổi âm nhạc, đi diễn văn nghệ', do: (fx) => (fx.stat('duyen', 15), fx.stat('tinh', 5), fx.love('hai', 10), fx.love('long', 3), fx.love('minh', 3)), note: (x) => `Ở đội văn nghệ có ${x.L('hai')}, ôm đàn ghi-ta cả buổi.` },
     ],
-    next: 't16_hethong',
+    next: 'rf@15',
   },
   {
     id: 't16_hethong',
@@ -591,7 +594,7 @@ const list: Scene[] = [
       `"Luật: cùng lúc tối đa 5 người, cả đời 10 người, mỗi năm 2 lượt. Bắt cá hai tay mà bị lộ thì tự chịu."`,
     ],
     choices: [{ t: '▶ Mở Bảng tình duyên', sys: 'Đinh! Mùa yêu bắt đầu.' }],
-    next: 'hub@20#1',
+    next: 'fo@20',
   },
   {
     id: 'y22_drama',
@@ -603,7 +606,7 @@ const list: Scene[] = [
     text: (x) => eraDrama(x).text,
     // lựa chọn thay theo năm: dựng ở getScene
     choices: [],
-    next: 'hub@22#1',
+    next: 'fo@22',
   },
   {
     id: 'y23_noidoi',
@@ -625,7 +628,7 @@ const list: Scene[] = [
       { t: '"Ở nhà ngủ sớm."', do: (fx) => fx.flag('noidoi'), note: (x) => `${x.L(P(x))} sẽ nhớ chuyện này.` },
       { t: '"Sao lại tra hỏi thế?"', do: (fx, x) => (fx.love(P(x), -8), fx.stat('noi', 5)) },
     ],
-    next: 'hub@23#1',
+    next: 'fo@23',
   },
   {
     id: 'y24_ramat',
@@ -668,7 +671,7 @@ const list: Scene[] = [
         sys: 'Đinh! Cảnh báo: hai người chưa đủ thân. Ký chủ chắc chưa?',
       },
     ],
-    next: 'hub@24#1',
+    next: 'fo@24',
   },
   {
     id: 'y25_traxanh',
@@ -709,7 +712,7 @@ const list: Scene[] = [
         },
       },
     ],
-    next: 'hub@25#1',
+    next: 'fo@25',
   },
   {
     id: 'y27_cauhon',
@@ -822,7 +825,7 @@ const list: Scene[] = [
       { t: 'Sinh hai đứa cho vui nhà', do: (fx) => (fx.kids(2), fx.rel('con', 55), fx.stat('tien', -20), fx.stat('tam', -5)) },
       { t: 'Chưa muốn có con', do: (fx, x) => (fx.kids(0), fx.stat('tam', 5), hasPartner(x) && fx.love(P(x), -5)) },
     ],
-    next: 'ev@35',
+    next: 'dr@34',
   },
   {
     id: 'm40_nguoicu',
@@ -866,7 +869,7 @@ const list: Scene[] = [
       },
       { t: '(Để "Đã xem", rồi xóa tin nhắn)', do: (fx, x) => (x.s.married && hasPartner(x) ? fx.love(P(x), 3) : undefined, fx.stat('tam', -3)) },
     ],
-    next: 'ev@42',
+    next: 'dr@41',
   },
   {
     id: 'm45_viec',
@@ -881,7 +884,7 @@ const list: Scene[] = [
       { t: (x) => `Đón ${x.bm} lên ở cùng`, do: (fx) => (fx.rel('bome', 20), fx.stat('tien', -10), fx.stat('tinh', 5)) },
       { t: 'Dành tiền đi du lịch khắp nơi', if: (x) => !x.s.married, do: (fx) => (fx.stat('tam', 15), fx.rel('banthan', 10)) },
     ],
-    next: 'o60',
+    next: 'dr@47',
   },
 
   // ===== Tuổi già =====
@@ -944,6 +947,24 @@ const AFTER_YEAR: Record<number, string> = {
   26: 'y27_cauhon',
 };
 
+/** Sau mỗi drama tình ái thì đi tới đâu (Mùa yêu 20-26 và những năm sau cưới) */
+const DR_NEXT: Record<number, string> = {
+  ...AFTER_YEAR,
+  24: 'rf@25',
+  31: 'm32_tet',
+  34: 'ev@35',
+  36: 'dr@37',
+  37: 'dr@38',
+  38: 'm40_nguoicu',
+  41: 'ev@42',
+  43: 'dr@44',
+  44: 'm45_viec',
+  47: 'rf@50',
+  50: 'dr@53',
+  53: 'dr@56',
+  56: 'o60',
+};
+
 /** Số giả ngẫu nhiên cố định theo trạng thái, để quay lại ngã rẽ vẫn ra cùng kết quả */
 function roll(s: Story, salt: number) {
   const n = Math.sin(s.path.length * 12.9898 + salt * 78.233) * 43758.5453;
@@ -959,7 +980,71 @@ const close = (s: Story) => activeOf(s).filter((id) => s.love[id] >= 40);
 
 /** Mỗi năm: 1 lượt tự do ở Bảng tình duyên, rồi tới ngã rẽ của tuyến tình */
 function afterTurn(age: number, n: number) {
-  return n === 1 ? `route@${age}` : `end@${age}`;
+  // năm chọn trọng tâm "Yêu" thì có hai lượt ở Bảng tình duyên
+  return (x: Ctx) => (n === 1 && x.has(`fy_${age}_yeu`) ? `hub@${age}#2` : `route@${age}`);
+}
+
+/** Câu hỏi ở các mốc tuổi: dừng lại, tự viết vài dòng; cuối đời đọc lại */
+const ASK: Record<number, { q: string; next: string }> = {
+  15: { q: 'Người đầu tiên khiến mình đỏ mặt là ai? Vì sao?', next: 't16_hethong' },
+  25: { q: 'Nếu được nói một câu với người cũ, mình sẽ nói gì?', next: 'y25_traxanh' },
+  50: { q: 'Có ai mình vẫn còn tiếc không?', next: 'dr@50' },
+  70: { q: 'Nếu gặp lại chính mình năm hai mươi tuổi, mình sẽ dặn điều gì?', next: 'o75' },
+};
+function reflectScene(age: number): Scene {
+  const a = ASK[age];
+  return {
+    id: `rf@${age}`,
+    age,
+    chapter: age <= 17 ? CH.teen : age < 30 ? CH.tre : age < 60 ? CH.nha : CH.gia,
+    kind: 'reflect',
+    bg: () => ({ place: 'phong', time: 'night' }),
+    title: `${age} tuổi, dừng lại một chút`,
+    text: () => ['Thời gian ngừng trôi. Một câu hỏi hiện ra, chỉ mình biết câu trả lời.'],
+    ask: () => a.q,
+    choices: [{ t: 'Ghi lại', do: (fx) => fx.stat('tam', 3) }, { t: 'Để sau' }],
+    next: a.next,
+  };
+}
+
+/** Trọng tâm của năm (kiểu 1 in 8 Billion): Yêu thì thêm lượt hẹn hò, chọn khác thì người yêu thấy bị bỏ bê */
+const FOCUS: { k: string; t: string; d: string; do: (fx: Fx, x: Ctx) => void }[] = [
+  { k: 'yeu', t: '♥ Yêu', d: 'Thêm một lượt hẹn hò, tâm sự, tặng quà', do: (fx) => fx.stat('dao', 3) },
+  { k: 'hoc', t: '✎ Học thêm', d: 'Thông minh tăng', do: (fx) => (fx.stat('hoc', 8), fx.stat('tam', -2)) },
+  { k: 'lam', t: '$ Lo sự nghiệp', d: 'Tài chính tăng', do: (fx) => (fx.stat('tien', 10), fx.flag('dilam')) },
+  { k: 'nha', t: '⌂ Gia đình', d: 'Gần bố mẹ hơn', do: (fx) => (fx.rel('bome', 12), fx.stat('tinh', 3)) },
+  { k: 'minh', t: '✦ Chăm bản thân', d: 'Nhan sắc, Tâm lý tăng', do: (fx) => (fx.stat('tam', 6), fx.stat('duyen', 5)) },
+];
+
+function focusScene(age: number): Scene {
+  return {
+    id: `fo@${age}`,
+    age,
+    chapter: CH.tre,
+    bg: () => ({ place: 'phong', time: 'day' }),
+    who: () => 'he_thong',
+    title: `Năm ${age} tuổi: dồn sức cho điều gì?`,
+    text: (x) => {
+      const lines = [`Năm ${x.year}. Mỗi năm chỉ có một trọng tâm.`];
+      if (hasPartner(x) && !x.has(`fy_${age - 1}_yeu`) && age > 20) lines.push(`Năm ngoái ${x.L(P(x))} hay nhắn: "Dạo này bận lắm à?"`);
+      const news = newsOfLoves(x);
+      if (news) lines.push(news);
+      return lines;
+    },
+    choices: FOCUS.map((f) => ({
+      t: `${f.t} - ${f.d}`,
+      do: (fx: Fx, x: Ctx) => {
+        fx.flag(`fy_${age}_${f.k}`);
+        f.do(fx, x);
+        // hai năm liền không dành cho tình yêu thì người yêu buồn
+        if (f.k !== 'yeu' && hasPartner(x) && !x.has(`fy_${age - 1}_yeu`) && age > 20) {
+          fx.love(P(x), -8);
+          fx.say(`${x.L(P(x))} bảo: "Hai năm rồi, ${x.goi} toàn bận." 🦋`);
+        }
+      },
+    })),
+    next: `hub@${age}#1`,
+  };
 }
 
 /** Tỏ tình: từ 60 là thành, 50-59 thì nhờ Duyên dáng */
@@ -1096,7 +1181,7 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
     who: () => id,
     bg: (x) => (x.year < 2012 ? { place: 'quan', time: 'dusk' } : { place: 'quan', time: 'dusk' }),
     title: (x) => `Hẹn hò với ${x.L(id)}`,
-    text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}).`, `Đi đâu bây giờ?`],
+    text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}).`, `Đi đâu bây giờ? (★ là chỗ riêng của ${x.ay})`],
     choices: order.map(
       (k): Choice => ({
         t: (x) => DATES[k].t(x.year),
@@ -1107,8 +1192,8 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
           if (x.s.partner && x.s.partner !== id) fx.flag(`len_${age}_${n}`);
         },
       }),
-    ),
-    next: afterTurn(age, n),
+    ).concat([spotChoice(age, n, id)]),
+    next: `d2@${age}#${n}:${id}`,
   };
 }
 
@@ -1311,7 +1396,7 @@ function hubScene(age: number, n: number): Scene {
     kind: 'hub',
     bg: () => (n === 1 ? { place: 'pho', time: 'dusk' } : { place: 'phong', time: 'night' }),
     title: `Mùa yêu năm ${age} tuổi`,
-    text: (x) => [`Năm ${x.year}, lượt tự do. Hôm nay ${x.me} dành thời gian cho ai?`],
+    text: (x) => [n === 1 ? `Năm ${x.year}, lượt tự do. Hôm nay ${x.me} dành thời gian cho ai?` : `Năm nay dồn sức cho tình yêu: thêm một lượt nữa.`],
     choices: [
       ...LOVE_IDS.flatMap(per),
       { t: (x) => quetLabel(x.year), act: 'quet', if: (x) => x.s.met.length < MAX_LIFE, to: `quet@${age}#${n}` },
@@ -1355,11 +1440,11 @@ function endYear(age: number): Scene {
     skip: () => true,
     next: (x) => {
       const pair = caughtPair(x.s);
-      if (!pair) return AFTER_YEAR[age];
+      if (!pair) return `dr@${age}`;
       const hasP = !!x.s.partner && x.s.partner !== 'xemmat';
       const lens = x.s.flags.filter((f) => f.startsWith(`len_${age}_`)).length;
       const risk = (hasP ? 0.35 : 0.12) + (close(x.s).length - 2) * 0.12 + lens * 0.12;
-      return roll(x.s, age * 13) < risk ? `bat@${age}` : AFTER_YEAR[age];
+      return roll(x.s, age * 13) < risk ? `bat@${age}` : `dr@${age}`;
     },
   };
 }
@@ -1455,16 +1540,26 @@ export function resolverOf(c: Character, f: Family): Resolve {
     switch (kind) {
       case 'ev':
         return eraScene(age, ctxOf(c, f, s, age));
+      case 'dr':
+        return dramaAt(age, ctxOf(c, f, s, age), DR_NEXT[age] ?? 'end');
       case 'route':
         return routeScene(age, ctxOf(c, f, s, age), `end@${age}`);
       case 'gift':
         return giftScene(age, n, who as LoveId);
       case 'hub':
         return hubScene(age, n);
+      case 'fo':
+        return focusScene(age);
+      case 'rf':
+        return ASK[age] ? reflectScene(age) : undefined;
       case 'chat':
         return chatScene(age, n, who as LoveId);
       case 'date':
         return dateScene(age, n, who as LoveId);
+      case 'd2':
+      case 'd3':
+      case 'd4':
+        return dateStep(Number(kind[1]) as 2 | 3 | 4, age, n, who as LoveId, afterTurn(age, n));
       case 'quet':
         return quetScene(age, n);
       case 'explore':

@@ -25,6 +25,8 @@ for (let i = 0; i < N; i++) {
       if (ch.act === 'drop' && ch.loveId !== target) v += 1;
       if (ch.act === 'confess' && ch.loveId === target) v += 8;
       if (/Gật đầu|duyen|Đến hậu trường|Đến clip/.test(t)) v += 2;
+      if (/♥ Yêu|Đi cùng nhau|★/.test(t)) v += 3;
+      if (/chia tay|Chia tay|không cưới|Ly hôn/.test(t)) v -= 6;
       return v;
     };
     let best = 0;

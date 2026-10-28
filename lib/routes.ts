@@ -1,8 +1,8 @@
 /**
  * Tuyến tình (kiểu Road to Empress + hiệu ứng cánh bướm).
  * Mỗi năm Mùa yêu, sau lượt tự do là một "ngã rẽ": chưa theo ai thì chọn hướng đi;
- * đang theo ai thì sang chặng tiếp của tuyến người ấy. Mỗi tuyến 5 chặng:
- * hẹn đầu - bí mật - người thứ ba - biến cố - ngã rẽ cuối. Lựa chọn ở chặng trước
+ * đang theo ai thì sang chặng tiếp của tuyến người ấy. Mỗi tuyến 7 chặng:
+ * hẹn đầu - bí mật - người thứ ba - biến cố - ra mắt nhà người ấy - chuyến đi đầu tiên - ngã rẽ cuối. Lựa chọn ở chặng trước
  * (và cả chuyện từ hồi bé) đổi tình huống, đổi lựa chọn ở chặng sau; khi vậy game ghi "🦋".
  */
 
@@ -121,7 +121,7 @@ export function routeOf(x: Ctx): { id: LoveId; step: number } | null {
   const f = x.s.flags.find((g) => g.startsWith('route_') && !x.has(`${g.slice(6)}_out`));
   if (!f) return null;
   const id = f.slice(6) as LoveId;
-  const step = [1, 2, 3, 4, 5].filter((k) => x.has(`rb_${id}_${k}`)).length;
+  const step = [1, 2, 3, 4, 5, 6, 7].filter((k) => x.has(`rb_${id}_${k}`)).length;
   return { id, step };
 }
 
@@ -166,7 +166,9 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
       ],
     };
   }
-  const { id, step } = r;
+  const { id } = r;
+  // vào tuyến muộn thì bỏ bớt chặng giữa (ra mắt, chuyến đi) để kịp ngã rẽ cuối trước 27 tuổi
+  const step = (r.step === 4 || r.step === 5) && 26 - age < 6 - r.step ? 6 : r.step;
   const p = P[id];
   const L = (cx: Ctx) => cx.L(id);
   const scene = (title: string, text: (cx: Ctx) => string[], choices: Choice[]): Scene => ({ ...base, title, who: () => id, bg: () => bgs[step % bgs.length], text, choices });
@@ -233,27 +235,66 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
     );
   }
 
+  if (step === 4)
+    return scene(
+      'Ra mắt nhà người ấy',
+      (cx) => [
+        `Lần đầu đến nhà ${L(cx)} ăn cơm. ${cx.lg === 'm' ? 'Bố' : 'Mẹ'} ${L(cx)} gắp cho ${cx.me} miếng to nhất, rồi hỏi: "Cháu làm gì, lương tháng bao nhiêu?"`,
+        ...(cx.has(`r_${id}_lo`) ? [butterfly(`Chuyện bí mật bị lộ năm ấy, cả nhà ${L(cx)} đều đã nghe.`)] : []),
+      ],
+      [
+        { t: 'Thật thà kể hết, không tô vẽ', do: (fx, cx) => (go(fx, id, 5), fx.love(id, 6), fx.stat('tinh', 4), cx.s.stats.tien < 35 && fx.flag(`r_${id}_ngheo`)) },
+        {
+          t: 'Nói khéo, chuyển sang khen món ăn',
+          do: (fx, cx) => {
+            go(fx, id, 5);
+            if (cx.s.stats.duyen >= 50) (fx.love(id, 10), fx.flag(`r_${id}_uong`), fx.say('Cả nhà cười rộn. Bố mẹ người ấy gật gù.'));
+            else (fx.love(id, -4), fx.say('Khen nhầm món người ấy nấu hỏng. Bữa cơm hơi lặng.'));
+          },
+        },
+        { t: 'Ăn xong giành rửa bát', do: (fx) => (go(fx, id, 5), fx.love(id, 8), fx.flag(`r_${id}_uong`)), note: () => butterfly('Bố mẹ người ấy sẽ nhớ cái bát rửa sạch bong ấy.') },
+      ],
+    );
+
+  if (step === 5)
+    return scene(
+      'Chuyến đi đầu tiên',
+      (cx) => [
+        `Hai người đi ${cx.year < 2000 ? 'Đà Lạt bằng xe khách' : cx.year < 2015 ? 'Sa Pa bằng tàu đêm' : 'Phú Quốc bằng máy bay giá rẻ'}, lần đầu xa nhà cùng nhau. Đến nơi thì lạc đường, trời tối, điện thoại sắp hết pin.`,
+        ...(cx.has(`r_${id}_ngheo`) ? [butterfly(`Nhà ${L(cx)} chê ${cx.me} nghèo, nên chuyến đi này phải giấu.`)] : []),
+      ],
+      [
+        { t: 'Bình tĩnh hỏi đường, cười cho qua', do: (fx) => (go(fx, id, 6), fx.love(id, 10), fx.stat('tam', 4)), note: (cx) => `${L(cx)} bảo: "Đi với ${cx.goi}, lạc cũng vui."` },
+        { t: 'Cãi nhau xem lỗi tại ai', do: (fx) => (go(fx, id, 6), fx.love(id, -8), fx.flag(`r_${id}_cai`)) },
+        { t: 'Thuê luôn một phòng, mai tính', do: (fx) => (go(fx, id, 6), fx.love(id, 6), fx.stat('noi', 4), fx.stat('tien', -4)) },
+      ],
+    );
+
   // chặng cuối: cơ hội đi xa
   return scene(
     'Ngã rẽ cuối',
-    (cx) => [`${L(cx)} ${p.dream}. "${cx.xung === 'anh' ? 'Anh' : 'Em'} tính sao?"`],
+    (cx) => [
+      `${L(cx)} ${p.dream}. "${cx.xung === 'anh' ? 'Anh' : 'Em'} tính sao?"`,
+      ...(cx.has(`r_${id}_uong`) ? [butterfly(`Bố mẹ ${L(cx)} gọi riêng cho ${cx.me}: "Hai đứa tính gì thì tính cùng nhau nhé."`)] : []),
+      ...(cx.has(`r_${id}_cai`) ? [butterfly('Trận cãi nhau ở chuyến đi năm ấy vẫn chưa ai xin lỗi ai.')] : []),
+    ],
     [
       {
         t: 'Đi cùng nhau',
         if: (cx) => cx.s.love[id] >= 45,
-        do: (fx, cx) => (go(fx, id, 5), endRoute(fx, id), fx.flag(`rdone_${id}`), fx.partner(id), fx.love(id, 12), fx.stat('noi', 4), fx.say(`${cx.L(id)} siết tay ${cx.me}. Hai người chính thức là người yêu.`)),
+        do: (fx, cx) => (go(fx, id, 7), endRoute(fx, id), fx.flag(`rdone_${id}`), fx.partner(id), fx.love(id, 12), fx.stat('noi', 4), fx.say(`${cx.L(id)} siết tay ${cx.me}. Hai người chính thức là người yêu.`)),
       },
       {
         t: 'Níu giữ: "Ở lại được không?"',
         do: (fx, cx) => {
-          go(fx, id, 5);
+          go(fx, id, 7);
           endRoute(fx, id);
           fx.flag(`rdone_${id}`);
           if (cx.s.love[id] >= 60) (fx.partner(id), fx.love(id, 4), fx.say(`${cx.L(id)} ở lại. Nhưng đôi khi vẫn nhìn ra xa.`));
           else (fx.love(id, -10), fx.drop(id), fx.mid('xa'), fx.say(`${cx.L(id)} vẫn đi. Hai người lỡ nhau.`));
         },
       },
-      { t: 'Buông tay, chúc người ấy bay xa', do: (fx, cx) => (go(fx, id, 5), endRoute(fx, id), fx.flag(`rdone_${id}`), fx.drop(id), fx.stat('tinh', 6), fx.say(`${cx.L(id)} đi. Năm năm sau còn gửi một tấm bưu thiếp.`)) },
+      { t: 'Buông tay, chúc người ấy bay xa', do: (fx, cx) => (go(fx, id, 7), endRoute(fx, id), fx.flag(`rdone_${id}`), fx.drop(id), fx.stat('tinh', 6), fx.say(`${cx.L(id)} đi. Năm năm sau còn gửi một tấm bưu thiếp.`)) },
     ],
   );
 }

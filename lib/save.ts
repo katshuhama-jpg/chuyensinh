@@ -10,6 +10,19 @@ export interface Meta {
   lives?: number;
   /** các kết cục đã mở, ghi trong Sổ Tình */
   endings?: string[];
+  /** sổ tưởng niệm: những đời đã sống */
+  memorials?: Memorial[];
+}
+
+export interface Memorial {
+  name: string;
+  born: number;
+  age: number;
+  province: string;
+  love: string;
+  who: string | null;
+  notes: { age: number; q: string; a: string }[];
+  photos: number;
 }
 
 export interface SaveState {

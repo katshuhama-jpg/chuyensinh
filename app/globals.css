@@ -3432,3 +3432,225 @@ p {
   font-size: 11px;
   gap: 1px;
 }
+
+/* ---------- cảnh ngẫm: tự viết vài dòng ---------- */
+.reflect {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 4px;
+}
+.rf-q {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--accent);
+}
+.rf-in {
+  font: inherit;
+  font-size: 21px;
+  line-height: 1.2;
+  padding: 10px 12px;
+  margin: 4px;
+  background: var(--panel);
+  color: var(--ink);
+  border: 0;
+  resize: none;
+}
+.rf-in:focus {
+  outline: 3px solid var(--orange);
+  outline-offset: 2px;
+}
+.rf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.rf-row .btn-main,
+.rf-row .btn-sub {
+  min-height: 52px;
+}
+.choices .timer {
+  margin-bottom: 2px;
+}
+
+/* ---------- album kỷ niệm: ảnh pixel kiểu polaroid ---------- */
+.album {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 4px;
+}
+.photo {
+  margin: 4px;
+  padding: 6px 6px 8px;
+  background: var(--card);
+  color: var(--card-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ph-img {
+  position: relative;
+  aspect-ratio: 200 / 144;
+  background-size: cover;
+  background-position: center bottom;
+  image-rendering: pixelated;
+  overflow: hidden;
+}
+.ph-a,
+.ph-b {
+  position: absolute;
+  bottom: -6px;
+}
+.ph-a {
+  left: 18%;
+}
+.ph-b {
+  right: 18%;
+}
+.photo figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 16px;
+  line-height: 1.1;
+}
+.photo figcaption b {
+  font-weight: 400;
+  font-size: 18px;
+}
+.photo figcaption small {
+  color: var(--card-mute);
+}
+.photo .ph-line {
+  color: var(--card-ink);
+}
+
+/* ---------- Sổ Tình: bản đồ tình duyên và tưởng niệm ---------- */
+.st-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+.st-sum b {
+  font-weight: 400;
+  font-size: 30px;
+}
+.st-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.st-branch {
+  margin: 4px;
+  background: var(--panel);
+}
+.st-branch summary {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.st-branch summary::-webkit-details-marker {
+  display: none;
+}
+.st-face {
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+.st-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.st-name b {
+  font-weight: 400;
+  font-size: 22px;
+}
+.st-name small {
+  font-size: 15px;
+  color: var(--mute);
+  line-height: 1.1;
+}
+.st-dots {
+  display: grid;
+  grid-template-columns: repeat(3, 12px);
+  gap: 4px;
+}
+.st-dots i {
+  width: 12px;
+  height: 12px;
+  background: var(--stat-empty);
+}
+.st-dots i.on {
+  background: var(--stat);
+}
+.st-dots i.on.k-lyhon,
+.st-dots i.on.k-lohen {
+  background: var(--stress);
+}
+.st-leaves,
+.st-ends,
+.st-mem {
+  list-style: none;
+  margin: 0;
+  padding: 0 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.st-leaves li,
+.st-ends li {
+  display: flex;
+  flex-direction: column;
+  padding-left: 12px;
+  box-shadow: -4px 0 0 0 var(--dim);
+  font-size: 18px;
+  line-height: 1.15;
+}
+.st-leaves li.on,
+.st-ends li.on {
+  box-shadow: -4px 0 0 0 var(--accent);
+}
+.st-leaves li b,
+.st-ends li b {
+  font-weight: 400;
+  font-size: 20px;
+}
+.st-leaves li small,
+.st-ends li small {
+  color: var(--mute);
+  font-size: 16px;
+}
+.st-ends {
+  padding: 0 4px;
+}
+.st-mem {
+  padding: 0;
+  gap: 14px;
+}
+.st-mem li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+}
+.st-mem li b {
+  font-weight: 400;
+  font-size: 24px;
+}
+.st-note {
+  color: var(--card-mute);
+  font-size: 16px;
+}
+.card .mute {
+  color: var(--card-mute);
+}

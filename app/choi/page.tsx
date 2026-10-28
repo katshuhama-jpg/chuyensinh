@@ -18,12 +18,14 @@ import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEn
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
-import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
 import { openerOf } from '@/lib/openers';
 import { PERSONA, PERSONA_AXES, jobOf, profileOf } from '@/lib/profiles';
+import { lifeOf } from '@/lib/lives';
+import { FLAVOR } from '@/lib/dates';
 import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -76,8 +78,14 @@ export default function Choi() {
       family={family}
       story={story}
       fb={fb}
-      onChoose={(i) => {
+      onChoose={(i, note) => {
         const r = choose(resolverOf(char, family), char, family, story, i);
+        // cảnh ngẫm: lưu dòng người chơi tự viết
+        if (note) {
+          const sc = resolverOf(char, family)(story.scene, story);
+          const x0 = ctxOf(char, family, story, sc?.age ?? 0);
+          r.s.notes = [...(r.s.notes ?? []), { age: sc?.age ?? 0, q: sc?.ask?.(x0) ?? '', a: note }];
+        }
         update(r.s);
         const has = r.fb.notes.length || r.fb.sys.length || r.fb.mids.length;
         setFb(has ? r.fb : null);
@@ -98,7 +106,7 @@ const CH_LINE: Record<string, string> = {
   'Tuổi già': 'Những người còn ở lại',
 };
 
-function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number) => void; onNext: () => void }) {
+function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; char: Character; family: Family; story: Story; fb: Feedback | null; onChoose: (i: number, note?: string) => void; onNext: () => void }) {
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
   const last = story.path[story.path.length - 1];
   const shownId = fb ? last.scene : story.scene;
@@ -154,7 +162,6 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="eyebrow" style={{ fontSize: 18 }}>
             {sc.chapter.toUpperCase()} · {age} TUỔI · {x.year}
-            {x.year > 2026 ? ' (GIẢ ĐỊNH)' : ''}
           </div>
           <h1>{txt(sc.title, x)}</h1>
         </div>
@@ -261,12 +268,14 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           <SlideUnlock>
             <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
           </SlideUnlock>
+        ) : sc.kind === 'reflect' ? (
+          <Reflect key={sc.id} ask={sc.ask?.(x) ?? ''} onDone={(t) => (t ? onChoose(0, t) : onChoose(Math.min(1, opts.length - 1)))} />
         ) : sc.kind === 'gift' ? (
           <GiftShelf opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
         ) : sc.kind === 'hub' ? (
           <HubBoard x={x} opts={opts} onChoose={onChoose} />
         ) : (
-          !chat && !swipe && !call && !tap && <Choices key={sc.id} opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
+          !chat && !swipe && !call && !tap && <Choices key={sc.id} opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} timer={sc.timer} timeout={sc.timeout} />
         )}
 
       </div>
@@ -329,15 +338,31 @@ function GiftShelf({ opts, onChoose }: { opts: string[]; onChoose: (i: number) =
   );
 }
 
-function Choices({ opts, onChoose }: { opts: string[]; onChoose: (i: number) => void }) {
+function Choices({ opts, onChoose, timer, timeout }: { opts: string[]; onChoose: (i: number) => void; timer?: number; timeout?: number }) {
   const done = useRef(false);
   const pick = (i: number) => {
     if (done.current) return;
     done.current = true;
     onChoose(i);
   };
+  const [left, setLeft] = useState(timer ?? 0);
+  useEffect(() => {
+    if (!timer) return;
+    const t = setInterval(() => setLeft((v) => v - 1), 1000);
+    return () => clearInterval(t);
+  }, [timer]);
+  useEffect(() => {
+    if (timer && left <= 0) pick(Math.min(timeout ?? opts.length - 1, opts.length - 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [left]);
   return (
     <div className="choices">
+      {!!timer && (
+        <div className="timer px" aria-label={`Còn ${Math.max(0, left)} giây`}>
+          <i style={{ width: `${(100 * Math.max(0, left)) / timer}%` }} />
+          <span>{Math.max(0, left)}s</span>
+        </div>
+      )}
       {opts.map((t, i) => (
         <button key={i} type="button" className="opt px" style={{ animationDelay: `${0.3 + i * 0.08}s` }} onClick={() => pick(i)}>
           <b>{t}</b>
@@ -483,6 +508,67 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
 }
 
 /** Nút Sổ tay ở góc trên: bấm mở bảng tình cảm với những người đã gặp và chỉ số của bạn */
+/** Cảnh ngẫm: tự viết vài dòng, cuối đời đọc lại */
+function Reflect({ ask, onDone }: { ask: string; onDone: (t: string | null) => void }) {
+  const [t, setT] = useState('');
+  const done = useRef(false);
+  const go = (v: string | null) => {
+    if (done.current) return;
+    done.current = true;
+    onDone(v);
+  };
+  return (
+    <div className="reflect">
+      <p className="rf-q">{ask}</p>
+      <textarea className="rf-in px-dim" rows={3} maxLength={200} value={t} onChange={(e) => setT(e.target.value)} placeholder="Viết gì cũng được, chỉ mình đọc..." aria-label={ask} />
+      <div className="rf-row">
+        <button type="button" className="btn-main" disabled={!t.trim()} onClick={() => go(t.trim())}>
+          ✎ GHI LẠI
+        </button>
+        <button type="button" className="btn-sub px" onClick={() => go(null)}>
+          Để sau
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Album kỷ niệm: mỗi buổi hẹn một tấm ảnh pixel */
+function Album({ photos, char, lg }: { photos: Photo[]; char: Character; lg: 'm' | 'f' }) {
+  const me = useMemo(() => lpcLayers(char.look, char.gender, 'adult'), [char]);
+  if (!photos.length) return <p className="mt-hint">Chưa có tấm ảnh nào. Đi hẹn hò đi!</p>;
+  return (
+    <div className="album">
+      {photos.map((p, i) => (
+        <AlbumPhoto key={i} p={p} me={me} lg={lg} />
+      ))}
+    </div>
+  );
+}
+function AlbumPhoto({ p, me, lg }: { p: Photo; me: ReturnType<typeof lpcLayers>; lg: 'm' | 'f' }) {
+  const them = useMemo(() => lpcLayers(CAST[p.who][lg], lg, 'adult'), [p.who, lg]);
+  const st = bgStage(p.bg, `album${p.age}${p.who}`, p.year);
+  return (
+    <figure className="photo px">
+      <div className="ph-img" style={{ backgroundImage: `url(${st.src})` }}>
+        <span className="ph-a">
+          <Sprite layers={me} scale={1} anim="idle" dir={3} label="" />
+        </span>
+        <span className="ph-b">
+          <Sprite layers={them} scale={1} anim="idle" dir={1} label="" />
+        </span>
+      </div>
+      <figcaption>
+        <b>
+          {LOVES[p.who][lg]} · {p.year}
+        </b>
+        <small>{p.place}</small>
+        <small className="ph-line">{p.line}</small>
+      </figcaption>
+    </figure>
+  );
+}
+
 function Notebook({ x, story }: { x: Ctx; story: Story }) {
   const [open, setOpen] = useState(false);
   const met = story.met ?? LOVE_IDS.filter((id) => story.love[id] > 0);
@@ -509,6 +595,8 @@ function Notebook({ x, story }: { x: Ctx; story: Story }) {
               </button>
             </div>
             <Meters x={x} story={story} met={met} />
+            <div className="mt-h">▣ ALBUM KỶ NIỆM ({(story.album ?? []).length})</div>
+            <Album photos={story.album ?? []} char={x.c} lg={x.lg} />
           </div>
         </div>
       )}
@@ -641,6 +729,8 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
           <li>⌂ {pf.home}</li>
           <li>➤ {pf.ride}</li>
           <li>♥ Thích {LOVES[id].likesName}</li>
+          {lifeOf(id, x) && <li>✦ Dạo này: {lifeOf(id, x)}</li>}
+          {x.has(`kv_${id}`) && <li>◆ Kỷ vật: {FLAVOR[id].keep}</li>}
         </ul>
         <div className="mt-h">CHỈ SỐ CỦA {x.L(id).toUpperCase()}</div>
         <Radar axes={PERSONA_AXES.map((label, i) => ({ label, value: p[i] }))} />
@@ -703,9 +793,20 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
     loadMe().then((m) => {
       const meta = m?.meta ?? {};
       const endings = Array.from(new Set([...(meta.endings ?? []), love.id, old.id, ...story.mids]));
-      void saveMeta({ ...meta, endings, lives: (meta.lives ?? 0) + 1 });
+      // sổ tưởng niệm: giữ 30 đời gần nhất
+      const mem = {
+        name: char.name,
+        born: char.birthYear,
+        age: lifespanOf(char, story),
+        province: family.province,
+        love: love.name,
+        who: story.partner && story.partner !== 'xemmat' ? LOVES[story.partner][char.gender === 'f' ? 'm' : 'f'] : null,
+        notes: story.notes ?? [],
+        photos: (story.album ?? []).length,
+      };
+      void saveMeta({ ...meta, endings, lives: (meta.lives ?? 0) + 1, memorials: [mem, ...(meta.memorials ?? [])].slice(0, 30) });
     });
-  }, [love.id, old.id, story.mids]);
+  }, [love.id, love.name, old.id, story, char, family]);
 
   return (
     <main className="app dither">
@@ -761,6 +862,38 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
             </b>
           </div>
         </div>
+
+        {story.endAt !== undefined && story.path[story.endAt] && (
+          <div className="note px-dim">
+            <span className="mute">Ngã rẽ đã đổi số phận:</span>
+            <span>
+              {story.path[story.endAt].age} tuổi · {story.path[story.endAt].title}
+            </span>
+            <b style={{ fontWeight: 400, color: 'var(--accent)' }}>→ {story.path[story.endAt].choice}</b>
+            <button type="button" className="btn-sub px" onClick={() => onRewind(story.endAt!)}>
+              ↺ Quay lại ngã rẽ này
+            </button>
+          </div>
+        )}
+
+        {(story.notes ?? []).length > 0 && (
+          <div className="note px-dim">
+            <span className="mute">Những dòng đã viết:</span>
+            {story.notes.map((n, i) => (
+              <span key={i}>
+                <small className="mute">
+                  {n.age} tuổi · {n.q}
+                </small>
+                <br />“{n.a}”
+              </span>
+            ))}
+          </div>
+        )}
+
+        <section className="group">
+          <div className="label">▣ Album kỷ niệm</div>
+          <Album photos={story.album ?? []} char={char} lg={char.gender === 'f' ? 'm' : 'f'} />
+        </section>
 
         <div className="note px-dim">
           <span className="mute">Lời thầy bói năm đầy tháng:</span>
