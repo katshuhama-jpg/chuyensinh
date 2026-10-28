@@ -35,7 +35,12 @@ export function lifeOf(id: LoveId, x: Ctx): string | null {
 
 /** Một dòng tin về một người cũ, cho đầu năm (chọn người lâu không gặp) */
 export function newsOfLoves(x: Ctx): string | null {
-  const ids = x.s.met.filter((id) => x.s.partner !== id && x.has(`${id}_out`));
+  // chỉ báo tin khi người ấy vừa sang một mốc mới (hoặc năm 32, lúc nhiều người đã có gia đình), không lặp lại tin cũ
+  const fresh = (id: LoveId) => {
+    const a = id === 'tuananh' ? x.age + 5 : x.age;
+    return x.age === 32 || LIFE[id].some(([m]) => m === a);
+  };
+  const ids = x.s.met.filter((id) => x.s.partner !== id && x.has(`${id}_out`) && fresh(id));
   if (!ids.length) return null;
   const id = ids[(x.age * 7) % ids.length];
   const t = lifeOf(id, x);

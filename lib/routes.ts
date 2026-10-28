@@ -9,6 +9,8 @@
 import type { Bg } from '@/components/Backdrop';
 import { activeOf, LOVES, type Choice, type Ctx, type Fx, type LoveId, type Scene } from './story';
 import { jobOf } from './profiles';
+import { isSouth } from './names';
+import { away } from './actions';
 
 type Person = {
   /** chỗ hẹn đúng gu / an toàn / lệch gu */
@@ -29,8 +31,8 @@ const P: Record<LoveId, Person> = {
   khoi: {
     dates: ['Về ngõ cũ thả diều', 'Đi ăn kem ở bờ hồ', 'Vào trung tâm thương mại đông nghẹt'],
     secret: 'nhà sắp phải bán căn nhà trong ngõ để trả nợ',
-    rival: 'cô bạn đồng nghiệp ngày nào cũng mang cơm trưa cho',
-    crisis: 'bố mẹ hai bên vốn xích mích chuyện ranh giới đất, giờ cấm hai đứa qua lại',
+    rival: '{co} bạn đồng nghiệp ngày nào cũng mang cơm trưa cho',
+    crisis: 'hai bên gia đình vốn xích mích chuyện ranh giới đất, giờ cấm hai đứa qua lại',
     dream: 'được cử đi làm ở công trường trên núi hai năm',
     past: { flag: 'dieu', t: 'Mang theo con diều năm nào ra bãi', note: 'Năm 6 tuổi bạn trèo cây gỡ diều. Con diều ấy vẫn còn.' },
   },
@@ -39,7 +41,7 @@ const P: Record<LoveId, Person> = {
     secret: 'từng bỏ học vì phải nuôi em, chưa kể với ai',
     rival: 'đám bạn cũ rủ quay lại những cuộc đua đêm',
     crisis: 'gây gổ ở quán vì bênh bạn, bị đưa về phường',
-    dream: 'có người rủ vào Nam mở xưởng độ xe riêng',
+    dream: 'có người rủ {xa} mở xưởng độ xe riêng',
     past: { flag: 'danh_long', t: 'Nhắc lại trận đánh nhau năm lớp ba', note: 'Năm 8 tuổi bạn quay xuống đánh lại. Người ấy nhớ mãi.' },
   },
   minh: {
@@ -88,14 +90,14 @@ const P: Record<LoveId, Person> = {
   bao: {
     dates: ['Đi trò chơi điện tử rồi ăn vặt', 'Ăn trưa gần công ty', 'Đi tiệc sang trọng'],
     secret: 'hay cười vì sợ người khác thấy mình buồn',
-    rival: 'cô sếp mới cứ giao việc riêng cho người ấy',
+    rival: 'sếp mới cứ giao việc riêng cho người ấy',
     crisis: 'công ty cắt giảm, một trong hai người phải nghỉ',
     dream: 'có lời mời làm diễn viên hài ở thành phố khác',
   },
   duy: {
     dates: ['Đi tàu đêm đến một ga lạ', 'Ngồi quán cà phê gần ga', 'Đi trung tâm thương mại'],
     secret: 'đi tàu khắp nơi để tìm người mẹ đã bỏ đi',
-    rival: 'cô bạn thanh mai trúc mã ở quê chờ cưới',
+    rival: '{co} bạn thanh mai trúc mã ở quê chờ cưới',
     crisis: 'tìm được tin về mẹ, nhưng ở rất xa',
     dream: 'muốn đi một chuyến dài xuyên Việt, không biết bao giờ về',
   },
@@ -134,13 +136,17 @@ const bgs: Bg[] = [
 ];
 
 const butterfly = (t: string) => `🦋 ${t}`;
+const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
+/** {co}: người thứ ba cùng giới với nhân vật chính; {xa}: đi xa theo vùng đang sống */
+const fill = (t: string, cx: Ctx) => t.replace('{co}', cx.lg === 'm' ? 'cô' : 'anh').replace('{xa}', isSouth(cx.f.province) ? 'ra Hà Nội' : 'vào Sài Gòn');
 const go = (fx: Fx, id: LoveId, k: number) => fx.flag(`rb_${id}_${k}`);
 const endRoute = (fx: Fx, id: LoveId) => fx.unflag(`route_${id}`);
 
 /** Cảnh ngã rẽ của năm Mùa yêu `age` */
 export function routeScene(age: number, x: Ctx, next: string): Scene {
   const r = routeOf(x);
-  const base = { id: `route@${age}`, age, chapter: 'Tuổi trẻ', next };
+  // đang ở nước ngoài thì tuyến tình tạm dừng
+  const base = { id: `route@${age}`, age, chapter: 'Tuổi trẻ', next, skip: (cx: Ctx) => away(cx) || cx.s.married };
   // chưa theo ai: chọn hướng đi
   if (!r) {
     // vòng yêu mới: người theo đuổi được chọn qua những buổi đi chơi, không hỏi riêng nữa
@@ -212,7 +218,7 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
   if (step === 2)
     return scene(
       'Người thứ ba',
-      (cx) => [`Xuất hiện ${p.rival}. ${L(cx)} có vẻ khó xử.`],
+      (cx) => [`Xuất hiện ${fill(p.rival, cx)}. ${L(cx)} có vẻ khó xử.`],
       [
         { t: 'Tin người ấy, không hỏi gì', do: (fx, cx) => (go(fx, id, 3), fx.love(id, cx.has(`r_${id}_tin`) ? 12 : 6)), note: (cx) => (cx.has(`r_${id}_tin`) ? butterfly(`Vì bạn từng giữ kín bí mật, ${L(cx)} cũng tin bạn tuyệt đối.`) : '') },
         { t: 'Ghen ra mặt', do: (fx) => (go(fx, id, 3), fx.flag(`r_${id}_ghen`), fx.love(id, -6), fx.stat('noi', 5)) },
@@ -226,7 +232,7 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
       'Biến cố',
       (cx) =>
         leaked
-          ? [butterfly(`Bí mật bạn kể cho ${cx.s.bestie} đã lan ra. Giờ ai cũng biết ${L(cx)} ${p.secret}.`), `${L(cx)} nhìn ${cx.me}: "Chỉ có ${cx.xung === 'anh' ? 'anh' : 'em'} biết chuyện này thôi mà."`]
+          ? [butterfly(`Bí mật bạn kể cho ${cx.s.bestie} đã lan ra. Giờ ai cũng biết ${L(cx)} ${p.secret}.`), `${L(cx)} nhìn ${cx.me}: "Chỉ có ${cx.goi} biết chuyện này thôi mà."`]
           : [`Biến cố: ${p.crisis}.`, ...(cx.has(`r_${id}_ghen`) ? [butterfly(`Vì lần ghen trước, ${L(cx)} ngại tìm đến ${cx.me} lúc này.`)] : [])],
       [
         { t: 'Đứng ra bảo vệ, mặc kệ thiên hạ', if: (cx) => cx.has(`r_${id}_tin`) || cx.has(`r_${id}_hop`), do: (fx) => (go(fx, id, 4), fx.love(id, 16), fx.stat('noi', 4)), note: () => butterfly('Lựa chọn này chỉ mở vì những gì hai người đã có từ trước.') },
@@ -275,7 +281,7 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
   return scene(
     'Ngã rẽ cuối',
     (cx) => [
-      `${L(cx)} ${p.dream}. "${cx.xung === 'anh' ? 'Anh' : 'Em'} tính sao?"`,
+      `${L(cx)} ${fill(p.dream, cx)}. "${cap(cx.goi)} tính sao?"`,
       ...(cx.has(`r_${id}_uong`) ? [butterfly(`Bố mẹ ${L(cx)} gọi riêng cho ${cx.me}: "Hai đứa tính gì thì tính cùng nhau nhé."`)] : []),
       ...(cx.has(`r_${id}_cai`) ? [butterfly('Trận cãi nhau ở chuyến đi năm ấy vẫn chưa ai xin lỗi ai.')] : []),
     ],

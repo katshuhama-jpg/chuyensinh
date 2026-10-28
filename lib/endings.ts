@@ -35,6 +35,7 @@ const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = 
   dodang: (n) => ({ name: 'Cưới Rồi Mới Biết', desc: `Cưới ${n}, yêu nhiều nhưng không hợp nhau ở những điều quan trọng.` }),
   chilaban: (n) => ({ name: 'Mãi Là Bạn', desc: `${n} quý mình thật lòng, nhưng chỉ như một người bạn.` }),
   lohen: (n) => ({ name: 'Lỡ Một Nhịp', desc: `Yêu ${n}, nhưng không đến được với nhau.` }),
+  duyenno: (n) => ({ name: 'Duyên Nợ Xem Mắt', desc: `Đi xem mắt cho mẹ vui, người ngồi đối diện lại là ${n}. Hai người cưới sau ba tháng.` }),
   muon: (n) => ({ name: 'Tình Muộn', desc: `Ngoài bốn mươi mới về chung một nhà với ${n}.` }),
   cuoivoi: () => ({ name: 'Cưới Vội', desc: 'Cưới khi còn chưa hiểu nhau, rồi cả đời tập hiểu.' }),
   bimeep: () => ({ name: 'Bị Mẹ Ép Cưới', desc: 'Cưới người xem mắt. Không ồn ào, không cổ tích.' }),
@@ -44,7 +45,7 @@ const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = 
 };
 
 /** Các kết cục của một người (cho Bản đồ tình duyên) */
-export const ROUTE_ENDS = ['hanhphuc', 'dodang', 'chilaban', 'lohen', 'muon', 'lyhon'] as const;
+export const ROUTE_ENDS = ['hanhphuc', 'dodang', 'chilaban', 'lohen', 'muon', 'duyenno', 'lyhon'] as const;
 /** Kết cục chung không gắn với ai */
 export const SOLO_ENDS = ['bimeep', 'cuoivoi', 'docthan', 'nguoicu'] as const;
 
@@ -73,6 +74,11 @@ export function titlesOf(s: Story) {
   if ((s.peak ?? 0) >= 3 && !s.flags.includes('caught')) out.push({ name: 'Cao Thủ Thả Thính', desc: 'Từng giữ 3 người thân cùng lúc mà chưa một lần bị phát hiện.' });
   if (s.met.length >= 10) out.push({ name: 'Đào Hoa Cả Đời', desc: 'Gặp đủ 10 người trong một đời.' });
   if (s.met.length <= 2 && s.married) out.push({ name: 'Một Đời Một Người', desc: 'Chỉ quen rất ít người, và cưới một trong số đó.' });
+  const given = s.flags.filter((f) => f.startsWith('htm_')).length;
+  const ok = s.flags.filter((f) => f.startsWith('htok_')).length;
+  if (given >= 3 && ok >= given - 1) out.push({ name: 'Ký Chủ Gương Mẫu', desc: `Hoàn thành ${ok} trên ${given} nhiệm vụ của Hệ Thống.` });
+  else if (given >= 3 && ok === 0) out.push({ name: 'Ký Chủ Bất Trị', desc: `Hệ Thống giao ${given} nhiệm vụ, không làm cái nào. Hệ Thống vẫn thương.` });
+  if (s.flags.some((f) => f.startsWith('st_cong_'))) out.push({ name: 'Người Yêu Của Ngôi Sao', desc: 'Từng cùng một ngôi sao công khai trước cả nước.' });
   return out;
 }
 

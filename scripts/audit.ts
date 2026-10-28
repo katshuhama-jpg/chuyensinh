@@ -87,7 +87,7 @@ for (let i = 0; i < N; i++) {
     for (const l of lines) {
       for (const [re, a, b] of ERA) if (re.test(l) && (x.year < a || x.year > b)) add(`NĂM ${re.source} @${s.scene.split(/[#:]/)[0]}`, `${x.year} (${age}t): ${l.slice(0, 140)}`);
       if (!l.startsWith('[hồ sơ')) for (const [re, a] of AGE) if (re.test(l) && age < a) add(`TUỔI ${re.source} @${s.scene.split(/[#:]/)[0]}`, `${age}t ${x.year}: ${l.slice(0, 140)}`);
-      if (fam.parents === 'Không còn bố mẹ' && /\b(bố|mẹ)\b/.test(l) && !/bố mẹ (đã|mất)|ông bà|không còn/.test(l)) add(`MỒ CÔI nhắc bố mẹ @${s.scene.split(/[#:]/)[0]}`, l.slice(0, 140));
+      if (fam.parents === 'Không còn bố mẹ' && !l.startsWith('[hồ sơ') && /(?<!\p{L})(bố|mẹ)(?!\p{L})/u.test(l) && !/bố mẹ (đã|mất)|ông bà|không còn/.test(l)) add(`MỒ CÔI nhắc bố mẹ @${s.scene.split(/[#:]/)[0]}`, l.slice(0, 140));
       if (!fam.siblings.length && /\b(anh trai|chị gái|em trai|em gái)\b/.test(l) && !/[A-ZĐ]\w+ (có|là)/.test(l)) add(`CON MỘT nhắc anh chị em @${s.scene.split(/[#:]/)[0]}`, l.slice(0, 140));
       if (!fam.urban && /ngõ phố|giữa phố|phố cổ|chung cư|tòa nhà/.test(l) && age < 18) add(`QUÊ mà phố @${s.scene.split(/[#:]/)[0]}`, `${fam.province}: ${l.slice(0, 140)}`);
     }

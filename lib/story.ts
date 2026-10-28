@@ -266,6 +266,10 @@ export interface Fx {
   marry: () => void;
   /** ly hôn: hết vợ chồng, người kia rời khỏi đời mình */
   divorce: () => void;
+  /** hủy cưới trước ngày cưới: không tính là ly hôn */
+  cancelWedding: () => void;
+  /** bạn thân phản bội: từ nay bạn thân là người khác */
+  newBestie: (name: string) => void;
   kids: (n: number) => void;
   /** chụp một tấm ảnh vào album kỷ niệm */
   photo: (p: Omit<Photo, 'age' | 'year'>) => void;
@@ -359,6 +363,17 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     marry: () => {
       s.married = true;
       s.marriedAge = scene.age;
+    },
+    newBestie: (name) => {
+      fx.flag(`bestie_cu`);
+      s.bestie = name;
+    },
+    cancelWedding: () => {
+      if (s.partner && s.partner !== 'xemmat') fx.flag(`${s.partner}_out`);
+      s.married = false;
+      s.partner = null;
+      s.endAt = undefined;
+      s.loveEnd = null;
     },
     divorce: () => {
       if (s.partner && s.partner !== 'xemmat') fx.flag(`${s.partner}_out`);

@@ -4366,3 +4366,8 @@ p {
 .lb-toast {
   white-space: pre-line;
 }
+
+/* nhiệm vụ Hệ Thống trên bảng */
+.lb-mission { border: 2px dashed var(--dim); padding: 6px 8px; margin: 6px 0; }
+.lb-mission b { color: var(--accent); }
+.lb-mission.ok { border-style: solid; opacity: 0.8; }

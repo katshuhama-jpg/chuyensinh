@@ -208,7 +208,7 @@ const YEU: Drama[] = [
     who,
     text: (x) => [`Hợp đồng phòng trọ của ${sp(x)} sắp hết. ${x.ay[0].toUpperCase() + x.ay.slice(1)} hỏi nhỏ: "Hay mình thuê chung một phòng?"`],
     choices: [
-      { t: 'Dọn về, giấu bố mẹ', do: (fx, x) => (lv(fx, x, 10), fx.stat('tien', 6), fx.flag('dr_songthu')), note: () => '🦋 Bí mật kiểu này thường không giữ được lâu.' },
+      { t: (x) => `Dọn về, giấu ${x.bm}`, do: (fx, x) => (lv(fx, x, 10), fx.stat('tien', 6), fx.flag('dr_songthu')), note: () => '🦋 Bí mật kiểu này thường không giữ được lâu.' },
       { t: 'Cưới rồi mới ở chung', do: (fx, x) => (fx.rel('bome', 6), lv(fx, x, x.s.stats.tinh >= 50 ? 4 : -3)) },
       { t: 'Thuê hai phòng cạnh nhau', do: (fx, x) => (lv(fx, x, 5), fx.stat('tien', -4)) },
     ],
@@ -321,24 +321,6 @@ const YEU: Drama[] = [
       { t: 'Đến tận nhà, đứng dưới cổng', do: (fx, x) => (lv(fx, x, 8), fx.stat('noi', 4)), note: (x) => `${sp(x)} chạy xuống, mắt đỏ hoe: "Đợi ${x.goi} đến lâu lắm rồi."` },
       { t: 'Cũng im luôn, xem ai lì hơn', do: (fx, x) => (lv(fx, x, -10), fx.stat('tam', -4)) },
       { t: 'Gửi một bài hát, không nói gì', do: (fx, x) => (lv(fx, x, x.s.stats.duyen >= 45 ? 7 : 2)) },
-    ],
-  },
-  {
-    id: 'thachcuoi',
-    pool: 'yeu',
-    minAge: 24,
-    if: (x) => !!pid(x) && x.s.love[pid(x)!] >= 55,
-    title: 'Mâm quả bao nhiêu?',
-    bg: () => ({ place: 'nha', time: 'day' }),
-    who,
-    text: (x) => [
-      `Hai nhà gặp nhau bàn chuyện cưới. ${x.c.gender === 'f' ? 'Nhà mình' : `Nhà ${sp(x)}`} đưa ra yêu cầu: ${x.year < 2000 ? 'mười mâm quả, một đôi bông tai vàng' : x.year < 2015 ? 'hai mươi mâm quả, một cây vàng' : 'sính lễ trăm triệu, vàng cưới đủ bộ'}.`,
-      `Không khí đặc quánh như cơm cháy.`,
-    ],
-    choices: [
-      { t: 'Hai đứa tự góp tiền cho đủ', do: (fx, x) => (fx.stat('tien', -16), lv(fx, x, 10), fx.rel('bome', 4)), note: () => 'Đám hỏi đẹp như phim. Tháng sau thì hết sạch tiền.' },
-      { t: 'Đứng ra xin bớt cho hai bên', do: (fx, x) => (x.s.stats.duyen >= 50 ? (lv(fx, x, 8), fx.say('Cả hai nhà cùng cười, chốt một nửa.')) : (lv(fx, x, -6), fx.rel('bome', -6), fx.say('Nói vụng, bên kia phật ý.'))) },
-      { t: 'Thôi, không cưới nữa', do: (fx, x) => (breakup(fx, x), fx.mid('thachcuoi')) },
     ],
   },
   {
@@ -635,11 +617,12 @@ const CUOI: Drama[] = [
         t: 'Ủng hộ hết mình',
         do: (fx, x) => {
           lv(fx, x, 10);
-          if (x.s.stats.tien >= 50) (fx.stat('tien', 15), fx.say('Một năm sau, quán đông kín khách.'));
-          else (fx.stat('tien', -15), fx.say('Một năm sau, quán đóng cửa. Nhưng hai người vẫn nắm tay nhau.'));
+          const live = x.year >= 2016;
+          if (x.s.stats.tien >= 50) (fx.stat('tien', 15), fx.say(live ? 'Một năm sau, phiên live nào cũng chốt hết đơn.' : 'Một năm sau, quán đông kín khách.'));
+          else (fx.stat('tien', -15), fx.say(live ? 'Một năm sau, kho hàng tồn chất đến trần nhà. Nhưng hai người vẫn nắm tay nhau.' : 'Một năm sau, quán đóng cửa. Nhưng hai người vẫn nắm tay nhau.'));
         },
       },
-      { t: 'Can: con còn nhỏ, nhà còn nợ', do: (fx, x) => (lv(fx, x, -6), fx.stat('tien', 4), fx.flag('dr_canhcan')) },
+      { t: (x) => (x.s.kids ? 'Can: con còn nhỏ, nhà còn nợ' : 'Can: nhà còn đang trả góp'), do: (fx, x) => (lv(fx, x, -6), fx.stat('tien', 4), fx.flag('dr_canhcan')) },
       { t: 'Cho thử sáu tháng, có kế hoạch rõ ràng', do: (fx, x) => (lv(fx, x, 6), fx.stat('hoc', 4)) },
     ],
   },
@@ -707,7 +690,7 @@ const CUOI: Drama[] = [
       `${sp(x)} bỗng đổi khác: ${x.year >= 2018 ? 'tập nhảy theo trào lưu, đăng clip mỗi ngày' : x.year >= 2005 ? 'mua xe phân khối lớn, đi phượt với hội' : 'mua cây đàn ghi-ta, học hát tình ca'}. "Không làm bây giờ thì bao giờ?"`,
     ],
     choices: [
-      { t: 'Làm cùng luôn', do: (fx, x) => (lv(fx, x, 12), fx.stat('noi', 8), fx.stat('tam', 6)), note: () => 'Con cái xấu hổ. Hai vợ chồng thì vui như hồi mới yêu.' },
+      { t: 'Làm cùng luôn', do: (fx, x) => (lv(fx, x, 12), fx.stat('noi', 8), fx.stat('tam', 6)), note: (x) => `${x.s.kids ? 'Con cái xấu hổ' : 'Bạn bè trêu suốt'}. Hai vợ chồng thì vui như hồi mới yêu.` },
       { t: 'Kệ, miễn vui là được', do: (fx, x) => (lv(fx, x, 4), fx.stat('tam', 4)) },
       { t: 'Cằn nhằn: già rồi còn bày trò', do: (fx, x) => lv(fx, x, -10) },
     ],

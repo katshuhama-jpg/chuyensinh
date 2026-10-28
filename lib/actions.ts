@@ -20,6 +20,9 @@ export const AREAS: { k: AreaKey; t: string; icon: string; d: string }[] = [
   { k: 'minh', t: 'Bản thân', icon: '✦', d: 'Sức khỏe, Nhan sắc ↑' },
 ];
 
+/** đang đi lao động nước ngoài (ba năm kể từ năm đi) */
+export const away = (x: Ctx) => x.s.flags.some((f) => f.startsWith('xk_') && x.age - Number(f.slice(3)) >= 0 && x.age - Number(f.slice(3)) <= 2);
+
 type Opt = Choice & { y0?: number; y1?: number; min?: number; max?: number; when?: (x: Ctx) => boolean };
 
 const partner = (x: Ctx): LoveId | null => (x.s.partner && x.s.partner !== 'xemmat' ? x.s.partner : null);
@@ -54,10 +57,10 @@ const OPTS: Record<AreaKey, Opt[]> = {
     { t: 'Nuôi heo đất, nhịn quà vặt', max: 15, do: (fx) => (fx.stat('tien', 5), fx.stat('tam', -1)) },
     { t: 'Bán hàng phụ mẹ ngoài chợ', max: 17, when: (x) => x.f.wealth === 'Tiểu thương' || !x.f.urban, do: (fx) => (fx.stat('tien', 4), fx.rel('bome', 3)) },
     { t: 'Làm gia sư', min: 18, max: 24, do: (fx) => (fx.stat('tien', 6), fx.stat('hoc', 2)) },
-    { t: 'Đi hợp tác lao động Đông Âu', min: 18, max: 35, y0: 1980, y1: 1990, do: (fx) => (fx.stat('tien', 15), fx.rel('bome', -6), fx.flag('ac_dongau')), note: '🦋 Mang về chiếc Babetta và cả một vùng trời khác.' },
-    { t: 'Đi lao động ở Đài Loan', min: 18, max: 38, y0: 1999, when: (x) => x.s.stats.tien < 45, do: (fx) => (fx.stat('tien', 14), fx.rel('bome', -5), fx.flag('ac_xkld')), note: '🦋 Ba năm xa nhà, nhiều thứ ở nhà sẽ khác.' },
-    { t: 'Đi thực tập sinh ở Nhật', min: 18, max: 30, y0: 2010, when: (x) => x.s.stats.tien < 50, do: (fx) => (fx.stat('tien', 14), fx.rel('bome', -5), fx.flag('ac_xkld')), note: '🦋 Ba năm xa nhà, nhiều thứ ở nhà sẽ khác.' },
-    { t: 'Vào khu công nghiệp làm công nhân', min: 18, max: 40, y0: 1995, when: (x) => !x.has('dodaihoc'), do: (fx) => (fx.stat('tien', 8), fx.stat('khoe', -2)) },
+    { t: 'Đi tu nghiệp sinh ở Hàn Quốc', min: 18, max: 35, y0: 1993, y1: 2003, when: (x) => x.s.stats.tien < 45 && !away(x), do: (fx, x) => (fx.stat('tien', 14), fx.rel('bome', -6), fx.flag('ac_xkld'), fx.flag(`xk_${x.age}`)), note: '🦋 Ba năm xa nhà. Người ở nhà chỉ còn nghe giọng qua điện thoại.' },
+    { t: (x) => (x.year < 2004 ? 'Đi lao động ở Đài Loan' : 'Đi lao động ở Đài Loan, Hàn Quốc'), min: 18, max: 38, y0: 1999, when: (x) => x.s.stats.tien < 45 && !away(x), do: (fx, x) => (fx.stat('tien', 14), fx.rel('bome', -5), fx.flag('ac_xkld'), fx.flag(`xk_${x.age}`)), note: '🦋 Ba năm xa nhà, nhiều thứ ở nhà sẽ khác.' },
+    { t: 'Đi thực tập sinh ở Nhật', min: 18, max: 30, y0: 2010, when: (x) => x.s.stats.tien < 50 && !away(x), do: (fx, x) => (fx.stat('tien', 14), fx.rel('bome', -5), fx.flag('ac_xkld'), fx.flag(`xk_${x.age}`)), note: '🦋 Ba năm xa nhà, nhiều thứ ở nhà sẽ khác.' },
+    { t: 'Vào khu công nghiệp làm công nhân', min: 18, max: 40, y0: 1995, when: (x) => !x.has('daihoc'), do: (fx) => (fx.stat('tien', 8), fx.stat('khoe', -2)) },
     { t: 'Tăng ca, làm thêm cuối tuần', min: 22, max: 59, do: (fx) => (fx.stat('tien', 8), fx.stat('khoe', -3), fx.stat('tam', -2)) },
     { t: (x) => (x.year < 2015 ? 'Mở sạp bán quần áo' : 'Bán hàng online'), min: 18, max: 50, do: (fx, x) => (fx.stat('tien', x.s.stats.duyen >= 45 ? 10 : 3), fx.flag('ac_buonban')) },
     { t: 'Chạy xe công nghệ buổi tối', min: 18, max: 55, y0: 2016, do: (fx) => (fx.stat('tien', 6), fx.stat('khoe', -2)) },

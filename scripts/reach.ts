@@ -6,7 +6,7 @@ import { choose, ctxOf, LOVE_IDS, visibleChoices, type LoveId } from '../lib/sto
 let seed = 11;
 const r = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 const target = (process.argv[2] || 'hung') as LoveId;
-let wed = 0, met = 0;
+let wed = 0, met = 0, night = 0, leak = 0;
 const N = 150;
 for (let i = 0; i < N; i++) {
   const fate = rollFate(r);
@@ -14,6 +14,8 @@ for (let i = 0; i < N; i++) {
   let s = newStory(fate, FIRST_SCENE);
   const R = resolverOf(c, fate.family);
   for (let k = 0; k < 500 && s.scene !== 'end'; k++) {
+    // màn chọn 3 người: luôn chọn người cần nhắm
+    if (s.scene.startsWith('fo@') && !s.flags.includes(`pksel_${target}`)) s.flags.push(`pksel_${target}`);
     const sc = R(s.scene, s)!;
     const x = ctxOf(c, fate.family, s, ageOfScene(s.scene));
     const o = visibleChoices(sc, x);
@@ -39,6 +41,8 @@ for (let i = 0; i < N; i++) {
     s = choose(R, c, fate.family, s, best).s;
   }
   if (s.met.includes(target)) met++;
+  if (s.path.some((p) => p.scene.startsWith('st4@'))) night++;
+  if (s.flags.includes(`st_lo_${target}`)) leak++;
   if (s.married && s.partner === target) wed++;
 }
-console.log(target, { met, wed, N });
+console.log(target, { met, wed, night, leak, N });

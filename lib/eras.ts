@@ -104,7 +104,7 @@ const WORLD: Ev[] = [
       { t: 'Hét khản cổ đến phút cuối, ăn mừng cùng nhau', do: (fx, x) => (fx.love(crushOf(x), 12), fx.stat('noi', 4), fx.stat('hoc', -3)), note: (x) => `Lúc chiếc cúp được nâng lên, ${x.L(crushOf(x))} ôm chầm lấy ${x.me}.` },
       { t: 'Xem đến cuối nhưng ngủ gật giữa trận', do: (fx, x) => (fx.love(crushOf(x), 4), fx.stat('tam', 2)), note: (x) => `Tỉnh dậy thì ${x.L(crushOf(x))} đã đắp áo khoác cho ${x.me}.` },
       { t: 'Cá cược với cả hội', do: (fx) => (fx.stat('tien', 5), fx.rel('banthan', 5)) },
-      { t: (x) => `Về ngủ sớm, mai còn ${x.age < 18 ? 'đi học' : x.age < 23 ? 'lên giảng đường' : 'đi làm'}`, do: (fx) => (fx.stat('hoc', 4), fx.stat('tinh', 2)) },
+      { t: (x) => `Về ngủ sớm, mai còn ${x.age < 18 ? 'đi học' : x.age < 23 && x.has('daihoc') && !x.has('dilam') ? 'lên giảng đường' : 'đi làm'}`, do: (fx) => (fx.stat('hoc', 4), fx.stat('tinh', 2)) },
     ],
   },
   {
@@ -224,6 +224,7 @@ const SLOTS: Record<number, Ev[]> = {
     },
     {
       id: 'dinhat',
+      if: (x) => x.f.parents !== 'Không còn bố mẹ',
       from: 2014,
       to: 2100,
       title: (x) => (x.year <= 2026 ? 'Mẹ đi Nhật' : 'Mẹ đi làm xa'),
@@ -247,6 +248,7 @@ const SLOTS: Record<number, Ev[]> = {
   11: [
     {
       id: 'dongau',
+      if: (x) => x.f.parents !== 'Không còn bố mẹ',
       from: 1980,
       to: 1990,
       title: 'Bố đi Đông Âu',
@@ -467,7 +469,7 @@ const SLOTS: Record<number, Ev[]> = {
       ],
       choices: [
         { t: 'Ở lại thành phố bám trụ', do: (fx) => (fx.stat('tien', 8), fx.stat('noi', 4), fx.rel('bome', -4), fx.stat('dao', 4)) },
-        { t: 'Về quê, gần bố mẹ', do: (fx) => (fx.rel('bome', 12), fx.stat('tam', 6), fx.stat('tien', -4)) },
+        { t: (x) => `Về quê, gần ${x.bm}`, do: (fx) => (fx.rel('bome', 12), fx.stat('tam', 6), fx.stat('tien', -4)) },
         { t: 'Hứa hai năm nữa sẽ về', do: (fx) => (fx.rel('bome', 4), fx.stat('tinh', 3)) },
       ],
     },
@@ -479,7 +481,7 @@ const SLOTS: Record<number, Ev[]> = {
       id: 'nguoiyeudixa',
       from: 2000,
       to: 2100,
-      if: (x) => !!partnerOf(x),
+      if: (x) => !!partnerOf(x) && !x.s.married,
       title: (x) => (x.year <= 2026 ? `${x.L(partnerOf(x)!)} đi ${x.year < 2012 ? 'Đài Loan' : 'Nhật'}` : `${x.L(partnerOf(x)!)} đi làm xa`),
       bg: () => ({ place: 'pho', time: 'dusk' }),
       who: (x) => partnerOf(x),
@@ -629,7 +631,7 @@ const SLOTS: Record<number, Ev[]> = {
 };
 
 /** nơi đi tiếp sau mỗi ô */
-export const SLOT_NEXT: Record<number, string> = { 9: 'ly@9', 11: 'ly@11', 14: 'ly@14', 16: 't17_thi', 21: 'fo@21', 26: 'fo@26', 30: 'dr@31', 35: 'dr@36', 42: 'dr@43', 65: 'rf@70' };
+export const SLOT_NEXT: Record<number, string> = { 9: 'ly@9', 11: 'ly@11', 14: 'ly@14', 16: 'ly@17', 21: 'fo@21', 26: 'fo@26', 30: 'dr@31', 35: 'dr@36', 42: 'dr@43', 65: 'rf@70' };
 const chapterOf = (age: number) => (age <= 12 ? 'Tuổi thơ' : age <= 17 ? 'Tuổi teen' : age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già');
 
 export const ERA_EVENT_IDS = Array.from(new Set(Object.values(SLOTS).flat().map((e) => e.id)));

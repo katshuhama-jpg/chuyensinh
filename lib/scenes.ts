@@ -13,7 +13,8 @@ import { dateStep, spotChoice } from './dates';
 import { newsOfLoves } from './lives';
 import { lyScene } from './life';
 import { xemmatName } from './names';
-import { AREA_PEOPLE, tallyOf, type AreaKey } from './actions';
+import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
+import { STARS, starNight, starScene } from './stars';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -53,6 +54,22 @@ export const spouseName = (x: Ctx) => {
   return spouseWord(x);
 };
 const out = (x: Ctx, id: LoveId) => x.has(`${id}_out`);
+/** bạn thân mới sau khi bạn thân cũ phản bội */
+const nextBestie = (x: Ctx) => {
+  const l = x.c.gender === 'f' ? ['Ngân', 'Thảo', 'Quyên', 'Diệu'] : ['Tùng', 'Hiếu', 'Nam', 'Dũng'];
+  return l.filter((n) => n !== x.s.bestie)[(x.s.seed ?? 0) % 3];
+};
+/** xem mắt mà gặp lại người quen cũ (khoảng 4 phần 10 số đời, chỉ khi có người cũ chưa ghét mình) */
+const twistOf = (x: Ctx): LoveId | null => {
+  if ((x.s.seed ?? 0) % 10 >= 4) return null;
+  const ids = x.s.met.filter((id) => id !== x.s.partner && x.s.love[id] >= 15 && !x.has('caught_' + id));
+  return ids.sort((a, b) => x.s.love[b] - x.s.love[a])[0] ?? null;
+};
+const swapBestie = (fx: Fx, x: Ctx) => {
+  const n = nextBestie(x);
+  fx.newBestie(n);
+  fx.say(`Từ hôm ấy, bạn thân của ${x.me} là ${n}, người lặng lẽ ngồi nghe ${x.me} khóc đến sáng.`);
+};
 /** người đang thầm thương lúc 16 tuổi (Khôi đã chuyển nhà) */
 const crush = (x: Ctx): LoveId => (x.s.love.long >= x.s.love.minh ? 'long' : 'minh');
 /** người cũ: thân nhất ngoài người yêu hiện tại */
@@ -64,32 +81,6 @@ const P = (x: Ctx) => x.s.partner as LoveId;
 const hasPartner = (x: Ctx) => !!x.s.partner && x.s.partner !== 'xemmat';
 
 /** Đánh giá lời cầu hôn: hai ngưỡng như Love Too Easily 2 */
-function propose(fx: Fx, x: Ctx) {
-  const p = P(x);
-  const lie = x.has('noidoi') ? 15 : 0;
-  const a = x.s.love[p] - lie >= 70;
-  const b = x.s.stats[LOVES[p].likes] >= 55;
-  if (lie) fx.say(`${x.L(p)} vẫn nhớ lời nói dối năm 23 tuổi.`);
-  if (a && b) {
-    fx.marry();
-    fx.loveEnd(`hanhphuc_${p}`);
-    fx.say(`${x.L(p)} ôm chặt ${x.me}. Đám cưới vào mùa thu năm ấy.`);
-  } else if (a) {
-    fx.marry();
-    fx.loveEnd(`dodang_${p}`);
-    fx.say(`Hai người cưới nhau. Nhưng ${x.L(p)} vốn thích ${LOVES[p].likesName}, và về sau sẽ có lúc lệch nhịp.`);
-  } else if (b) {
-    fx.partner(null);
-    fx.flag(`${p}_out`);
-    fx.loveEnd(`chilaban_${p}`);
-    fx.say(`${x.L(p)} lùi lại: "Có lẽ mình hợp làm bạn thân hơn." Câu ấy đúng, và đau.`);
-  } else {
-    fx.partner(null);
-    fx.flag(`${p}_out`);
-    fx.loveEnd(`lohen_${p}`);
-    fx.say(`${x.L(p)} cười buồn, cất nhẫn đi. Hai người lỡ nhau một nhịp.`);
-  }
-}
 
 
 /* ---------- đám cưới: đỉnh của một đời, có tên, có ảnh ---------- */
@@ -154,16 +145,48 @@ function weddingScene(age: number, next: string): Scene {
   };
 }
 
+/** người ấy đi đâu khi mình xin thêm thời gian mà chưa đủ thân để được chờ */
+const LEAVE: Record<LoveId, string> = {
+  khoi: 'nhận việc ở công trường trên núi',
+  long: 'mở xưởng độ xe ở thành phố khác',
+  minh: 'nhận học bổng đi nước ngoài',
+  phong: 'xin lên tuyến huyện vùng cao',
+  hai: 'theo đoàn đi lưu diễn cả năm',
+  tuananh: 'nhận chức ở chi nhánh nước ngoài',
+  kai: 'về nước',
+  quan: 'sang nước ngoài đóng phim',
+  bao: 'chuyển đi thành phố khác diễn hài',
+  duy: 'lên một chuyến tàu dài không hẹn ngày về',
+  hung: 'sang nước ngoài làm dự án mới',
+  tai: 'đi tour hát khắp các tỉnh',
+};
+/** nhận lời cầu hôn của người ấy: cưới, hợp gu thì hạnh phúc, lệch gu thì dở dang */
+function accept(fx: Fx, x: Ctx) {
+  const p = P(x);
+  const b = x.s.stats[LOVES[p].likes] >= 55;
+  fx.marry();
+  fx.flag('dinhhon');
+  if (b) (fx.loveEnd(`hanhphuc_${p}`), fx.say(`${x.L(p)} ôm chặt ${x.me}. Đám cưới vào mùa thu năm ấy.`));
+  else (fx.loveEnd(`dodang_${p}`), fx.say(`Hai người cưới nhau. Nhưng ${x.L(p)} vốn thích ${LOVES[p].likesName}, và về sau sẽ có lúc lệch nhịp.`));
+}
+
+/** người ấy cầu hôn mình */
 const proposeChoices: Choice[] = [
-  { t: 'Gật đầu', do: propose },
+  { t: 'Gật đầu', do: accept },
   {
     t: 'Xin thêm thời gian',
     do: (fx, x) => {
       const p = P(x);
+      if (x.s.love[p] >= 75 && !x.has('cho_them')) {
+        fx.flag('cho_them');
+        fx.love(p, -3);
+        fx.say(`${x.L(p)} cất nhẫn vào túi: "Một năm nữa ${x.xung} hỏi lại. Lúc ấy đừng bắt ${x.xung} đợi nữa nhé."`);
+        return;
+      }
       fx.partner(null);
       fx.flag(`${p}_out`);
       fx.loveEnd(`lohen_${p}`);
-      fx.say(`${x.L(p)} đợi thêm một năm, rồi nhận học bổng đi nước ngoài.`);
+      fx.say(`${x.L(p)} đợi thêm một năm, rồi ${LEAVE[p]}. Lần này ${x.ay} đi một mình.`);
     },
   },
   {
@@ -177,6 +200,22 @@ const proposeChoices: Choice[] = [
     sys: 'Đinh! Ký chủ vừa từ chối một lời cầu hôn. Bản Hệ Thống bắt đầu lo rồi đấy.',
   },
 ];
+
+/** mình tự cầu hôn: đủ thân thì thành, chưa đủ thì người ấy xin thêm thời gian */
+function myPropose(fx: Fx, x: Ctx) {
+  const p = P(x);
+  const lie = x.has('noidoi') ? 15 : 0;
+  if (lie) fx.say(`${x.L(p)} vẫn nhớ lời nói dối năm 23 tuổi.`);
+  if (x.s.love[p] - lie >= 70) return accept(fx, x);
+  if (x.s.stats[LOVES[p].likes] >= 55) {
+    fx.love(p, -10);
+    fx.say(`${x.L(p)} lùi lại: "Cho ${x.xung} nghĩ thêm. Đừng giận ${x.xung} nhé." Câu ấy nhẹ, mà đau.`);
+  } else {
+    fx.love(p, -6);
+    fx.say(`${x.L(p)} cười bối rối: "Sớm quá. Mình còn chưa hiểu nhau hết mà."`);
+  }
+  fx.flag('cauhon_hut');
+}
 
 /* ---------- drama theo thời kỳ, lúc 22 tuổi ---------- */
 /** nền của cảnh drama theo năm */
@@ -582,7 +621,7 @@ const list: Scene[] = [
   },
   {
     id: 't17_thi',
-    age: 17,
+    age: 18,
     chapter: CH.teen,
     bg: () => ({ place: 'cong', time: 'day' }),
     title: 'Thi đại học',
@@ -595,7 +634,7 @@ const list: Scene[] = [
     },
     choices: [
       {
-        t: 'Lên thành phố học, ở ký túc xá',
+        t: (x) => (x.f.urban && (x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh') ? 'Vào đại học, ngày ngày đạp xe đến giảng đường' : 'Lên thành phố học, ở ký túc xá'),
         if: (x) => x.s.stats.hoc >= passMark(x.year),
         do: (fx, x) => {
           fx.flag('daihoc');
@@ -612,7 +651,7 @@ const list: Scene[] = [
       },
       { t: 'Đi làm luôn, kiếm tiền sớm', do: (fx) => (fx.flag('dilam'), fx.stat('tien', 15), fx.stat('noi', 5), fx.love('long', 5)) },
     ],
-    next: 'ly@17',
+    next: 'ly@18',
   },
 
   // ===== Tuổi trẻ =====
@@ -656,6 +695,8 @@ const list: Scene[] = [
     bg: () => ({ place: 'phong', time: 'night' }),
     who: () => 'he_thong',
     title: 'Mở khóa Mùa yêu',
+    // gộp vào cảnh chọn 3 người ngay sau đó
+    skip: () => true,
     text: (x) => [
       `"Đinh! 20 tuổi, mở khóa Bảng tình duyên."`,
       `"Luật: cùng lúc tối đa 5 người, cả đời 10 người, mỗi năm 2 lượt. Bắt cá hai tay mà bị lộ thì tự chịu."`,
@@ -703,7 +744,7 @@ const list: Scene[] = [
     chapter: CH.tre,
     bg: () => ({ place: 'nha', time: 'day' }),
     who: () => 'mom',
-    skip: (x) => !hasPartner(x),
+    skip: (x) => !hasPartner(x) || x.s.married,
     title: (x) => `Ra mắt ${x.bm}`,
     text: (x) => {
       const p = P(x);
@@ -711,7 +752,7 @@ const list: Scene[] = [
       if (x.f.parents === 'Gia trưởng' && p === 'long') lines.push(`Bố ${x.me} nhìn ${x.L(p)} từ đầu đến chân rồi đập bàn: "Cái ${x.lg === 'm' ? 'thằng' : 'đứa'} đi xe độ ấy à? Không được!"`);
       else if (x.f.parents === 'Hòa thuận, cởi mở') lines.push(`${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} nấu cả mâm cơm, gắp cho ${x.L(p)} miếng ngon nhất.`);
       else lines.push(`Bữa cơm ra mắt im lặng hơn ${x.me} tưởng.`);
-      if (x.s.love[p] < 45) lines.push(`Mẹ ${x.L(p)} nói luôn: "Hai đứa cưới luôn cho xong, tháng sau có ngày đẹp!"`);
+      if (x.s.love[p] < 45) lines.push(`${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} ${x.me} nói luôn: "Hai đứa cưới luôn cho xong, tháng sau có ngày đẹp!" Cả hai cùng sặc nước.`);
       return lines;
     },
     choices: [
@@ -764,17 +805,19 @@ const list: Scene[] = [
       {
         t: 'Hỏi thẳng cả hai, bình tĩnh',
         do: (fx, x) => {
+          swapBestie(fx, x);
           fx.rel('banthan', -15);
           if (x.s.love[P(x)] >= 45) (fx.love(P(x), 10), fx.say(`${x.L(P(x))} chặn ${x.s.bestie} ngay trước mặt ${x.me}.`));
           else (fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('traxanh'));
         },
       },
-      { t: (x) => `${x.year < 2012 ? 'Kể cho cả xóm biết' : 'Đăng lên Tường bóc phốt'}`, do: (fx, x) => (fx.rel('banthan', -30), fx.stat('noi', 10), fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('bocphot')) },
+      { t: (x) => `${x.year < 2012 ? 'Kể cho cả xóm biết' : 'Đăng lên Tường bóc phốt'}`, do: (fx, x) => (swapBestie(fx, x), fx.rel('banthan', -30), fx.stat('noi', 10), fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('bocphot')) },
       {
         t: '(Giả vờ như không thấy)',
         do: (fx, x) => {
           fx.stat('tam', -10);
           fx.love(P(x), -10);
+          fx.flag('traxanh_im');
           if (x.s.love[P(x)] < 45) (fx.flag(`${P(x)}_out`), fx.partner(null), fx.mid('traxanh'));
         },
       },
@@ -791,6 +834,7 @@ const list: Scene[] = [
     title: 'Lời cầu hôn',
     text: (x) => {
       const p = P(x);
+      if (x.s.love[p] < 60) return [`27 tuổi. Yêu ${x.L(p)} đã lâu, nhưng chưa ai nhắc đến chuyện cưới.`, `${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} hỏi: "Hai đứa định thế nào?"`];
       const lines = [`${x.L(p)} hẹn ${x.me} ra ${spotOf(x.year)}, nơi hai người hẹn hò lần đầu.`];
       if (p === 'khoi' && x.has('dieu')) lines.push(`${x.ay[0].toUpperCase() + x.ay.slice(1)} mang theo con diều giấy năm nào, giờ buộc thêm một chiếc nhẫn.`);
       if (p === 'long') lines.push(`Chiếc xe độ đã bán. ${x.L(p)} đi xe buýt tới, cười ngượng.`);
@@ -799,7 +843,11 @@ const list: Scene[] = [
       lines.push(`"Lấy ${x.xung} nhé?"`);
       return lines;
     },
-    choices: proposeChoices,
+    choices: [
+      ...proposeChoices.map((c) => ({ ...c, if: (x: Ctx) => x.s.love[P(x)] >= 60 })),
+      { t: (x) => `Tự mua nhẫn, cầu hôn ${x.L(P(x))}`, if: (x) => x.s.love[P(x)] < 60, do: myPropose },
+      { t: 'Cứ để mọi chuyện tự nhiên', if: (x) => x.s.love[P(x)] < 60, do: (fx, x) => fx.love(P(x), -4) },
+    ],
     next: 'wd@27',
   },
   {
@@ -808,7 +856,8 @@ const list: Scene[] = [
     chapter: CH.tre,
     bg: () => ({ place: 'phong', time: 'night' }),
     who: () => 'he_thong',
-    skip: (x) => x.s.married,
+    // còn người yêu thì chưa tính là thất bại: sang năm 29 hỏi lại
+    skip: (x) => x.s.married || hasPartner(x),
     title: 'Hết hạn nhiệm vụ',
     text: (x) => [`"Đinh! Ký chủ đã 28 tuổi mà chưa yên bề. Nhiệm vụ thất bại."`, `${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} đã hẹn sẵn một buổi xem mắt vào chủ nhật.`],
     choices: [
@@ -824,22 +873,47 @@ const list: Scene[] = [
       ),
       { t: 'Ở một mình cũng vui', do: (fx) => (fx.loveEnd('docthan'), fx.stat('tam', 5)), sys: 'Đinh! Bản Hệ Thống... thôi, chúc ký chủ vui.' },
     ],
-    next: 'ev@30',
+    next: (x) => (hasPartner(x) && !x.s.married ? 'y29_quaylai' : 'ev@30'),
   },
   {
     id: 'y28_xemmat',
     age: 28,
     chapter: CH.tre,
     bg: () => ({ place: 'quan', time: 'day' }),
-    who: () => 'xemmat',
+    who: (x) => twistOf(x) ?? 'xemmat',
     title: 'Buổi xem mắt',
-    text: (x) => [
-      `Người xem mắt tên ${xemmatName(x)}, con bạn ${x.mom}, làm ${xemJob(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
-      `Cuối buổi, ${x.lg === 'm' ? 'anh ta' : 'cô ta'} hỏi: "Mình thử tìm hiểu nhé?"`,
-    ],
+    text: (x) => {
+      const t = twistOf(x);
+      if (t)
+        return [
+          `${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} dặn: "Con bạn ${x.mom}, hiền lắm, làm ${jobOf(t, x.lg, x.age, x.year)}." ${x.me} đến quán, cúi mặt khuấy cốc nước.`,
+          `Người ngồi xuống đối diện cũng cúi mặt. Rồi cả hai cùng ngẩng lên. Là ${x.L(t)}.`,
+          `"Hóa ra là ${x.goi}," ${x.ay} bật cười. "Mấy năm rồi nhỉ?"`,
+        ];
+      return [
+        `Người xem mắt tên ${xemmatName(x)}, con bạn ${x.mom}, làm ${xemJob(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
+        `Cuối buổi, ${x.lg === 'm' ? 'anh ta' : 'cô ta'} hỏi: "Mình thử tìm hiểu nhé?"`,
+      ];
+    },
     choices: [
-      { t: (x) => `Đồng ý, nửa năm sau cưới ${xemmatName(x)}`, do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
-      { t: 'Từ chối khéo', do: (fx) => (fx.loveEnd('docthan'), fx.rel('bome', -5)) },
+      {
+        t: (x) => `Lần này không để lỡ ${x.L(twistOf(x)!)} nữa`,
+        if: (x) => !!twistOf(x),
+        do: (fx, x) => {
+          const t = twistOf(x)!;
+          fx.unflag(`${t}_out`);
+          fx.partner(t);
+          fx.love(t, 15);
+          fx.marry();
+          fx.loveEnd(`duyenno_${t}`);
+          fx.rel('bome', 10);
+        },
+        note: () => '🦋 Có những người đi một vòng thật xa rồi mới quay về.',
+        sys: 'Đinh! Bản Hệ Thống thề là không sắp đặt vụ này.',
+      },
+      { t: 'Chào nhau như người quen cũ, rồi thôi', if: (x) => !!twistOf(x), do: (fx, x) => (fx.loveEnd('docthan'), fx.love(twistOf(x)!, 4)) },
+      { t: (x) => `Đồng ý, nửa năm sau cưới ${xemmatName(x)}`, if: (x) => !twistOf(x), do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
+      { t: 'Từ chối khéo', if: (x) => !twistOf(x), do: (fx) => (fx.loveEnd('docthan'), fx.rel('bome', -5)) },
     ],
     next: 'wd@28',
   },
@@ -850,9 +924,27 @@ const list: Scene[] = [
     bg: () => ({ place: 'quan', time: 'dusk' }),
     who: (x) => P(x),
     skip: (x) => !hasPartner(x) || x.s.married,
-    title: 'Gặp lại',
-    text: (x) => [`${x.L(P(x))} đến đúng hẹn, vẫn ngồi chỗ cũ, vẫn gọi đúng món ${x.me} thích.`, `Ngồi được một lúc, ${x.ay} hỏi: "Mình thử lại lần nữa, rồi cưới luôn nhé?"`],
-    choices: proposeChoices,
+    title: (x) => (x.has('cho_them') ? 'Hỏi lại lần nữa' : x.s.path.some((h) => h.scene === 'y28_hethong') ? 'Gặp lại' : 'Năm 29 tuổi'),
+    text: (x) =>
+      x.has('cho_them')
+        ? [`Đúng một năm sau, ${x.L(P(x))} lại rút chiếc nhẫn ấy ra.`, `"${x.xung === 'anh' ? 'Anh' : 'Em'} hỏi lại đây. Lấy ${x.xung} nhé?"`]
+        : x.s.path.some((h) => h.scene === 'y28_hethong')
+          ? [`${x.L(P(x))} đến đúng hẹn, vẫn ngồi chỗ cũ, vẫn gọi đúng món ${x.me} thích.`, `Ngồi được một lúc, ${x.ay} hỏi: "Mình thử lại lần nữa, rồi cưới luôn nhé?"`]
+          : [`29 tuổi. ${x.L(P(x))} vẫn ở bên, bạn bè thì đã con bế con bồng.`, `Tối ấy ${x.ay} hỏi nhỏ: "Mình cưới nhé?"`],
+    choices: [
+      { t: 'Gật đầu', do: accept },
+      {
+        t: 'Thôi, mình dừng ở đây',
+        do: (fx, x) => {
+          const p = P(x);
+          fx.love(p, -20);
+          fx.partner(null);
+          fx.flag(`${p}_out`);
+          fx.loveEnd(`lohen_${p}`);
+          fx.say(`${x.L(p)} gật đầu, không khóc. Chỉ có ${x.me} khóc.`);
+        },
+      },
+    ],
     next: 'wd@29',
   },
 
@@ -1041,7 +1133,7 @@ function roll(s: Story, salt: number) {
 const quetLabel = (y: number) => (y > 2026 ? 'Mở app ghép đôi AI' : y >= 2015 ? 'Mở app Quẹt' : y >= 2005 ? 'Lên diễn đàn kết bạn' : 'Đọc mục Tìm bạn bốn phương');
 /** Độ thân ẩn số, chỉ hiện trạng thái */
 export const statusOf = (s: Story, id: LoveId) =>
-  s.partner === id ? 'Người yêu' : s.love[id] >= 60 ? 'Say nắng' : s.love[id] >= 40 ? 'Mập mờ' : s.love[id] >= 20 ? 'Bạn bè' : 'Mới quen';
+  s.partner === id ? (s.married ? 'Bạn đời' : 'Người yêu') : s.love[id] >= 60 ? 'Say nắng' : s.love[id] >= 40 ? 'Mập mờ' : s.love[id] >= 20 ? 'Bạn bè' : 'Mới quen';
 /** người đang thân (độ thân từ 40) */
 const close = (s: Story) => activeOf(s).filter((id) => s.love[id] >= 40);
 
@@ -1080,7 +1172,7 @@ function reflectScene(age: number): Scene {
    VÒNG YÊU MỚI (20-26 tuổi): chọn 3 người muốn tìm hiểu, năm tháng tua những chuyện nhỏ,
    rồi hỏi đi chơi với ai, đi đâu, làm gì, lúc về. Thỉnh thoảng có một ngã rẽ lớn của tuyến tình.
    ========================================================= */
-const inPool = (x: Ctx) => LOVE_IDS.filter((id) => x.has(`pool_${id}`) && !out(x, id));
+const inPool = (x: Ctx) => (x.s.married ? (hasPartner(x) ? [P(x)] : []) : LOVE_IDS.filter((id) => x.has(`pool_${id}`) && !out(x, id)));
 /** những người có thể chọn để tìm hiểu ở năm này */
 export function candidatesOf(x: Ctx): LoveId[] {
   const ok = (id: LoveId) =>
@@ -1099,7 +1191,13 @@ export function candidatesOf(x: Ctx): LoveId[] {
     (x.has('ac_phuot') && (id === 'duy' || id === 'kai') ? 4 : 0);
   const rnd = (id: LoveId) => (LOVE_IDS.indexOf(id) * 7 + x.age + (x.s.seed ?? 0)) % 11;
   const fresh = LOVE_IDS.filter((id) => !x.s.met.includes(id) && ok(id)).sort((a, b) => boost(b) - boost(a) || rnd(a) - rnd(b));
-  return [...met, ...fresh].slice(0, 10 - Math.max(0, x.s.met.length - met.length)).slice(0, 10);
+  const list = [...met, ...fresh].slice(0, 10 - Math.max(0, x.s.met.length - met.length)).slice(0, 10);
+  // luôn có ít nhất một ngôi sao trong danh sách (nếu còn ngôi sao nào hợp thời)
+  if (!list.some((id) => STARS.includes(id))) {
+    const st = STARS.find((id) => ok(id) && !out(x, id));
+    if (st) list.splice(Math.min(list.length, 9), 1, st);
+  }
+  return list;
 }
 const needPick = (x: Ctx, age: number) =>
   !x.s.married && (age === 20 || !inPool(x).length || ((age === 23 || age === 26) && !hasPartner(x)) || ((x.has(`ac_${age - 1}_yeu`) && (x.has('ac_app') || x.has('ac_maimoi'))) && !hasPartner(x)));
@@ -1114,7 +1212,7 @@ function pickScene(age: number): Scene {
     who: () => 'he_thong',
     skip: (x) => !needPick(x, age) || !candidatesOf(x).length,
     title: age === 20 ? 'Mở khóa Mùa yêu: chọn 3 người' : 'Chọn lại những người muốn tìm hiểu',
-    text: (x) => [age === 20 ? '"Đinh! Mùa yêu bắt đầu. Ký chủ hãy chọn tối đa 3 người để tìm hiểu."' : `"Đinh! ${x.age} tuổi rồi. Chọn lại tối đa 3 người ký chủ muốn dành thời gian."`],
+    text: (x) => [age === 20 ? '"Đinh! 20 tuổi, Mùa yêu bắt đầu. Ký chủ chọn tối đa 3 người để tìm hiểu. Bắt cá hai tay mà bị lộ thì tự chịu."' : `"Đinh! ${x.age} tuổi rồi. Chọn lại tối đa 3 người ký chủ muốn dành thời gian."`],
     cands: (x) => candidatesOf(x),
     choices: [
       {
@@ -1131,6 +1229,104 @@ function pickScene(age: number): Scene {
         },
       },
     ],
+    next: `ht@${age}`,
+  };
+}
+
+/* ---------- Hệ Thống ra nhiệm vụ mỗi năm Mùa yêu: làm được thì có thưởng, không làm thì bị phạt ---------- */
+type Mission = { k: string; t: (x: Ctx, id: LoveId) => string; can: (x: Ctx, id: LoveId | undefined) => boolean; done: (x: Ctx, a: number, id: LoveId) => boolean };
+const MISSIONS: Mission[] = [
+  { k: 'hen', t: (x, id) => `Hẹn ${x.L(id)} đi chơi ít nhất một lần`, can: (x, id) => !!id && !x.s.married, done: (x, a, id) => x.s.path.some((p) => p.age === a && (p.scene === `date@${a}#1:${id}` || p.scene === `st1@${a}:${id}`)) },
+  { k: 'say', t: (x, id) => `Làm ${x.L(id)} "say nắng" mình`, can: (x, id) => !!id && x.s.love[id] < 55 && !x.s.married, done: (x, _a, id) => x.s.love[id] >= 60 },
+  { k: 'yeu', t: () => 'Có người yêu trước cuối năm', can: (x) => !hasPartner(x) && x.age >= 21, done: (x) => hasPartner(x) },
+  { k: 'nha', t: () => 'Dành một năm cho gia đình (ô Gia đình)', can: () => true, done: (x, a) => x.has(`ac_${a}_nha`) },
+  { k: 'dulich', t: () => 'Đi một chuyến du lịch (ô Du lịch)', can: (x) => x.s.stats.tien >= 25, done: (x, a) => x.has(`ac_${a}_dulich`) },
+  { k: 'cuoi', t: (x, id) => `Cầu hôn ${x.L(id)} trong năm nay`, can: (x) => hasPartner(x) && !x.s.married && x.age >= 23 && x.age <= 26 && x.s.love[P(x)] >= 55, done: (x) => x.s.married || x.has('cauhon_hut') },
+];
+const missionOf = (x: Ctx, a: number) => {
+  const f = x.s.flags.find((g) => g.startsWith(`htm_${a}_`));
+  if (!f) return null;
+  const [, , k, id] = f.split('_');
+  return { m: MISSIONS.find((m) => m.k === k)!, id: id as LoveId };
+};
+/** nhiệm vụ năm nay (để hiện trên bảng), kèm đã xong chưa */
+export const activeMission = (x: Ctx) => {
+  const m = missionOf(x, x.age);
+  return m ? { t: m.m.t(x, m.id), done: m.m.done(x, x.age, m.id) } : null;
+};
+const SNARK_OK = ['Bản Hệ Thống rơi nước mắt tự hào.', 'Ký chủ hôm nay tỏa sáng như đèn led.', 'Bản Hệ Thống ghi vào sổ vàng.'];
+const SNARK_NO = ['Bản Hệ Thống thất vọng, nhưng vẫn thương ký chủ.', 'Ký chủ làm Bản Hệ Thống bạc cả mã nguồn.', 'Lần sau cố lên. Bản Hệ Thống tin ký chủ, khoảng sáu mươi phần trăm.'];
+
+function missionScene(age: number): Scene {
+  const pick = (x: Ctx) => {
+    const top = inPool(x).sort((a, b) => x.s.love[b] - x.s.love[a])[0];
+    const who = hasPartner(x) ? P(x) : top;
+    const prev = missionOf(x, age - 1)?.m.k;
+    const all = MISSIONS.filter((m) => m.can(x, who) && (age >= 23 || m.k !== 'cuoi'));
+    const ok = all.length > 1 ? all.filter((m) => m.k !== prev) : all;
+    if (!ok.length) return null;
+    // đủ thân mà chưa cưới thì Hệ Thống giục cầu hôn
+    const m = ok.find((m) => m.k === 'cuoi') ?? ok[((x.s.seed ?? 0) + age * 3) % ok.length];
+    return { m, id: (m.k === 'cuoi' ? P(x) : who) as LoveId };
+  };
+  const last = (x: Ctx) => missionOf(x, age - 1);
+  /** người được "đọc tâm" khi nhận thưởng */
+  const rid = (x: Ctx): LoveId | null => {
+    const c = [pick(x)?.id, last(x)?.id, ...inPool(x)].find((id) => !!id && !!LOVES[id as LoveId]);
+    return (c as LoveId) ?? null;
+  };
+  const lastOk = (x: Ctx) => {
+    const l = last(x);
+    return !!l && l.m.done(x, age - 1, l.id);
+  };
+  return {
+    id: `ht@${age}`,
+    age,
+    chapter: CH.tre,
+    who: () => 'he_thong',
+    bg: () => ({ place: 'phong', time: 'night' }),
+    skip: (x) => !last(x) && (x.s.married || !pick(x)),
+    title: (x) => (last(x) && (x.s.married || !pick(x)) ? 'Hệ Thống chấm điểm' : 'Hệ Thống giao nhiệm vụ'),
+    text: (x) => {
+      const lines: string[] = [];
+      const l = last(x);
+      if (l) {
+        const ok = lastOk(x);
+        const sn = (ok ? SNARK_OK : SNARK_NO)[age % 3];
+        lines.push(ok ? `"Đinh! Nhiệm vụ năm ngoái: ${l.m.t(x, l.id)}. HOÀN THÀNH. ${sn}"` : `"Đinh! Nhiệm vụ năm ngoái: ${l.m.t(x, l.id)}. THẤT BẠI. Trừ 5 điểm Vận đào hoa. ${sn}"`);
+      }
+      const p = pick(x);
+      if (p && !x.s.married) lines.push(`"Nhiệm vụ năm ${x.age} tuổi: ${p.m.t(x, p.id)}."`);
+      return lines;
+    },
+    choices: [
+      {
+        t: (x) => (lastOk(x) ? (rid(x) ? `Nhận thưởng: đọc được lòng ${x.L(rid(x)!)}` : 'Nhận thưởng: +5 Nhan sắc') : pick(x) && !x.s.married ? 'Nhận nhiệm vụ' : 'Biết rồi'),
+        do: (fx, x) => {
+          const np = pick(x);
+          if (np && !x.s.married) fx.flag(`htm_${age}_${np.m.k}_${np.id ?? ''}`);
+          const l = last(x);
+          if (l) {
+            if (lastOk(x)) {
+              const id = rid(x);
+              fx.flag(`htok_${age - 1}`);
+              if (!id) return void fx.stat('duyen', 5);
+              fx.love(id, 4);
+              fx.say(`Đinh! Đọc tâm: ${x.L(id)} thích ${LOVES[id].likesName}. Trên đầu ${x.ay} hiện dòng chữ nhỏ: "${statusOf(x.s, id)}".`);
+            } else (fx.stat('dao', -5), fx.stat('tam', -2));
+          }
+        },
+      },
+      {
+        t: '"Không nhận đâu, ký chủ tự lo"',
+        if: (x) => !!pick(x) && !x.s.married,
+        do: (fx, x) => {
+          if (last(x) && !lastOk(x)) (fx.stat('dao', -5), fx.stat('tam', -2));
+          if (last(x) && lastOk(x)) fx.flag(`htok_${age - 1}`);
+        },
+        sys: 'Đinh! Bản Hệ Thống dỗi. Năm nay ký chủ tự đi một mình nhé.',
+      },
+    ],
     next: `yl@${age}`,
   };
 }
@@ -1140,11 +1336,32 @@ function smallOf(x: Ctx, id: LoveId, k: number): string {
   const v = x.s.love[id];
   const m = x.year < 2004 ? 'thư' : x.year < 2012 ? 'tin nhắn' : 'tin nhắn';
   const n = x.L(id);
-  const low = [`${n} ${x.year < 2010 ? 'gửi lời hỏi thăm qua bạn chung' : 'thả tim ảnh của mình'}.`, `Tình cờ gặp ${n} ở quán quen, chào nhau một câu.`, `${n} mượn ${x.me} cuốn sách, hẹn tuần sau trả.`];
-  const mid = [`${n} gửi một ${m} lúc nửa đêm: "Ngủ chưa?"`, `${n} nhớ đúng món ${x.me} thích, mua mang đến tận nơi.`, `Đi sinh nhật bạn chung, ${n} ngồi cạnh ${x.me} cả buổi.`];
-  const high = [`${n} gọi điện chỉ để kể chuyện con mèo ngoài ngõ.`, `Trời mưa, ${n} đứng đợi ${x.me} ở cổng với chiếc áo mưa.`, `${n} khoe ${x.me} với bạn bè: "Đây là người tớ hay kể."`];
+  const low = [
+    `${n} ${x.year < 2010 ? 'gửi lời hỏi thăm qua bạn chung' : 'thả tim ảnh của mình'}.`,
+    `Tình cờ gặp ${n} ở quán quen, chào nhau một câu.`,
+    `${n} mượn ${x.me} cuốn sách, hẹn tuần sau trả.`,
+    `Đi ngang chỗ ${n} làm, thấy ${n} đang cười với ai đó. Hơi tò mò.`,
+    `${n} hỏi mượn ${x.me} cái sạc ${x.year < 2005 ? 'đèn pin' : 'điện thoại'}, rồi quên trả.`,
+    `Bạn chung kể: "${n} hỏi về ${x.me} đấy."`,
+  ];
+  const mid = [
+    `${n} gửi một ${m} lúc nửa đêm: "Ngủ chưa?"`,
+    `${n} nhớ đúng món ${x.me} thích, mua mang đến tận nơi.`,
+    `Đi sinh nhật bạn chung, ${n} ngồi cạnh ${x.me} cả buổi.`,
+    `${x.me} ốm hai ngày. ${n} để một túi cam trước cửa, không gõ.`,
+    `${n} lưu tên ${x.me} trong máy bằng một biệt danh bí mật. Hỏi mãi không chịu nói.`,
+    `Đi siêu thị gặp ${n}, hai người đẩy chung một xe hàng mà không ai rủ.`,
+  ];
+  const high = [
+    `${n} gọi điện chỉ để kể chuyện con mèo ngoài ngõ.`,
+    `Trời mưa, ${n} đứng đợi ${x.me} ở cổng với chiếc áo mưa.`,
+    `${n} khoe ${x.me} với bạn bè: "Đây là người tớ hay kể."`,
+    `${n} đưa ${x.me} xem ảnh hồi bé của mình, cái ảnh không cho ai xem.`,
+    `Hai đứa cãi nhau vì một bộ phim, rồi làm hòa bằng một bát ${x.year < 2015 ? 'chè' : 'mì cay'}.`,
+    `${n} bắt đầu nói "chúng mình" thay vì "tớ với cậu".`,
+  ];
   const pool = v < 25 ? low : v < 50 ? mid : high;
-  return pool[(x.age + k + LOVE_IDS.indexOf(id)) % pool.length];
+  return pool[(x.age * 5 + k * 2 + LOVE_IDS.indexOf(id) + (x.s.seed ?? 0)) % pool.length];
 }
 function yearFeed(age: number): Scene {
   return {
@@ -1174,24 +1391,42 @@ function goScene(age: number): Scene {
     age,
     chapter: CH.tre,
     bg: () => ({ place: 'phong', time: 'day' }),
-    title: 'Cuối tuần này đi chơi với ai?',
-    text: (x) => [inPool(x).length ? `Điện thoại có ${inPool(x).length} cuộc hẹn đang chờ trả lời.` : 'Chưa có ai để hẹn.'],
+    title: (x) => (away(x) ? 'Ở xứ người, gọi về cho ai?' : 'Cuối tuần này đi chơi với ai?'),
+    text: (x) =>
+      away(x)
+        ? [`Ca làm kết thúc lúc nửa đêm. ${x.year < 2005 ? 'Thẻ điện thoại quốc tế còn đúng mười phút.' : 'Wifi khu trọ chập chờn.'} Gọi cho ai bây giờ?`]
+        : x.s.married
+          ? [`Cuối tuần hiếm hoi cả hai cùng được nghỉ. ${spouseName(x)} hỏi: "Hôm nay mình làm gì?"`]
+          : [inPool(x).length ? `Điện thoại có ${inPool(x).length} cuộc hẹn đang chờ trả lời.` : 'Chưa có ai để hẹn.'],
     choices: [
+      ...LOVE_IDS.map(
+        (id): Choice => ({
+          t: (x) => `Gọi cho ${x.L(id)}`,
+          loveId: id,
+          if: (x) => away(x) && inPool(x).includes(id),
+          do: (fx, x) => {
+            fx.love(id, 5);
+            fx.say(`${x.L(id)} nghe máy ngay, giọng ngái ngủ: "Bên ấy lạnh không? Ăn uống đủ chưa?"`);
+          },
+        }),
+      ),
+      { t: 'Tăng ca thêm, gửi tiền về nhà', if: (x) => away(x), do: (fx) => (fx.stat('tien', 6), fx.rel('bome', 4), fx.stat('khoe', -2)) },
       ...LOVE_IDS.map(
         (id): Choice => ({
           t: (x) => `${x.L(id)} · ${statusOf(x.s, id)} ${'♥'.repeat(Math.min(5, Math.max(1, Math.ceil(x.s.love[id] / 20))))}`,
           loveId: id,
-          if: (x) => inPool(x).includes(id),
+          if: (x) => !away(x) && inPool(x).includes(id),
           do: (fx, x) => {
             // người được hẹn nhiều và đủ thân thì thành tuyến tình chính
             if (!x.s.flags.some((g) => g.startsWith('route_')) && x.s.love[id] >= 30 && !x.has(`rdone_${id}`)) fx.flag(`route_${id}`);
             if (x.s.partner && x.s.partner !== id) fx.flag(`len_${age}_1`);
           },
-          to: `date@${age}#1:${id}`,
+          // ngôi sao đủ thân: một đêm hẹn kiểu thần tượng thay cho buổi hẹn thường
+          to: (x) => (starNight(x, id) ? `st1@${age}:${id}` : `date@${age}#1:${id}`),
         }),
       ),
-      { t: (x) => `Đi chơi với hội bạn của ${x.s.bestie}`, do: (fx) => (fx.rel('banthan', 8), fx.stat('tam', 4)) },
-      { t: 'Ở nhà, ngủ một giấc thật dài', do: (fx) => (fx.stat('tam', 5), fx.stat('khoe', 2)) },
+      { t: (x) => `Đi chơi với hội bạn của ${x.s.bestie}`, if: (x) => !away(x), do: (fx) => (fx.rel('banthan', 8), fx.stat('tam', 4)) },
+      { t: 'Ở nhà, ngủ một giấc thật dài', if: (x) => !away(x), do: (fx) => (fx.stat('tam', 5), fx.stat('khoe', 2)) },
     ],
     next: `route@${age}`,
   };
@@ -1213,7 +1448,62 @@ function msScene(age: number): Scene {
       { t: (x) => `Tỏ tình với ${x.L(top(x)!)}`, do: (fx, x) => confess(fx, x, top(x)!) },
       { t: 'Chờ thêm một chút', do: (fx, x) => fx.love(top(x)!, 2) },
     ],
-    next: `end@${age}`,
+    next: `ch@${age}`,
+  };
+}
+
+/** cầu hôn bất kỳ năm nào từ 23 đến 26, khi đã là người yêu và đủ thân */
+function proposeScene(age: number): Scene {
+  return {
+    id: `ch@${age}`,
+    age,
+    chapter: CH.tre,
+    bg: (x) => (x.year < 1995 ? { place: 'congvien', time: 'night' } : { place: 'quan', time: 'night' }),
+    who: (x) => P(x),
+    skip: (x) => age < 23 || x.s.married || !hasPartner(x) || x.s.love[P(x)] < 62 || x.has(`ch_${age - 1}`),
+    title: 'Chiếc nhẫn trong túi áo',
+    text: (x) => [
+      `${x.age} tuổi. Yêu ${x.L(P(x))} đủ lâu để biết ${x.ay} uống cà phê mấy thìa đường, sợ gì nhất, hay nói mớ câu gì.`,
+      `Tối nay hai người ngồi ở ${spotOf(x.year)}. Trong túi áo ${x.me} có ${x.year < 2000 ? 'một chiếc nhẫn vàng ta mua ở tiệm đầu chợ' : 'một chiếc nhẫn đã chọn ba tuần'}.`,
+    ],
+    choices: [
+      { t: (x) => `Cầu hôn ${x.L(P(x))} ngay tối nay`, do: (fx, x) => (fx.flag(`ch_${age}`), myPropose(fx, x)) },
+      { t: 'Chưa vội, cứ yêu thêm đã', do: (fx, x) => (fx.flag(`ch_${age}`), fx.love(P(x), 2)) },
+    ],
+    next: (x) => (x.s.married && !x.has('cuoi_done') ? `tq@${age}` : `end@${age}`),
+  };
+}
+
+/** trước đám cưới: hai nhà bàn sính lễ (thách cưới) */
+function bridePriceScene(age: number): Scene {
+  return {
+    id: `tq@${age}`,
+    age,
+    chapter: CH.tre,
+    bg: () => ({ place: 'nha', time: 'day' }),
+    who: (x) => P(x),
+    skip: (x) => !x.s.married || !hasPartner(x) || x.has('tq_done') || ((x.s.seed ?? 0) + age) % 3 === 0,
+    title: 'Mâm quả bao nhiêu?',
+    text: (x) => [
+      `Hai nhà gặp nhau bàn chuyện cưới. ${x.c.gender === 'f' ? 'Nhà mình' : `Nhà ${x.L(P(x))}`} đưa ra yêu cầu: ${x.year < 2000 ? 'mười mâm quả, một đôi bông tai vàng' : x.year < 2015 ? 'hai mươi mâm quả, một cây vàng' : 'sính lễ trăm triệu, vàng cưới đủ bộ'}.`,
+      'Không khí đặc quánh như cơm cháy.',
+    ],
+    choices: [
+      { t: 'Hai đứa tự góp tiền cho đủ', do: (fx, x) => (fx.flag('tq_done'), fx.stat('tien', -16), fx.love(P(x), 8), fx.rel('bome', 4)), note: () => 'Đám hỏi đẹp như phim. Tháng sau thì hết sạch tiền.' },
+      {
+        t: 'Đứng ra xin bớt cho hai bên',
+        do: (fx, x) => (fx.flag('tq_done'), x.s.stats.duyen >= 50 ? (fx.love(P(x), 6), fx.say('Cả hai nhà cùng cười, chốt một nửa.')) : (fx.love(P(x), -6), fx.rel('bome', -6), fx.say('Nói vụng, bên kia phật ý. Nhưng cưới thì vẫn cưới.'))),
+      },
+      { t: 'Thôi, không cưới nữa', do: (fx, x) => {
+          const p = P(x);
+          fx.flag('tq_done');
+          fx.say(`${x.L(p)} lặng người. Chiếc nhẫn trả lại trong một chiếc hộp nhỏ.`);
+          fx.cancelWedding();
+          fx.mid('thachcuoi');
+        },
+      },
+    ],
+    next: `wd@${age}`,
   };
 }
 
@@ -1650,7 +1940,7 @@ function endYear(age: number): Scene {
     skip: () => true,
     next: (x) => {
       const pair = caughtPair(x.s);
-      if (!pair) return `dr@${age}`;
+      if (!pair || x.s.married) return `dr@${age}`;
       const hasP = !!x.s.partner && x.s.partner !== 'xemmat';
       const lens = x.s.flags.filter((f) => f.startsWith(`len_${age}_`)).length;
       const risk = (hasP ? 0.35 : 0.12) + (close(x.s).length - 2) * 0.12 + lens * 0.12;
@@ -1766,12 +2056,18 @@ export function resolverOf(c: Character, f: Family): Resolve {
         return pickScene(age);
       case 'yl':
         return yearFeed(age);
+      case 'ht':
+        return missionScene(age);
       case 'go':
         return goScene(age);
       case 'ms':
         return msScene(age);
       case 'wd':
-        return weddingScene(age, age === 27 ? 'y28_hethong' : 'ev@30');
+        return weddingScene(age, age === 27 ? 'y28_hethong' : age >= 28 ? 'ev@30' : `end@${age}`);
+      case 'ch':
+        return proposeScene(age);
+      case 'tq':
+        return bridePriceScene(age);
       case 'rf':
         return ASK[age] ? reflectScene(age) : undefined;
       case 'chat':
@@ -1782,6 +2078,11 @@ export function resolverOf(c: Character, f: Family): Resolve {
       case 'd3':
       case 'd4':
         return dateStep(Number(kind[1]) as 2 | 3 | 4, age, n, who as LoveId, afterTurn(age, n));
+      case 'st1':
+      case 'st2':
+      case 'st3':
+      case 'st4':
+        return starScene(Number(kind[2]) as 1 | 2 | 3 | 4, age, who as LoveId, `route@${age}`, ctxOf(c, f, s, age));
       case 'quet':
         return quetScene(age, n);
       case 'explore':

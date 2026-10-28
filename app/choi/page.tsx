@@ -16,7 +16,7 @@ import { placeOf, siblingText, type Character, type Family } from '@/lib/charact
 import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEndOf, titlesOf } from '@/lib/endings';
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
-import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
+import { activeMission, ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { commit } from '@/lib/board';
 import { AREAS, areasOf, doAction, lifePathOf, doneThisYear, optionsOf, tallyOf, type AreaKey } from '@/lib/actions';
 import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
@@ -309,6 +309,15 @@ function Board({
           ) : (
             <p className="mt-hint">Chọn một mảng, rồi chọn một việc cụ thể. Mảng nào chọn nhiều sẽ quyết định cả đời mình dành cho điều gì.</p>
           )}
+          {(() => {
+            const m = activeMission(xa);
+            return m ? (
+              <p className={`mt-hint lb-mission ${m.done ? 'ok' : ''}`}>
+                ✦ Nhiệm vụ Hệ Thống: <b>{m.t}</b>
+                {m.done ? ' - đã xong!' : ''}
+              </p>
+            ) : null;
+          })()}
           <div className="lb-areas">
             {areasOf(xa).map((a) => (
               <button key={a.k} type="button" className={`tile px lb-area ${story.focus === a.k ? 'on' : ''}`} disabled={yearDone} onClick={() => setArea(a.k)}>

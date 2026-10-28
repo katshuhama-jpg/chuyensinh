@@ -8,6 +8,7 @@
 
 import type { Bg } from '@/components/Backdrop';
 import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
+import { regionOf } from './names';
 
 type Life = {
   id: string;
@@ -532,7 +533,7 @@ const TEEN: Life[] = [
     max: 12,
     title: 'Ngày đầu vào cấp hai',
     bg: bg('cong'),
-    text: (x) => [`Ngày đầu vào lớp sáu. ${isF(x) ? 'Tóc buộc đuôi gà, áo trắng mới tinh' : 'Áo trắng rộng thùng thình, mẹ bảo "để năm sau còn mặc"'}. Lớp mới, bạn mới.`],
+    text: (x) => [`Ngày đầu vào lớp sáu. ${isF(x) ? 'Tóc buộc đuôi gà, áo trắng mới tinh' : `Áo trắng rộng thùng thình, ${x.mom} bảo "để năm sau còn mặc"`}. Lớp mới, bạn mới.`],
     choices: [
       { t: 'Ngồi bàn đầu cho cô nhớ mặt', do: (fx) => fx.stat('hoc', 5) },
       { t: 'Ngồi bàn cuối gần cửa sổ', do: (fx) => (fx.stat('noi', 4), fx.stat('dao', 2)) },
@@ -987,10 +988,13 @@ const YOUNG: Life[] = [
     id: 'nhaphoc',
     min: 18,
     max: 19,
-    if: (x) => x.has('dodaihoc') || x.s.stats.hoc >= 40,
+    if: (x) => x.has('daihoc') && !x.has('dilam'),
     title: 'Ngày nhập học',
     bg: bg('cong'),
-    text: (x) => [`${x.me} xách va li lên thành phố nhập học. ${x.year < 2005 ? 'Ký túc xá tám người một phòng, giường tầng sắt kêu cót két.' : 'Phòng trọ mười hai mét vuông, chung chủ với ba đứa khác.'}`],
+    text: (x) =>
+      bigCity(x)
+        ? [`${x.me} đạp xe đến trường nhập học, ngay trong thành phố. ${x.year < 2005 ? 'Giảng đường quạt trần kêu cọt kẹt, ba trăm người một lớp.' : 'Nhóm lớp lập ngay hôm đầu, ba trăm tin nhắn một tối.'}`]
+        : [`${x.me} xách va li lên thành phố nhập học. ${x.year < 2005 ? 'Ký túc xá tám người một phòng, giường tầng sắt kêu cót két.' : 'Phòng trọ mười hai mét vuông, chung chủ với ba đứa khác.'}`],
     choices: [
       { t: 'Làm quen cả dãy phòng trong một tối', do: (fx) => (fx.stat('duyen', 6), fx.rel('banthan', 3)) },
       { t: 'Gọi điện về nhà khóc', do: (fx) => (fx.rel('bome', 6), fx.stat('tinh', 3)) },
@@ -1059,6 +1063,8 @@ const ALL: Life[] = [...SMALL, ...KID, ...TEEN, ...YOUNG];
    ========================================================= */
 type Auto = { id: string; min: number; max: number; from?: number; to?: number; if?: (x: Ctx) => boolean; t: (x: Ctx) => string; do?: (fx: Fx, x: Ctx) => void };
 
+/** sống ở nội thành Hà Nội / TP. Hồ Chí Minh: học đại học không phải xa nhà */
+const bigCity = (x: Ctx) => x.f.urban && (x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh');
 const kg = (x: Ctx) => (2.6 + (hash(`${x.s.seed ?? 0}kg`) % 11) / 10).toFixed(1).replace('.', ',');
 const AUTO: Auto[] = [
   // 0-2 tuổi
@@ -1101,7 +1107,7 @@ const AUTO: Auto[] = [
   { id: 'nhinTrom', min: 12, max: 17, t: (x) => `Bắt gặp ${C(x)} nhìn trộm mình trong giờ Văn. Cả hai cùng quay đi.`, do: (fx, x) => fx.love(crush(x), 4) },
   { id: 'cangtin', min: 12, max: 17, t: (x) => `${C(x)} mua hộ ${x.me} cốc ${x.year < 2008 ? 'nước mía' : 'trà sữa'} ở căng tin, không lấy tiền.`, do: (fx, x) => fx.love(crush(x), 4) },
   { id: 'tenvo', min: 12, max: 16, t: (x) => `Viết tên ${C(x)} vào góc vở, rồi tô đen kín lại cho không ai đọc được.`, do: (fx, x) => fx.love(crush(x), 2) },
-  { id: 'dichoixa', min: 12, max: 17, t: (x) => `Lần đầu đi chơi xa với lớp: ${['Tam Đảo', 'Đồ Sơn', 'Đà Lạt', 'Hạ Long', 'Vũng Tàu'][hash(`${x.s.seed ?? 0}xa`) % 5]}. Thức trắng đêm buôn chuyện.`, do: (fx) => fx.rel('banthan', 3) },
+  { id: 'dichoixa', min: 12, max: 17, t: (x) => `Lần đầu đi chơi xa với lớp: ${(regionOf(x.f.province) === 'nam' ? ['Vũng Tàu', 'Đà Lạt', 'Mũi Né', 'Cần Giờ'] : regionOf(x.f.province) === 'trung' ? ['Hội An', 'Bà Nà', 'Cửa Lò', 'Nha Trang'] : ['Tam Đảo', 'Đồ Sơn', 'Hạ Long', 'Sa Pa'])[hash(`${x.s.seed ?? 0}xa`) % 4]}. Thức trắng đêm buôn chuyện.`, do: (fx) => fx.rel('banthan', 3) },
   { id: 'bongda', min: 12, max: 17, t: (x) => `Mê ${x.year < 2006 ? 'xem bóng đá Ngoại hạng Anh cùng bố' : 'bóng đá, thức đêm xem Champions League'}.` },
   { id: 'thuemay', min: 13, max: 17, from: 2004, t: (x) => `Bị ${x.bm} thu điện thoại vì nhắn tin đến một giờ sáng.`, do: (fx) => fx.rel('bome', -2) },
   { id: 'xebus', min: 12, max: 16, from: 2002, if: (x) => x.f.urban, t: () => 'Lần đầu tự đi xe buýt một mình. Đi nhầm tuyến, về muộn hai tiếng.' },
@@ -1115,7 +1121,7 @@ const AUTO: Auto[] = [
   { id: 'thithu', min: 16, max: 17, t: () => 'Thi thử đại học lần thứ ba, điểm lên xuống như chứng khoán.', do: (fx) => fx.stat('hoc', 2) },
   // 18-19 tuổi
   { id: 'banglai', min: 18, max: 19, from: 1996, t: () => 'Thi bằng lái xe máy, trượt vòng số tám một lần rồi mới đỗ.' },
-  { id: 'xanha', min: 18, max: 19, t: (x) => `Lần đầu xa nhà. Tối nào cũng gọi về cho ${x.mom}, rồi thưa dần.`, do: (fx) => fx.rel('bome', -2) },
+  { id: 'xanha', min: 18, max: 19, if: (x) => !bigCity(x), t: (x) => `Lần đầu xa nhà. Tối nào cũng gọi về cho ${x.mom}, rồi thưa dần.`, do: (fx) => fx.rel('bome', -2) },
   { id: 'nau', min: 18, max: 19, t: () => 'Tự nấu bữa cơm đầu tiên: cơm khê, trứng cháy, vẫn ăn hết.' },
 ];
 
@@ -1150,7 +1156,7 @@ export const LY_NEXT: Record<string, string> = {
   '16': 'ly@16#2',
   '16#2': 'ev@16',
   '17': 'ly@17#2',
-  '17#2': 'ly@18',
+  '17#2': 't17_thi',
   '18': 'y19_veve',
   '19': 'y20_chon',
 };
