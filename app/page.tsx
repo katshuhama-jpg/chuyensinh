@@ -57,7 +57,7 @@ export default function Home() {
           RẼ LỐI
         </h1>
         <p className="mute" style={{ marginTop: 8, fontSize: 22 }}>
-          Mỗi lựa chọn mở ra một dòng thời gian khác. Lần này, bạn sẽ rẽ lối nào?
+          Không day dứt, chỉ tò mò: Nếu rẽ lối khác, đời mình sẽ ra sao?
         </p>
       </div>
 

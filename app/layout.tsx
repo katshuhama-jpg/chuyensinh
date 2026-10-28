@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: { default: 'Đường Tình Rẽ Lối', template: '%s · Đường Tình Rẽ Lối' },
-  description: "Love's Altered Lines - mỗi lựa chọn mở ra một dòng thời gian khác. Lần này, bạn sẽ rẽ lối nào?",
+  description: "Love's Altered Lines - không day dứt, chỉ tò mò: Nếu rẽ lối khác, đời mình sẽ ra sao?",
   applicationName: 'Đường Tình Rẽ Lối',
 };
 
