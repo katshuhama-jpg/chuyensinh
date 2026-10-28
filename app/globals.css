@@ -1850,3 +1850,35 @@ p {
 .deck-ai {
   background: linear-gradient(135deg, #e8d9ff, #d6f5ff 50%, #ffe3f1);
 }
+
+/* ---------- nhân vật luôn nổi trên mọi nền ----------
+   Viền sáng 1 điểm ảnh quanh dáng người (2px ở cỡ 2 lần) và quầng sáng phía sau:
+   tóc đen, áo đen trên nền tối hay đồ sáng trên nền sáng đều thấy rõ. */
+:root {
+  --sprite-rim: rgba(255, 236, 244, 0.92);
+  --sprite-glow: rgba(244, 166, 192, 0.28);
+}
+:root[data-theme='light'] {
+  --sprite-rim: rgba(255, 255, 255, 0.95);
+  --sprite-glow: rgba(168, 63, 112, 0.14);
+}
+.lpc-strip {
+  filter: drop-shadow(2px 0 0 var(--sprite-rim)) drop-shadow(-2px 0 0 var(--sprite-rim)) drop-shadow(0 2px 0 var(--sprite-rim)) drop-shadow(0 -2px 0 var(--sprite-rim));
+}
+.lpc::before {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 14%;
+  bottom: 4%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--sprite-glow), transparent);
+  pointer-events: none;
+}
+.preview {
+  background: radial-gradient(circle at 50% 42%, #4f3d6b 0, var(--scene) 62%);
+}
+:root[data-theme='light'] .preview {
+  background: radial-gradient(circle at 50% 42%, #fffafb 0, var(--scene) 62%);
+}
