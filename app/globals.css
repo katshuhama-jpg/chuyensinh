@@ -3309,3 +3309,30 @@ p {
 .stat .cells i .part.stress {
   background: var(--stress);
 }
+
+/* ---------- biểu đồ mạng nhện chỉ số ---------- */
+.radar {
+  position: relative;
+  margin: 4px auto 8px;
+}
+.radar canvas {
+  position: absolute;
+  left: 60px;
+  top: 28px;
+}
+.rd-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 16px;
+  line-height: 1.05;
+  color: var(--mute);
+  white-space: nowrap;
+}
+.rd-label b {
+  font-weight: 400;
+  font-size: 18px;
+  color: var(--orange);
+}

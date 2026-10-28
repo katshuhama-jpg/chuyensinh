@@ -8,6 +8,7 @@ import Feed from '@/components/Feed';
 import Phone, { skinOf } from '@/components/Phone';
 import CallScreen, { callSkinOf } from '@/components/CallScreen';
 import TapGame from '@/components/TapGame';
+import Radar from '@/components/Radar';
 import { CheerMeter, SlideUnlock } from '@/components/MiniActs';
 import Sprite from '@/components/Sprite';
 import SwipeDeck from '@/components/SwipeDeck';
@@ -17,7 +18,7 @@ import { fateResultOf, funeralOf, lifespanOf, loveEndOf, loveTypeOf, MIDS, oldEn
 import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
-import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, RADAR, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -524,16 +525,8 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
       </div>
       <p className="mt-hint">Lúc cầu hôn: độ thân từ 70 và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
-      <div className="mt-h">BẠN - CHỈ SỐ (0 ĐẾN 100)</div>
-      {STAT_KEYS.map((k) => (
-        <div className="stat" key={k}>
-          <span>{STAT_LABEL[k]}</span>
-          <span className="cells" role="meter" aria-label={STAT_LABEL[k]} aria-valuenow={story.stats[k]} aria-valuemin={0} aria-valuemax={100}>
-            {cells(story.stats[k])}
-          </span>
-          <span>{story.stats[k]}</span>
-        </div>
-      ))}
+      <div className="mt-h">BẠN - CHỈ SỐ</div>
+      <Radar axes={RADAR.map((r) => ({ label: r.label, value: r.of(story.stats) }))} />
     </div>
   );
 }
