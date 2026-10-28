@@ -3,7 +3,7 @@
  * và đoạn giới thiệu nhân vật.
  */
 
-import { REAL_UNTIL, rollFamily, siblingText, suggestName, type Family, type Gender } from './character';
+import { REAL_UNTIL, placeOf, rollFamily, siblingText, suggestName, type Family, type Gender } from './character';
 import { LOVE_IDS, type Story, type StoryCore } from './story';
 
 export interface Fate {
@@ -56,7 +56,7 @@ const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 export function introOf(f: Fate): string[] {
   const short = f.name.trim().split(/\s+/).pop() || f.name;
   const fam = f.family;
-  const where = `${fam.province}, ${fam.urban ? 'giữa phố' : 'ở vùng quê'}`;
+  const where = placeOf(fam).long;
   const wealth = fam.wealth.startsWith('Mồ côi') ? 'không còn bố mẹ, được ông bà nuôi' : `trong một gia đình ${lower(fam.wealth)}`;
   const parents: Record<string, string> = {
     'Hòa thuận, cởi mở': 'Bố mẹ hiền, hiếm khi to tiếng.',

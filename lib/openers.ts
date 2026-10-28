@@ -35,8 +35,8 @@ const LINES: Record<string, Line[]> = {
     { t: 'Trợ lý AI kể chuyện cổ tích trước giờ ngủ', if: (x) => y(x) > 2020 },
     { t: 'Đom đóm, ruộng lúa và những buổi tắm sông', if: (x) => rural(x) && !highland(x) },
     { t: 'Ghe xuồng, mùa nước nổi và những trưa trốn ngủ', if: (x) => south(x) && rural(x) },
-    { t: 'Hẻm nhỏ Sài Gòn, xe bánh mì đầu hẻm', if: (x) => x.f.province === 'TP. Hồ Chí Minh' },
-    { t: 'Phố cổ, gánh hàng rong và tiếng rao đêm', if: (x) => x.f.province === 'Hà Nội' },
+    { t: 'Hẻm nhỏ Sài Gòn, xe bánh mì đầu hẻm', if: (x) => x.f.province === 'TP. Hồ Chí Minh' && city(x) },
+    { t: 'Phố cổ, gánh hàng rong và tiếng rao đêm', if: (x) => x.f.province === 'Hà Nội' && city(x) },
     { t: 'Gió Lào, nắng cháy và nồi cơm độn khoai', if: (x) => central(x) && rural(x) },
     { t: 'Biển, cát trắng và những con còng gió', if: sea },
     { t: 'Sương núi, chợ phiên và tiếng khèn xa', if: highland },
@@ -52,6 +52,7 @@ const LINES: Record<string, Line[]> = {
     { t: 'Đồng lương của bố và những bữa cơm đủ đầy', if: (x) => x.f.wealth === 'Công chức trung lưu' },
     { t: 'Ruộng nhà, con trâu và mùa gặt', if: (x) => x.f.wealth === 'Nhà nông' },
     { t: 'Khu trọ công nhân, nơi bố mẹ đi làm từ tờ mờ sáng', if: (x) => x.f.wealth === 'Lao động phổ thông' && city(x) },
+    { t: 'Ruộng rau ven đô, nhìn về phía những tòa nhà thành phố', if: (x) => !!x.f.district },
     { t: 'Ngày Tết đầu tiên còn nhớ được', generic: true },
   ],
   'Tuổi teen': [

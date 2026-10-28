@@ -31,6 +31,8 @@ export interface Character {
 export interface Family {
   province: string;
   urban: boolean;
+  /** huyện ngoại thành khi sống ở vùng quê của Hà Nội / TP. Hồ Chí Minh */
+  district?: string;
   wealth: string;
   parents: string;
   /** anh chị em cụ thể, xếp từ lớn đến bé; rỗng là con một */
@@ -227,15 +229,39 @@ function siblingsW(birthYear: number) {
   return SIBLING_COUNT;
 }
 
+const BIG = ['Hà Nội', 'TP. Hồ Chí Minh'];
+/** Huyện ngoại thành (có từ trước 2008, để đúng với mọi năm sinh) */
+const OUTER: Record<string, string[]> = {
+  'Hà Nội': ['Sóc Sơn', 'Đông Anh', 'Gia Lâm', 'Thanh Trì', 'Từ Liêm'],
+  'TP. Hồ Chí Minh': ['Củ Chi', 'Hóc Môn', 'Bình Chánh', 'Nhà Bè', 'Cần Giờ'],
+};
+
+/** Nơi sinh hiển thị: Hà Nội, TP. HCM thì ghi nội thành / ngoại thành kèm huyện */
+export function placeOf(f: Family): { short: string; long: string } {
+  const outer = OUTER[f.province];
+  if (outer) {
+    if (f.urban) return { short: `${f.province}, nội thành`, long: `${f.province}, giữa phố` };
+    const d = f.district ?? outer[(f.wealth.length + f.parents.length) % outer.length];
+    return { short: `${f.province}, ngoại thành (${d})`, long: `huyện ${d}, ngoại thành ${f.province}` };
+  }
+  return f.urban
+    ? { short: `${f.province}, thành thị`, long: `${f.province}, giữa phố` }
+    : { short: `${f.province}, nông thôn`, long: `${f.province}, ở vùng quê` };
+}
+
 export function rollFamily(r = Math.random, birthYear = 2000): Family {
   const province = pickW(r, PROVINCES.map((v, i) => ({ v, w: PROVINCE_W[i] })));
-  const big = province === 'Hà Nội' || province === 'TP. Hồ Chí Minh';
-  const wealth = pickW(r, WEALTH);
-  const urban = wealth === 'Nhà nông' ? false : r() < (big ? 0.8 : 0.35);
+  const big = BIG.includes(province);
+  // thành phố lớn ít nhà làm ruộng, chỉ còn ở huyện ngoại thành
+  const wealth = pickW(r, big ? WEALTH.map((x) => (x.v === 'Nhà nông' ? { ...x, w: 5 } : x)) : WEALTH);
+  const rich = wealth === 'Hào môn' || wealth === 'Khá giả';
+  const urban = wealth === 'Nhà nông' ? false : rich && big ? true : r() < (big ? 0.85 : 0.35);
+  const outer = OUTER[province];
+  const district = !urban && outer ? outer[Math.floor(r() * outer.length)] : undefined;
   // mồ côi thì không có mục bố mẹ
   const parents = wealth.startsWith('Mồ côi') ? 'Không còn bố mẹ' : pickW(r, PARENTS);
   const n = Number(pickW(r, siblingsW(birthYear)));
   const siblings: Sibling[] = Array.from({ length: n }, () => ({ older: r() < 0.5, gender: (r() < 0.5 ? 'f' : 'm') as Gender }));
   siblings.sort((a, b) => Number(b.older) - Number(a.older));
-  return { province, urban, wealth, parents, siblings };
+  return { province, urban, district, wealth, parents, siblings };
 }

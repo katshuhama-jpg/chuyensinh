@@ -13,6 +13,7 @@ import {
   STYLES,
   defaultCharacter,
   hairsFor,
+  placeOf,
   siblingText,
   suggestName,
   type Character,
@@ -105,7 +106,7 @@ function FateStep({ fate, rolls, onRoll, onNext }: { fate: Fate; rolls: number; 
                 {fate.gender === 'f' ? 'Bé gái' : 'Bé trai'} · {fate.birthYear}
               </span>
               <span>
-                {fam.province}, {fam.urban ? 'thành thị' : 'nông thôn'}
+                {placeOf(fam).short}
               </span>
             </div>
           </div>
