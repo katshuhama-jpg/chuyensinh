@@ -9,12 +9,12 @@ import type { Bg } from '@/components/Backdrop';
 
 export type StatKey = 'hoc' | 'noi' | 'duyen' | 'tinh' | 'tien' | 'tam' | 'dao' | 'khoe';
 export const STAT_LABEL: Record<StatKey, string> = {
-  hoc: 'Thông minh',
+  hoc: 'Hiểu biết',
   noi: 'Nổi loạn',
   duyen: 'Nhan sắc',
   tinh: 'Tình cảm',
   tien: 'Tài chính',
-  tam: 'Tâm lý',
+  tam: 'Vui vẻ',
   dao: 'Vận đào hoa',
   khoe: 'Sức khỏe',
 };
@@ -22,10 +22,10 @@ export const STAT_LABEL: Record<StatKey, string> = {
 /** 5 trục hiện trên biểu đồ mạng nhện; Tâm lý gộp tâm trạng và tình cảm, Vận đào hoa giữ kín */
 export const RADAR: { label: string; of: (s: Record<StatKey, number>) => number }[] = [
   { label: 'Nhan sắc', of: (s) => s.duyen },
-  { label: 'Thông minh', of: (s) => s.hoc },
+  { label: 'Hiểu biết', of: (s) => s.hoc },
   { label: 'Nổi loạn', of: (s) => s.noi },
   { label: 'Tài chính', of: (s) => s.tien },
-  { label: 'Tâm lý', of: (s) => Math.round((s.tam + s.tinh) / 2) },
+  { label: 'Vui vẻ', of: (s) => Math.round((s.tam + s.tinh) / 2) },
 ];
 export const STAT_KEYS = Object.keys(STAT_LABEL) as StatKey[];
 

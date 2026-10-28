@@ -244,7 +244,7 @@ const YEU: Drama[] = [
     choices: [
       { t: 'Bật chia sẻ vị trí cho xong', do: (fx, x) => (lv(fx, x, 4), fx.stat('noi', -6), fx.stat('tam', -6), fx.flag('dr_kiemsoat')), note: () => '🦋 Một lần nhượng bộ, rồi sẽ có lần thứ hai.' },
       { t: '"Yêu là tin, không phải theo dõi"', do: (fx, x) => (lv(fx, x, -6), fx.stat('tam', 6), fx.stat('noi', 4)) },
-      { t: 'Chia tay. Thấy dấu hiệu là đi', do: (fx, x) => (breakup(fx, x), fx.stat('tam', 10)), sys: 'Đinh! Ký chủ nhận ra cờ đỏ. Tâm lý +10.' },
+      { t: 'Chia tay. Thấy dấu hiệu là đi', do: (fx, x) => (breakup(fx, x), fx.stat('tam', 10)), sys: 'Đinh! Ký chủ nhận ra cờ đỏ. Vui vẻ +10.' },
     ],
   },
   {
@@ -872,7 +872,7 @@ const DON: Drama[] = [
     choices: [
       { t: 'Chuyển tiền, vì tin', do: (fx) => (fx.stat('tien', -20), fx.stat('tam', -10), fx.mid('luadao')), note: () => 'Tài khoản kia xóa nick ngay sau khi nhận tiền.' },
       { t: 'Đòi gọi video trước', do: (fx) => (fx.stat('hoc', 4), fx.stat('tam', 4)), note: () => 'Bên kia bảo "camera hỏng", rồi im luôn.' },
-      { t: 'Chặn và báo cáo tài khoản', do: (fx) => fx.stat('tam', 6), sys: 'Đinh! Ký chủ tỉnh táo. Tâm lý +6.' },
+      { t: 'Chặn và báo cáo tài khoản', do: (fx) => fx.stat('tam', 6), sys: 'Đinh! Ký chủ tỉnh táo. Vui vẻ +6.' },
     ],
   },
   {

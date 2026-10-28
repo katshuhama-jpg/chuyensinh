@@ -4191,3 +4191,8 @@ p {
     opacity: 0;
   }
 }
+/* thanh chỉ số chính cùng màu với hàng chỉ số ở đầu bảng đời */
+.stat .cells i.on,
+.stat .cells i .part {
+  background: var(--c, var(--stat));
+}

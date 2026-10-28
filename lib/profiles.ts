@@ -113,4 +113,4 @@ export const PERSONA: Record<LoveId, [number, number, number, number, number]> =
   hung: [92, 70, 65, 95, 45],
   tai: [80, 50, 80, 40, 75],
 };
-export const PERSONA_AXES = ['Nhan sắc', 'Thông minh', 'Nổi loạn', 'Tài chính', 'Tâm lý'];
+export const PERSONA_AXES = ['Nhan sắc', 'Hiểu biết', 'Nổi loạn', 'Tài chính', 'Vui vẻ'];

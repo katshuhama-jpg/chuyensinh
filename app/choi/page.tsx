@@ -18,7 +18,7 @@ import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { commit, focusesOf } from '@/lib/board';
-import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, bondsOf, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, fastForward, STOP_AT, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -1003,11 +1003,12 @@ const cells = (v: number, cls = '') =>
   });
 
 /** Chỉ số dạng 10 ô pixel, mỗi ô 10 điểm */
-function StatBars({ rows }: { rows: { label: string; value: number }[] }) {
+const MAIN_COLORS = ['#5a9a62', '#c99a3e', '#4a9a90', '#b8455e', 'var(--stat)'];
+function StatBars({ rows }: { rows: { label: string; value: number; color?: string }[] }) {
   return (
     <>
       {rows.map((r) => (
-        <div className="stat" key={r.label}>
+        <div className="stat" key={r.label} style={r.color ? ({ '--c': r.color } as React.CSSProperties) : undefined}>
           <span>{r.label}</span>
           <span className="cells" role="meter" aria-label={r.label} aria-valuenow={r.value} aria-valuemin={0} aria-valuemax={100}>
             {cells(r.value)}
@@ -1035,7 +1036,9 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
       <p className="mt-hint">Lúc cầu hôn: phải thật thương nhau (4 tim trở lên) và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
       <div className="mt-h">CHỈ SỐ CỦA BẠN (0 ĐẾN 100)</div>
-      <StatBars rows={[...STAT_KEYS.map((k) => ({ label: STAT_LABEL[k], value: story.stats[k] ?? 70 })), { label: 'Gắn kết', value: bondsOf(story) }]} />
+      <StatBars rows={MAIN_STATS.map((m, i) => ({ label: m.label, value: m.of(story), color: MAIN_COLORS[i] }))} />
+      <div className="mt-h">TÍNH CÁCH VÀ VẬN</div>
+      <StatBars rows={(['duyen', 'noi', 'tinh', 'tien', 'dao'] as const).map((k) => ({ label: STAT_LABEL[k], value: story.stats[k] }))} />
     </div>
   );
 }

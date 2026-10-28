@@ -1013,10 +1013,10 @@ function reflectScene(age: number): Scene {
 /** Trọng tâm của năm (kiểu 1 in 8 Billion): Yêu thì thêm lượt hẹn hò, chọn khác thì người yêu thấy bị bỏ bê */
 const FOCUS: { k: string; t: string; d: string; do: (fx: Fx, x: Ctx) => void }[] = [
   { k: 'yeu', t: '♥ Yêu', d: 'Thêm một lượt hẹn hò, tâm sự, tặng quà', do: (fx) => fx.stat('dao', 3) },
-  { k: 'hoc', t: '✎ Học thêm', d: 'Thông minh tăng', do: (fx) => (fx.stat('hoc', 8), fx.stat('tam', -2)) },
+  { k: 'hoc', t: '✎ Học thêm', d: 'Hiểu biết tăng', do: (fx) => (fx.stat('hoc', 8), fx.stat('tam', -2)) },
   { k: 'lam', t: '$ Lo sự nghiệp', d: 'Tài chính tăng', do: (fx) => (fx.stat('tien', 10), fx.flag('dilam')) },
   { k: 'nha', t: '⌂ Gia đình', d: 'Gần bố mẹ hơn', do: (fx) => (fx.rel('bome', 12), fx.stat('tinh', 3)) },
-  { k: 'minh', t: '✦ Chăm bản thân', d: 'Nhan sắc, Tâm lý tăng', do: (fx) => (fx.stat('tam', 6), fx.stat('duyen', 5)) },
+  { k: 'minh', t: '✦ Chăm bản thân', d: 'Nhan sắc, Vui vẻ tăng', do: (fx) => (fx.stat('tam', 6), fx.stat('duyen', 5)) },
 ];
 
 function focusScene(age: number): Scene {

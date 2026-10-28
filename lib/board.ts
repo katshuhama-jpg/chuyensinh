@@ -13,14 +13,14 @@ export type Focus = { k: string; t: string; d: string };
 export function focusesOf(age: number): Focus[] {
   if (age < 12)
     return [
-      { k: 'hoc', t: 'Học', d: 'Thông minh ↑' },
+      { k: 'hoc', t: 'Học', d: 'Hiểu biết ↑' },
       { k: 'choi', t: 'Chơi với bạn', d: 'Bạn bè ↑ Vui ↑' },
       { k: 'nha', t: 'Giúp nhà', d: 'Gần bố mẹ ↑' },
       { k: 'minh', t: 'Vận động', d: 'Sức khỏe ↑ Vui ↑' },
     ];
   if (age < 18)
     return [
-      { k: 'hoc', t: 'Học', d: 'Thông minh ↑ Vui ↓' },
+      { k: 'hoc', t: 'Học', d: 'Hiểu biết ↑ Vui ↓' },
       { k: 'yeu', t: 'Để ý crush', d: 'Tình cảm ↑' },
       { k: 'choi', t: 'Bạn bè', d: 'Bạn bè ↑' },
       { k: 'minh', t: 'Chăm bản thân', d: 'Nhan sắc ↑' },
@@ -31,7 +31,7 @@ export function focusesOf(age: number): Focus[] {
       { k: 'lam', t: 'Sự nghiệp', d: 'Tài chính ↑ Sức khỏe ↓' },
       { k: 'nha', t: 'Gia đình', d: 'Bố mẹ, con cái ↑' },
       { k: 'minh', t: 'Bản thân', d: 'Sức khỏe ↑ Vui ↑' },
-      { k: 'hoc', t: 'Học thêm', d: 'Thông minh ↑' },
+      { k: 'hoc', t: 'Học thêm', d: 'Hiểu biết ↑' },
     ];
   return [
     { k: 'yeu', t: 'Bạn đời', d: 'Tình cảm ↑' },
