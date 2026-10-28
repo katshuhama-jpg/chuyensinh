@@ -106,14 +106,17 @@ function draw(ctx: CanvasRenderingContext2D, ops: Op[], time: Time, at: Record<A
 const TINT: Record<Time, string | null> = { day: null, dusk: 'rgba(255,140,90,0.22)', night: 'rgba(30,24,80,0.55)' };
 
 export default function TileStage({
-  ops,
+  src,
+  ops = [],
   front = [],
   time = 'day',
   season,
   lights = [],
   children,
 }: {
-  ops: Op[];
+  /** ảnh nền ghép sẵn 200x144 (scripts/bg/compose.py) */
+  src?: string;
+  ops?: Op[];
   /** vẽ sau nhân vật (tán cây che phía trước) */
   front?: Op[];
   time?: Time;
@@ -143,6 +146,7 @@ export default function TileStage({
 
   return (
     <div className="ts" style={{ width: W * 2, height: H * 2 }}>
+      {src && <img src={src} alt="" className="ts-cv" />}
       <canvas ref={back} width={W} height={H} className="ts-cv" />
       <div className="ts-actors">{children}</div>
       <canvas ref={fore} width={W} height={H} className="ts-cv ts-front" />
