@@ -4110,3 +4110,32 @@ p {
 .lb-body {
   padding-bottom: calc(96px + env(safe-area-inset-bottom));
 }
+
+/* lựa chọn nằm trong một bottom sheet ghim ở đáy: nội dung phía trên vẫn đọc được hết */
+.lb-play .choices,
+.lb-play .reflect {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 8px -12px 0;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  background: var(--bg-deep);
+  box-shadow: 0 -4px 0 0 var(--line);
+}
+.lb-play .choices::before {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 4px;
+  margin: -4px auto 2px;
+  background: var(--dim);
+}
+.lb-play {
+  padding-bottom: 0;
+}
+.lb-sh button {
+  color: var(--mute);
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

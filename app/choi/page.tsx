@@ -117,6 +117,8 @@ export default function Choi() {
 /* ---------- bảng đời kiểu 1 in 8 Billion ---------- */
 const WEALTH_DOTS: Record<string, number> = { 'Mồ côi, ở với ông bà': 1, 'Nhà nông': 2, 'Lao động phổ thông': 2, 'Tiểu thương': 3, 'Công chức trung lưu': 3, 'Khá giả': 4, 'Hào môn': 5 };
 const SPEEDS = [1, 2, 4, 8];
+/** 1× = 1 năm mỗi 8 giây, tăng tốc thì chia ra (8× = 1 giây một năm) */
+const YEAR_SEC = 8;
 
 function Board({
   char,
@@ -166,7 +168,7 @@ function Board({
   // đồng hồ: mỗi nhịp hiện một năm; hết các năm thì sang cảnh tiếp
   useEffect(() => {
     if (!isFeed || !running || fb) return;
-    const t = setTimeout(() => (shown < lines.length ? setShown(shown + 1) : go(0, undefined, true)), (shown === 0 ? 500 : 2400) / speed);
+    const t = setTimeout(() => (shown < lines.length ? setShown(shown + 1) : go(0, undefined, true)), (shown === 0 ? 600 : YEAR_SEC * 1000) / speed);
     return () => clearTimeout(t);
   }, [isFeed, running, fb, shown, lines.length, speed, go]);
 
@@ -210,12 +212,12 @@ function Board({
           <b>{curAge}</b>
           <small>
             {year} · {x.me}
-            {isFeed && lines.length > 1 ? ` · 1 năm ≈ ${(2.4 / speed).toFixed(1)} giây` : ''}
+             · 1 năm ≈ {YEAR_SEC / speed} giây
           </small>
           <Notebook x={x} story={story} />
         </div>
         <div className="lb-bar" aria-hidden="true">
-          <i key={`${story.path.length}-${shown}`} style={{ animationDuration: `${2.4 / speed}s`, animationPlayState: running && isFeed ? 'running' : 'paused' }} />
+          <i key={`${story.path.length}-${shown}`} style={{ animationDuration: `${YEAR_SEC / speed}s`, animationPlayState: running && isFeed ? 'running' : 'paused' }} />
         </div>
         <div className="lb-ctl" role="toolbar" aria-label="Điều khiển thời gian">
           <button type="button" className="px" onClick={() => setPaused(!paused)} aria-pressed={paused}>
@@ -319,10 +321,14 @@ function Board({
         <div className="lb-veil">
           <div className="lb-sheet px" role="dialog" aria-modal="true" aria-label="Một ngã rẽ">
             <div className="lb-sh">
-              <span>{fb ? 'CHUYỆN VỪA XẢY RA' : 'MỘT NGÃ RẼ'}</span>
               <span>
-                {age} tuổi · {char.birthYear + age}
+                {fb ? 'CHUYỆN VỪA XẢY RA' : 'MỘT NGÃ RẼ'} · {age} tuổi · {char.birthYear + age}
               </span>
+              {!fb && !stop && (
+                <button type="button" onClick={() => setAuto(true)}>
+                  Để game tự chọn
+                </button>
+              )}
             </div>
             <Play
               R={R}
@@ -336,13 +342,6 @@ function Board({
               onNext={() => setFb(null)}
               onFast={onFast}
             />
-            {!fb && !stop && (
-              <div className="lb-auto">
-                <button type="button" className="btn-sub px" onClick={() => setAuto(true)}>
-                  Từ giờ để game tự chọn hộ
-                </button>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -1029,7 +1028,7 @@ function Meters({ x, story, met }: { x: Ctx; story: Story; met: LoveId[] }) {
       </div>
       <p className="mt-hint">Lúc cầu hôn: phải thật thương nhau (4 tim trở lên) và đúng kiểu người ấy thích thì mới thành đôi hạnh phúc.</p>
 
-      <div className="mt-h">BẠN - CHỈ SỐ</div>
+      <div className="mt-h">CHỈ SỐ CỦA BẠN</div>
       <Radar axes={RADAR.map((r) => ({ label: r.label, value: r.of(story.stats) }))} />
     </div>
   );
