@@ -991,8 +991,10 @@ p {
     transform: translateY(6px);
   }
 }
+@media (hover: hover) {
 .choices .opt:hover {
   background: var(--sel);
+}
 }
 .ht-line {
   color: var(--orange);
@@ -1269,8 +1271,10 @@ p {
   border: 2px solid #c9a878;
   color: #3a2a1a;
 }
+@media (hover: hover) {
 .lt-opt:hover {
   background: #fff;
+}
 }
 
 /* ---------- điện thoại: cục gạch ---------- */
@@ -1338,11 +1342,13 @@ p {
   min-height: 36px;
   color: #0f380f;
 }
+@media (hover: hover) {
 .nk-opt:hover,
 .nk-opt:focus-visible {
   background: #0f380f;
   color: #9bbc0f;
   outline: none;
+}
 }
 .nk-keys {
   display: grid;
@@ -1501,8 +1507,10 @@ p {
   color: #2a1f3d;
   box-shadow: inset 0 0 0 2px #e8789f;
 }
+@media (hover: hover) {
 .sm-opt:hover {
   background: #fde7ef;
+}
 }
 .ph-timer {
   position: relative;
@@ -2626,9 +2634,11 @@ p {
   font-size: 15px;
   color: #1a1a1a;
 }
+@media (hover: hover) {
 .pc-opt:hover,
 .pc-opt:focus-visible {
   background: #dfe8f6;
+}
 }
 .pc-send {
   display: flex;
