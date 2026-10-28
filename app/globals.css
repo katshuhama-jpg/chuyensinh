@@ -2467,3 +2467,16 @@ p {
   display: flex;
   gap: 8px;
 }
+/* sân khấu trong màn chơi: không viền, sát mép */
+.stage-ts.play {
+  margin: 0 -12px;
+  background: transparent;
+}
+.ts-spark {
+  position: absolute;
+  z-index: 2;
+}
+.ts .ht-scan {
+  position: absolute;
+  inset: 0;
+}

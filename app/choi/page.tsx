@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Backdrop from '@/components/Backdrop';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { Bg } from '@/components/Backdrop';
+import TileStage from '@/components/TileStage';
 import Feed from '@/components/Feed';
 import Phone, { skinOf } from '@/components/Phone';
 import Sprite from '@/components/Sprite';
@@ -15,6 +16,7 @@ import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { activeOf, choose, ctxOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
+import { stageOf as bgStage } from '@/lib/scenebg';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
 
@@ -151,32 +153,32 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
 
       <div className="body" style={{ paddingTop: 4, gap: 16 }}>
         {!swipe && (
-          <div className="stage px">
-            {sc.bg && <Backdrop bg={sc.bg(x)} year={x.year} />}
+          <Stage x={x} bg={sc.bg ? sc.bg(x) : { place: 'nha', time: 'day' }} sceneId={shownId}>
+            <Actor x={whoLayers || who === 'he_thong' ? 72 : 100} feet={stg(sc.bg ? sc.bg(x) : null, shownId).feet}>
+              <Sprite layers={meLayers} scale={2} anim="idle" dir={who ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
+              <figcaption>{x.me}</figcaption>
+            </Actor>
+            {who && (
+              <span className="spark ts-spark" style={{ left: 196, top: stg(sc.bg ? sc.bg(x) : null, shownId).feet * 2 - 100 }} aria-hidden="true">
+                {who === 'he_thong' ? '!' : '♥'}
+              </span>
+            )}
+            {who === 'he_thong' && (
+              <Actor x={124} feet={stg(sc.bg ? sc.bg(x) : null, shownId).feet}>
+                <div className="ht-box" aria-hidden="true">
+                  <span>◆</span>
+                </div>
+                <figcaption>Hệ Thống</figcaption>
+              </Actor>
+            )}
+            {whoLayers && (
+              <Actor x={124} feet={stg(sc.bg ? sc.bg(x) : null, shownId).feet}>
+                <Sprite layers={whoLayers} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={whoName} />
+                <figcaption>{whoName}</figcaption>
+              </Actor>
+            )}
             {who === 'he_thong' && <span className="ht-scan" aria-hidden="true" />}
-            <div className="actors">
-              <figure>
-                <Sprite layers={meLayers} scale={2} anim="idle" dir={who ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
-                <figcaption>{x.me}</figcaption>
-              </figure>
-              {who && <span className="spark" aria-hidden="true">{who === 'he_thong' ? '!' : '♥'}</span>}
-              {who === 'he_thong' && (
-                <figure>
-                  <div className="ht-box" aria-hidden="true">
-                    <span>◆</span>
-                  </div>
-                  <figcaption>Hệ Thống</figcaption>
-                </figure>
-              )}
-              {whoLayers && (
-                <figure>
-                  <Sprite layers={whoLayers} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={whoName} />
-                  <figcaption>{whoName}</figcaption>
-                </figure>
-              )}
-            </div>
-            
-          </div>
+          </Stage>
         )}
 
         <div className="textbox px-dim">
@@ -482,6 +484,30 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
         </div>
       </div>
     </div>
+  );
+}
+
+const stg = (bg: Bg | null, id: string) => bgStage(bg ?? { place: 'nha', time: 'day' }, id);
+
+/** Sân khấu: nền LPC ghép sẵn, đổi theo nơi, giờ, mùa; không viền */
+function Stage({ x, bg, sceneId, children }: { x: Ctx; bg: Bg; sceneId: string; children: ReactNode }) {
+  const st = bgStage(bg, sceneId, x.year);
+  return (
+    <div className="stage-ts play">
+      <TileStage src={st.src} time={bg.time} season={st.season} lights={st.lights}>
+        {children}
+      </TileStage>
+    </div>
+  );
+}
+
+/** Đặt nhân vật theo tâm chân x, hàng chân feet (px gốc 200x144) */
+function Actor({ x, feet, children }: { x: number; feet: number; children: ReactNode }) {
+  return (
+    <figure className="ts-actor" style={{ left: x * 2 - 64, top: feet * 2 - 124 }}>
+      <i className="ts-shadow" />
+      {children}
+    </figure>
   );
 }
 
