@@ -8,6 +8,7 @@ import { CAST } from './cast';
 import type { Bg } from '@/components/Backdrop';
 import { activeOf, ctxOf, isOut, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, type Choice, type Ctx, type Fx, type LoveId, type Post, type Resolve, type Scene, type Story, type SwipeCard } from './story';
 import type { Character, Family } from './character';
+import { eraScene } from './eras';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -368,7 +369,7 @@ const list: Scene[] = [
       { t: 'Mách cô giáo', do: (fx) => (fx.flag('mach_co'), fx.stat('hoc', 5), fx.love('minh', 10), fx.love('long', -5)), note: (x) => `${x.L('minh')} ghi nhận.` },
       { t: 'Nhịn, về nhà khóc', do: (fx) => (fx.stat('tam', -5), fx.stat('tinh', 5)) },
     ],
-    next: 'c10_he',
+    next: 'ev@9',
   },
   {
     id: 'c10_he',
@@ -382,7 +383,7 @@ const list: Scene[] = [
       { t: (x) => `Trốn ra ${playOf(x.year)}`, do: (fx) => (fx.stat('noi', 10), fx.love('long', 8), fx.rel('bome', -5)), note: (x) => `${x.L('long')} cũng là khách quen ở đây.` },
       { t: 'Về quê với ông bà', do: (fx) => (fx.stat('tinh', 8), fx.stat('tam', 5), fx.love('khoi', 8)), note: (x) => `Nhà ${x.L('khoi')} cũng về quê cùng xóm. Hai đứa đi bắt chuồn chuồn cả hè.` },
     ],
-    next: 'c12_chuyennha',
+    next: 'ev@11',
   },
   {
     id: 'c12_chuyennha',
@@ -402,7 +403,7 @@ const list: Scene[] = [
       { t: 'Tặng lại một món kỷ vật', do: (fx) => (fx.flag('kyvat'), fx.love('khoi', 8), fx.stat('tinh', 5)), note: (x) => `${x.L('khoi')} cất món quà vào ngăn kéo.` },
       { t: 'Cười cho qua, chạy đi chơi', do: (fx) => fx.love('khoi', -5) },
     ],
-    next: 't15',
+    next: 'ev@14',
   },
 
   // ===== Tuổi teen =====
@@ -493,7 +494,7 @@ const list: Scene[] = [
           x.year < 2004 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : x.year < 2012 ? `${x.L(crush(x))} cầm điện thoại đợi tin nhắn cả đêm.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`,
       },
     ],
-    next: 't17_thi',
+    next: 'ev@16',
   },
   {
     id: 't17_thi',
@@ -741,7 +742,7 @@ const list: Scene[] = [
       ),
       { t: 'Ở một mình cũng vui', do: (fx) => (fx.loveEnd('docthan'), fx.stat('tam', 5)), sys: 'Đinh! Bản Hệ Thống... thôi, chúc ký chủ vui.' },
     ],
-    next: 'm32_tet',
+    next: 'ev@30',
   },
   {
     id: 'y28_xemmat',
@@ -758,7 +759,7 @@ const list: Scene[] = [
       { t: 'Đồng ý, nửa năm sau cưới', do: (fx) => (fx.partner('xemmat'), fx.marry(), fx.loveEnd('bimeep'), fx.rel('bome', 10)) },
       { t: 'Từ chối khéo', do: (fx) => (fx.loveEnd('docthan'), fx.rel('bome', -5)) },
     ],
-    next: 'm32_tet',
+    next: 'ev@30',
   },
   {
     id: 'y29_quaylai',
@@ -770,7 +771,7 @@ const list: Scene[] = [
     title: 'Gặp lại',
     text: (x) => [`${x.L(P(x))} đến đúng hẹn, vẫn ngồi chỗ cũ, vẫn gọi đúng món ${x.me} thích.`, `Ngồi được một lúc, ${x.ay} hỏi: "Mình thử lại lần nữa, rồi cưới luôn nhé?"`],
     choices: proposeChoices,
-    next: 'm32_tet',
+    next: 'ev@30',
   },
 
   // ===== Lập gia đình =====
@@ -809,7 +810,7 @@ const list: Scene[] = [
       { t: 'Sinh hai đứa cho vui nhà', do: (fx) => (fx.kids(2), fx.rel('con', 55), fx.stat('tien', -20), fx.stat('tam', -5)) },
       { t: 'Chưa muốn có con', do: (fx, x) => (fx.kids(0), fx.stat('tam', 5), hasPartner(x) && fx.love(P(x), -5)) },
     ],
-    next: 'm40_nguoicu',
+    next: 'ev@35',
   },
   {
     id: 'm40_nguoicu',
@@ -853,7 +854,7 @@ const list: Scene[] = [
       },
       { t: '(Để "Đã xem", rồi xóa tin nhắn)', do: (fx, x) => (x.s.married && hasPartner(x) ? fx.love(P(x), 3) : undefined, fx.stat('tam', -3)) },
     ],
-    next: 'm45_viec',
+    next: 'ev@42',
   },
   {
     id: 'm45_viec',
@@ -894,7 +895,7 @@ const list: Scene[] = [
       { t: 'Về quê sửa lại ngôi nhà cũ', do: (fx) => (fx.stat('tinh', 10), fx.stat('tam', 5)) },
       { t: 'Viết hồi ký', do: (fx) => (fx.stat('hoc', 5), fx.stat('tam', 5)) },
     ],
-    next: 'o75',
+    next: 'ev@65',
   },
   {
     id: 'o75',
@@ -923,12 +924,12 @@ export const FIRST_SCENE = 'c6_dieu';
 
 /** Sau mỗi năm Mùa yêu thì đi tới đâu */
 const AFTER_YEAR: Record<number, string> = {
-  20: 'hub@21#1',
+  20: 'ev@21',
   21: 'y22_drama',
   22: 'y23_noidoi',
   23: 'y24_ramat',
   24: 'y25_traxanh',
-  25: 'hub@26#1',
+  25: 'ev@26',
   26: 'y27_cauhon',
 };
 
@@ -1355,6 +1356,8 @@ export function resolverOf(c: Character, f: Family): Resolve {
     const [, kind, , nn, who] = m;
     const n = Number(nn ?? 1);
     switch (kind) {
+      case 'ev':
+        return eraScene(age, ctxOf(c, f, s, age));
       case 'hub':
         return hubScene(age, n);
       case 'chat':

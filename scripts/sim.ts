@@ -8,6 +8,8 @@ let seed = 7;
 const r = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
 const N = Number(process.argv[2] || 2000);
 let errs = 0, ends = 0;
+const evs: Record<string, number> = {};
+let evPerLife = 0;
 const pass: Record<string, [number, number]> = {};
 const sib: Record<string, number[]> = {};
 for (let i = 0; i < N; i++) {
@@ -32,10 +34,14 @@ for (let i = 0; i < N; i++) {
       s = choose(R, c, fate.family, s, idx).s;
     }
     if (s.scene === 'end') ends++;
+    const e = s.path.filter((p) => p.scene.startsWith('ev@'));
+    evPerLife += e.length;
+    for (const p of e) evs[p.title] = (evs[p.title] ?? 0) + 1;
   } catch (e) {
     if (errs++ < 3) console.log('ERR', s.scene, String(e));
   }
 }
-console.log({ N, ends, errs });
+console.log({ N, ends, errs, evPerLife: (evPerLife / N).toFixed(1), kinds: Object.keys(evs).length });
+console.log(evs);
 console.log('đỗ đại học', Object.fromEntries(Object.entries(pass).map(([k, [a, b]]) => [k, `${Math.round((100 * a) / b)}% (${b})`])));
 console.log('anh chị em TB', Object.fromEntries(Object.entries(sib).map(([k, v]) => [k, (v.reduce((a, b) => a + b, 0) / v.length).toFixed(2)])));
