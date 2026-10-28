@@ -194,7 +194,9 @@ export interface Scene {
   chapter: string;
   /** ai đứng cạnh nhân vật chính trong cảnh */
   who?: (x: Ctx) => LoveId | 'mom' | 'bestie' | 'he_thong' | 'xemmat' | null;
-  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer' | 'reflect' | 'feed';
+  kind?: 'talk' | 'chat' | 'swipe' | 'hub' | 'call' | 'tap' | 'gift' | 'unlock' | 'cheer' | 'reflect' | 'feed' | 'pick';
+  /** cảnh chọn người: danh sách người có thể chọn để tìm hiểu (chọn tối đa 3) */
+  cands?: (x: Ctx) => LoveId[];
   /** dòng thời gian: những năm trôi qua không cần chọn */
   feed?: (x: Ctx) => { age: number; year: number; t: string }[];
   /** cảnh ngẫm (kiểu 1 in 8 Billion): câu hỏi để người chơi tự viết */

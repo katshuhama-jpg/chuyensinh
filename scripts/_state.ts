@@ -14,7 +14,7 @@ for (let i = 0; i < 400 && Object.keys(out).length < want.length; i++) {
     for (const w of want) if (!out[w] && s.scene.startsWith(w) && (w !== 'end' )) out[w] = { char: c, family: fate.family, story: s };
     const sc = R(s.scene, s)!; const x = ctxOf(c, fate.family, s, ageOfScene(s.scene)); const o = visibleChoices(sc, x);
     let idx = Math.floor(r() * o.length);
-    const pref = o.findIndex((ch) => ch.act === 'date' || /♥ Yêu|★/.test(typeof ch.t === 'function' ? ch.t(x) : ch.t));
+    const pref = o.findIndex((ch) => /Hẹn|★/.test(typeof ch.t === 'function' ? ch.t(x) : ch.t));
     if (pref >= 0 && r() < 0.8) idx = pref;
     s = choose(R, c, fate.family, s, idx).s;
   }

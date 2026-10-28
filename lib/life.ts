@@ -1160,7 +1160,7 @@ const asks = (x: Ctx, key: string) => {
   const [a, n] = key.split('#').map(Number);
   if (a === 0 || a === 2) return false;
   if (a === 1) return true;
-  const p = a <= 5 ? 55 : a <= 11 ? 60 : n ? 55 : 75;
+  const p = a <= 5 ? 10 : a <= 11 ? 35 : n ? 20 : 60;
   return hash(`${x.s.seed ?? 0}|ask|${key}`) % 100 < p;
 };
 const keyOf = (id: string) => id.slice(3);

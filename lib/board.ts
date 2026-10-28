@@ -62,7 +62,11 @@ function applyFocus(s: Story, age: number) {
 }
 
 /** Chọn lựa chọn i ở cảnh hiện tại rồi ghi nhật ký, bản đồ đời, trọng tâm */
-export function commit(R: Resolve, c: Character, f: Family, before: Story, i: number, note?: string): { s: Story; fb: Feedback } {
+export function commit(R: Resolve, c: Character, f: Family, before0: Story, i: number, note0?: string): { s: Story; fb: Feedback } {
+  // cảnh chọn người: danh sách người được chọn đi kèm dưới dạng "pick:a,b,c"
+  const picks = note0?.startsWith('pick:') ? note0.slice(5).split(',').filter(Boolean) : null;
+  const note = picks ? undefined : note0;
+  const before = picks ? { ...before0, flags: [...before0.flags, ...picks.map((id) => `pksel_${id}`)] } : before0;
   const sc = R(before.scene, before)!;
   const age0 = sc.age;
   const x0 = ctxOf(c, f, before, age0);

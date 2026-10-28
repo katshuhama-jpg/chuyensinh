@@ -4231,3 +4231,90 @@ p {
   line-height: 1.25;
   animation: lb-in 0.2s ease-out both;
 }
+
+/* chọn 3 người muốn tìm hiểu */
+.pk-h {
+  margin: 0 0 4px;
+  font-size: 18px;
+  color: var(--mute);
+}
+.pk-h b {
+  color: var(--accent);
+  font-weight: 400;
+  font-size: 22px;
+}
+.pk-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+.pk-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 4px 8px;
+  margin: 3px;
+  background: var(--panel);
+  color: var(--ink);
+  min-width: 0;
+}
+.pk-card.on {
+  background: var(--sel);
+  box-shadow: 0 -3px 0 0 var(--accent), 0 3px 0 0 var(--accent), -3px 0 0 0 var(--accent), 3px 0 0 0 var(--accent);
+}
+.pk-face {
+  height: 64px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+.pk-card b {
+  font-weight: 400;
+  font-size: 18px;
+}
+.pk-card small {
+  font-size: 13px;
+  line-height: 1.1;
+  color: var(--mute);
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.pk-card .pk-st {
+  color: var(--accent);
+}
+.pk-tick {
+  position: absolute;
+  top: 2px;
+  right: 6px;
+  font-style: normal;
+  color: var(--accent);
+}
+.lb-play .choices.pick::before {
+  display: none;
+}
+.lb-heart {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.lb-heart span {
+  color: var(--mute);
+  flex: none;
+}
+.lb-heart b {
+  font-weight: 400;
+  color: var(--accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -144,18 +144,44 @@ export function dateStep(step: 2 | 3 | 4, age: number, n: number, id: LoveId, af
   const base = { age, chapter: 'Tuổi trẻ', who: () => id as LoveId };
   const key = `${age}#${n}:${id}`;
   if (step === 2) {
+    // làm gì: thỉnh thoảng có chuyện bất ngờ chen vào; đúng gu người ấy thì thân hơn hẳn
+    const oops = (x: Ctx) => roll(x, age * 11 + n) < 0.35;
+    const common = (x: Ctx) => {
+      const ok = COMMON.filter((c) => c.if(x));
+      return ok[Math.floor(roll(x, age * 17 + n) * ok.length)];
+    };
+    const like = LOVES[id].likes;
+    const ACTS: { t: string; k: string }[] = [
+      { t: 'Ngồi tâm sự chuyện nhà, chuyện cũ', k: 'tinh' },
+      { t: 'Trêu nhau, chụp thật nhiều ảnh', k: 'duyen' },
+      { t: 'Rủ nhau làm một trò liều', k: 'noi' },
+      { t: 'Kể về ước mơ, kế hoạch sau này', k: 'hoc' },
+      { t: 'Đi dạo thật chậm, không nói gì nhiều', k: 'tam' },
+    ];
+    const pick3 = (x: Ctx) => {
+      const start = Math.floor(roll(x, age * 5 + n) * ACTS.length);
+      const xs = [0, 1, 2].map((k) => ACTS[(start + k) % ACTS.length]);
+      return xs.some((a) => a.k === like) ? xs : [...xs.slice(0, 2), ACTS.find((a) => a.k === like) ?? xs[2]];
+    };
     return {
       ...base,
       id: `d2@${key}`,
-      bg: () => ({ place: 'phong', time: 'day' }),
-      title: (x) => `Trước giờ hẹn với ${x.L(id)}`,
-      text: (x) => [`Còn một tiếng nữa là đến giờ hẹn. Mang theo gì đây?`],
-      choices: [
-        { t: () => Up(F.bring), do: (fx: Fx, x: Ctx) => (fx.love(id, 6), fx.flag(`db_${key}`), fx.stat('tien', -3)), note: (x) => `${x.L(id)} sẽ nhớ là ${x.me} để ý.` },
-        { t: 'Một chiếc ô, phòng khi trời mưa', do: (fx: Fx) => fx.flag(`do_${key}`) },
-        { t: 'Tay không, mang theo nụ cười', do: (fx: Fx) => fx.stat('duyen', 2) },
-      ],
-      next: `d3@${key}`,
+      bg: (x) => (x.has(`dspot_${key}`) ? F.spotBg : { place: 'quan', time: 'dusk' }),
+      title: 'Làm gì đây?',
+      text: (x) => [oops(x) ? (roll(x, age * 3 + n) < 0.5 ? F.oops(x) : common(x).t(x, id)) : `Đến nơi rồi. ${Up(x.L(id))} nhìn ${x.me}, chờ xem hôm nay làm gì.`],
+      choices: [0, 1, 2].map(
+        (k): Choice => ({
+          t: (x) => (oops(x) && k === 0 ? (roll(x, age * 3 + n) < 0.5 ? F.fix : common(x).good) : pick3(x)[k].t),
+          do: (fx: Fx, x: Ctx) => {
+            if (oops(x) && k === 0) return void (fx.love(id, 10), fx.say('Gỡ rối khéo. Người ấy nhìn mình khác hẳn.'));
+            const a = pick3(x)[k];
+            if (a.k === like) (fx.love(id, 12), fx.say(`Đúng gu ${x.L(id)}: ${x.ay} vốn thích ${LOVES[id].likesName}.`));
+            else fx.love(id, 4);
+            fx.stat(a.k as 'tinh', 2);
+          },
+        }),
+      ),
+      next: `d4@${key}`,
     };
   }
   if (step === 3) {

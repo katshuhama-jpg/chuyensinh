@@ -143,7 +143,8 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
   const base = { id: `route@${age}`, age, chapter: 'Tuổi trẻ', next };
   // chưa theo ai: chọn hướng đi
   if (!r) {
-    const act = activeOf(x.s).filter((id) => !x.has(`rdone_${id}`));
+    // vòng yêu mới: người theo đuổi được chọn qua những buổi đi chơi, không hỏi riêng nữa
+    const act: LoveId[] = [];
     if (!act.length) return { ...base, title: '', text: () => [], choices: [], skip: () => true };
     return {
       ...base,

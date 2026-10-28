@@ -248,6 +248,7 @@ function Board({
             </button>
           </div>
         )}
+        <HeartLine story={story} x={x} />
         <div className="lb-stats">
           {MAIN_STATS.map((r, i) => (
             <div key={r.label} className={`ms-${i}`}>
@@ -350,6 +351,27 @@ function Board({
         </div>
       )}
     </main>
+  );
+}
+
+/** Người trong lòng: người yêu, hoặc những người đang tìm hiểu */
+function HeartLine({ story, x }: { story: Story; x: Ctx }) {
+  const p = story.partner && story.partner !== 'xemmat' ? story.partner : null;
+  const pool = LOVE_IDS.filter((id) => story.flags.includes(`pool_${id}`) && !story.flags.includes(`${id}_out`) && id !== p).sort((a, b) => story.love[b] - story.love[a]);
+  const hearts = (id: LoveId) => '♥'.repeat(Math.max(1, Math.min(5, Math.ceil(story.love[id] / 20))));
+  if (!p && !pool.length) return null;
+  return (
+    <div className="lb-heart">
+      <span>{story.married ? (x.lg === 'm' ? 'Chồng' : 'Vợ') : p ? 'Người yêu' : 'Đang tìm hiểu'}</span>
+      <b>
+        {p
+          ? `${x.L(p)} ${hearts(p)}`
+          : pool
+              .slice(0, 3)
+              .map((id) => `${x.L(id)} ${hearts(id)}`)
+              .join(' · ')}
+      </b>
+    </div>
   );
 }
 
@@ -623,6 +645,8 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
           <SlideUnlock>
             <Choices opts={opts.map((o) => txt(o.t, x))} onChoose={onChoose} />
           </SlideUnlock>
+        ) : sc.kind === 'pick' ? (
+          <PickPeople key={sc.id} x={x} ids={sc.cands?.(x) ?? []} onDone={(ids) => onChoose(0, `pick:${ids.join(',')}`)} />
         ) : sc.kind === 'feed' ? (
           <LifeFeed key={sc.id} lines={sc.feed?.(x) ?? []} onDone={() => onChoose(0)} />
         ) : sc.kind === 'reflect' ? (
@@ -881,6 +905,52 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
 }
 
 /** Nút Sổ tay ở góc trên: bấm mở bảng tình cảm với những người đã gặp và chỉ số của bạn */
+/** Chọn tối đa 3 người muốn tìm hiểu */
+function PickPeople({ x, ids, onDone }: { x: Ctx; ids: LoveId[]; onDone: (ids: LoveId[]) => void }) {
+  const [sel, setSel] = useState<LoveId[]>([]);
+  const done = useRef(false);
+  const toggle = (id: LoveId) => setSel((v) => (v.includes(id) ? v.filter((k) => k !== id) : v.length >= 3 ? v : [...v, id]));
+  return (
+    <div className="choices pick">
+      <p className="pk-h">
+        Đã chọn <b>{sel.length}</b>/3 · {ids.length} người đang chờ
+      </p>
+      <div className="pk-grid">
+        {ids.map((id) => (
+          <PickCard key={id} id={id} x={x} on={sel.includes(id)} onTap={() => toggle(id)} />
+        ))}
+      </div>
+      <button
+        type="button"
+        className="btn-main"
+        disabled={!sel.length}
+        onClick={() => {
+          if (done.current) return;
+          done.current = true;
+          onDone(sel);
+        }}
+      >
+        ♥ CHỌN XONG ({sel.length}/3)
+      </button>
+    </div>
+  );
+}
+function PickCard({ id, x, on, onTap }: { id: LoveId; x: Ctx; on: boolean; onTap: () => void }) {
+  const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
+  const met = x.s.met.includes(id);
+  return (
+    <button type="button" className={`pk-card px ${on ? 'on' : ''}`} onClick={onTap} aria-pressed={on}>
+      <span className="pk-face">
+        <Sprite layers={layers} scale={1} anim="idle" dir={2} label={x.L(id)} />
+      </span>
+      <b>{x.L(id)}</b>
+      <small>{jobOf(id, x.lg, x.age, x.year)}</small>
+      <small className="pk-st">{met ? statusOf(x.s, id) : 'Người mới'}</small>
+      {on && <i className="pk-tick">♥</i>}
+    </button>
+  );
+}
+
 /** Dòng thời gian: các năm lần lượt trôi qua, không cần chọn; chạm để hiện hết */
 function LifeFeed({ lines, onDone }: { lines: { age: number; year: number; t: string }[]; onDone: () => void }) {
   const [n, setN] = useState(1);
