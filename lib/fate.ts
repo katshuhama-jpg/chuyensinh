@@ -115,6 +115,7 @@ export function newStory(f: Fate, first: string): Story {
     peak: 0,
     album: [],
     notes: [],
+    seed: Math.floor(Math.random() * 1e9),
     hist: [],
   };
 }

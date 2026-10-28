@@ -11,6 +11,7 @@ import { jobOf } from './profiles';
 import { dramaAt } from './drama';
 import { dateStep, spotChoice } from './dates';
 import { newsOfLoves } from './lives';
+import { lifeAt } from './life';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -368,7 +369,7 @@ const list: Scene[] = [
       { t: 'Chạy đi gọi người lớn', do: (fx) => (fx.love('khoi', 8), fx.stat('tinh', 5)) },
       { t: 'Mặc kệ, chạy ra xem phim', do: (fx) => fx.stat('tam', 5) },
     ],
-    next: 'c8_lop',
+    next: 'ly@6',
   },
   {
     id: 'c8_lop',
@@ -386,7 +387,7 @@ const list: Scene[] = [
       { t: 'Mách cô giáo', do: (fx) => (fx.flag('mach_co'), fx.stat('hoc', 5), fx.love('minh', 10), fx.love('long', -5)), note: (x) => `${x.L('minh')} ghi nhận.` },
       { t: 'Nhịn, về nhà khóc', do: (fx) => (fx.stat('tam', -5), fx.stat('tinh', 5)) },
     ],
-    next: 'ev@9',
+    next: 'ly@8',
   },
   {
     id: 'c10_he',
@@ -400,7 +401,7 @@ const list: Scene[] = [
       { t: (x) => `Trốn ra ${playOf(x.year)}`, do: (fx) => (fx.stat('noi', 10), fx.love('long', 8), fx.rel('bome', -5)), note: (x) => `${x.L('long')} cũng là khách quen ở đây.` },
       { t: 'Về quê với ông bà', do: (fx) => (fx.stat('tinh', 8), fx.stat('tam', 5), fx.love('khoi', 8)), note: (x) => `Nhà ${x.L('khoi')} cũng về quê cùng xóm. Hai đứa đi bắt chuồn chuồn cả hè.` },
     ],
-    next: 'ev@11',
+    next: 'ly@10',
   },
   {
     id: 'c12_chuyennha',
@@ -420,7 +421,7 @@ const list: Scene[] = [
       { t: 'Tặng lại một món kỷ vật', do: (fx) => (fx.flag('kyvat'), fx.love('khoi', 8), fx.stat('tinh', 5)), note: (x) => `${x.L('khoi')} cất món quà vào ngăn kéo.` },
       { t: 'Cười cho qua, chạy đi chơi', do: (fx) => fx.love('khoi', -5) },
     ],
-    next: 'ev@14',
+    next: 'ly@12',
   },
 
   // ===== Tuổi teen =====
@@ -511,7 +512,7 @@ const list: Scene[] = [
           x.year < 2004 ? `${x.L(crush(x))} đợi thư hồi âm cả tuần.` : x.year < 2012 ? `${x.L(crush(x))} cầm điện thoại đợi tin nhắn cả đêm.` : `${x.L(crush(x))} nhìn dòng "Đã xem" cả đêm.`,
       },
     ],
-    next: 'ev@16',
+    next: 'ly@16',
   },
   {
     id: 't17_thi',
@@ -545,7 +546,7 @@ const list: Scene[] = [
       },
       { t: 'Đi làm luôn, kiếm tiền sớm', do: (fx) => (fx.flag('dilam'), fx.stat('tien', 15), fx.stat('noi', 5), fx.love('long', 5)) },
     ],
-    next: 'y19_veve',
+    next: 'ly@17',
   },
 
   // ===== Tuổi trẻ =====
@@ -580,7 +581,7 @@ const list: Scene[] = [
         note: 'Có những người chỉ đi ngang qua đời mình một lần.',
       },
     ],
-    next: 'y20_chon',
+    next: 'ly@19',
   },
   {
     id: 'y20_chon',
@@ -929,7 +930,34 @@ const list: Scene[] = [
 ];
 
 export const SCENES: Record<string, Scene> = Object.fromEntries(list.map((s) => [s.id, s]));
-export const FIRST_SCENE = 'c6_dieu';
+export const FIRST_SCENE = 'ly@3';
+
+/** Mỗi năm một chuyện từ 3 đến 19 tuổi (tuổi teen hai chuyện một năm), xen giữa các cảnh chính */
+const LY_NEXT: Record<string, string> = {
+  '3': 'ly@4',
+  '4': 'ly@5',
+  '5': 'c6_dieu',
+  '6': 'ly@7',
+  '7': 'c8_lop',
+  '8': 'ev@9',
+  '9': 'c10_he',
+  '10': 'ev@11',
+  '11': 'c12_chuyennha',
+  '12': 'ly@12#2',
+  '12#2': 'ly@13',
+  '13': 'ly@13#2',
+  '13#2': 'ev@14',
+  '14': 'ly@14#2',
+  '14#2': 't15',
+  '15': 'ly@15#2',
+  '15#2': 't16_hethong',
+  '16': 'ly@16#2',
+  '16#2': 'ev@16',
+  '17': 'ly@17#2',
+  '17#2': 'ly@18',
+  '18': 'y19_veve',
+  '19': 'y20_chon',
+};
 
 /* =========================================================
    MÙA YÊU (20 đến 26 tuổi): Bảng tình duyên, tin nhắn, hẹn hò, quẹt, đi chỗ mới,
@@ -986,7 +1014,7 @@ function afterTurn(age: number, n: number) {
 
 /** Câu hỏi ở các mốc tuổi: dừng lại, tự viết vài dòng; cuối đời đọc lại */
 const ASK: Record<number, { q: string; next: string }> = {
-  15: { q: 'Người đầu tiên khiến mình đỏ mặt là ai? Vì sao?', next: 't16_hethong' },
+  15: { q: 'Người đầu tiên khiến mình đỏ mặt là ai? Vì sao?', next: 'ly@15' },
   25: { q: 'Nếu được nói một câu với người cũ, mình sẽ nói gì?', next: 'y25_traxanh' },
   50: { q: 'Có ai mình vẫn còn tiếc không?', next: 'dr@50' },
   70: { q: 'Nếu gặp lại chính mình năm hai mươi tuổi, mình sẽ dặn điều gì?', next: 'o75' },
@@ -1540,6 +1568,10 @@ export function resolverOf(c: Character, f: Family): Resolve {
     switch (kind) {
       case 'ev':
         return eraScene(age, ctxOf(c, f, s, age));
+      case 'ly': {
+        const key = n > 1 ? `${age}#${n}` : `${age}`;
+        return lifeAt(age, n, ctxOf(c, f, s, age), LY_NEXT[key] ?? 'y20_chon');
+      }
       case 'dr':
         return dramaAt(age, ctxOf(c, f, s, age), DR_NEXT[age] ?? 'end');
       case 'route':

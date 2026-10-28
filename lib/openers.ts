@@ -109,5 +109,5 @@ export function openerOf(chapter: string, x: Ctx): string {
   // câu chung chỉ dùng khi ít câu riêng hợp hoàn cảnh
   const pool = all.filter((l) => !l.generic).length >= 2 ? all.filter((l) => !l.generic) : all;
   if (!pool.length) return '';
-  return pool[hash(`${x.c.name}|${x.c.birthYear}|${x.f.province}|${chapter}`) % pool.length].t;
+  return pool[hash(`${x.s.seed ?? 0}|${x.c.name}|${x.c.birthYear}|${x.f.province}|${chapter}`) % pool.length].t;
 }

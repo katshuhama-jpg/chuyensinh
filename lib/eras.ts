@@ -628,7 +628,7 @@ const SLOTS: Record<number, Ev[]> = {
 };
 
 /** nơi đi tiếp sau mỗi ô */
-export const SLOT_NEXT: Record<number, string> = { 9: 'c10_he', 11: 'c12_chuyennha', 14: 't15', 16: 't17_thi', 21: 'fo@21', 26: 'fo@26', 30: 'dr@31', 35: 'dr@36', 42: 'dr@43', 65: 'rf@70' };
+export const SLOT_NEXT: Record<number, string> = { 9: 'ly@9', 11: 'ly@11', 14: 'ly@14', 16: 't17_thi', 21: 'fo@21', 26: 'fo@26', 30: 'dr@31', 35: 'dr@36', 42: 'dr@43', 65: 'rf@70' };
 const chapterOf = (age: number) => (age <= 12 ? 'Tuổi thơ' : age <= 17 ? 'Tuổi teen' : age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già');
 
 export const ERA_EVENT_IDS = Array.from(new Set(Object.values(SLOTS).flat().map((e) => e.id)));

@@ -909,8 +909,14 @@ export const DRAMA_IDS = ALL.map((d) => d.id);
 
 function hash(s: string) {
   let h = 7;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x9e3779b1);
+  // trộn đều các bit để thứ tự xáo thật sự khác nhau giữa các đời
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return h >>> 0;
 }
 
 const poolOf = (x: Ctx): Pool => (x.s.married ? 'cuoi' : x.s.partner ? 'yeu' : 'don');
@@ -926,7 +932,7 @@ const fits = (d: Drama, x: Ctx) =>
 /** Drama của năm `age`: chuyện "nổ lại" ưu tiên trước, còn lại xáo theo từng đời. Không có thì bỏ qua */
 export function dramaAt(age: number, x: Ctx, next: string): Scene {
   const chapter = age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già';
-  const seed = `${x.c.name}|${x.c.birthYear}|${x.f.province}`;
+  const seed = `${x.s.seed ?? 0}|${x.c.name}|${x.c.birthYear}|${x.f.province}`;
   const cands = ALL.filter((d) => fits(d, x)).sort((a, b) => Number(!!b.callback) - Number(!!a.callback) || hash(seed + a.id) - hash(seed + b.id));
   const d = cands[0];
   if (!d) return { id: `dr@${age}`, age, chapter, title: '', text: () => [], choices: [], next, skip: () => true };

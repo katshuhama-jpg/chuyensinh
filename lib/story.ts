@@ -94,6 +94,8 @@ export interface StoryCore {
   notes: { age: number; q: string; a: string }[];
   /** ngã rẽ (số thứ tự trong path) đã chốt kết cục tình yêu */
   endAt?: number;
+  /** hạt ngẫu nhiên riêng của đời này: cùng tên, cùng năm sinh vẫn ra chuyện khác */
+  seed?: number;
 }
 
 export interface Photo {
