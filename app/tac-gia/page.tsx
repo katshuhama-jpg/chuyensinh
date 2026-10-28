@@ -19,6 +19,11 @@ export default function TacGia() {
         </p>
         <p>Giấy phép: {credits.licenses.join(', ')}.</p>
         <p>Tác giả: {credits.authors.join(', ')}.</p>
+        <p>
+          Cây, đá, nước, tường, cửa và đồ vật lấy từ <a href="https://opengameart.org/content/lpc-tile-atlas">LPC Tile Atlas</a> (Liberated Pixel Cup), tác giả: Lanea Zimmerman (Sharm), Stephen Challener
+          (Redshrike), Charles Sanchez (CharlesGabriel), Manuel Riecke (MrBeast), Daniel Armstrong (HughSpectrum), Casper Nilsson, Daniel Eddeland, Johann Charlot, Skyler Robert Colladay. Giấy phép CC-BY-SA 3.0 / GPL 3.0, danh sách đầy đủ ở{' '}
+          <a href="/tiles/ATTRIBUTION.txt">ATTRIBUTION.txt</a>. Trời, núi, giờ trong ngày, mùa và đồ hiện đại được vẽ thêm trong game.
+        </p>
         <details>
           <summary>Nguồn gốc từng bộ hình</summary>
           <ul style={{ fontSize: 16, wordBreak: 'break-all' }}>
