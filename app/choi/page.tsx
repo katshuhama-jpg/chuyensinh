@@ -23,7 +23,7 @@ import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
 import { openerOf } from '@/lib/openers';
-import { PERSONA, PERSONA_AXES, profileOf } from '@/lib/profiles';
+import { PERSONA, PERSONA_AXES, jobOf, profileOf } from '@/lib/profiles';
 import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -392,7 +392,7 @@ function NewFace({ id, x, count }: { id: LoveId; x: Ctx; count: number }) {
         </div>
         <div className="nf-info">
           <b>{x.L(id)}</b>
-          <span>{LOVES[id].job[x.lg === 'm' ? 0 : 1]}</span>
+          <span>{jobOf(id, x.lg, x.age, x.year)}</span>
           <small>{LOVES[id].kind}</small>
           <small className="nf-like">Thích {LOVES[id].likesName}</small>
           <small className="nf-life">⌂ {profileOf(id, x).home}</small>
@@ -574,7 +574,7 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
           <small className={story.partner === id ? 'yeu' : ''}>{st}</small>
         </div>
         <small>
-          {LOVES[id].job[x.lg === 'm' ? 0 : 1]} · thích {LOVES[id].likesName}
+          {jobOf(id, x.lg, x.age, x.year)} · thích {LOVES[id].likesName}
         </small>
         <small>
           ⌂ {profileOf(id, x).home} · ➤ {profileOf(id, x).ride}
@@ -633,7 +633,7 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
           </span>
           <div className="ld-id">
             <b>{x.L(id)}</b>
-            <span>{LOVES[id].job[x.lg === 'm' ? 0 : 1]}</span>
+            <span>{jobOf(id, x.lg, x.age, x.year)}</span>
             <small>{LOVES[id].kind}</small>
             <small className="yeu">{st}</small>
           </div>

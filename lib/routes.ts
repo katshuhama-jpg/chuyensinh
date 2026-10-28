@@ -8,6 +8,7 @@
 
 import type { Bg } from '@/components/Backdrop';
 import { activeOf, LOVES, type Choice, type Ctx, type Fx, type LoveId, type Scene } from './story';
+import { jobOf } from './profiles';
 
 type Person = {
   /** chỗ hẹn đúng gu / an toàn / lệch gu */
@@ -152,7 +153,7 @@ export function routeScene(age: number, x: Ctx, next: string): Scene {
       choices: [
         ...act.map(
           (id): Choice => ({
-            t: (cx) => `Theo đuổi ${cx.L(id)} (${LOVES[id].job[cx.lg === 'm' ? 0 : 1]})`,
+            t: (cx) => `Theo đuổi ${cx.L(id)} (${jobOf(id, cx.lg, cx.age, cx.year)})`,
             loveId: id,
             do: (fx, cx) => {
               for (const g of cx.s.flags) if (g.startsWith('route_')) fx.unflag(g);

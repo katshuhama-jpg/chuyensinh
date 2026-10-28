@@ -7,6 +7,7 @@ import { defaultCharacter, type Gender, type Look } from './character';
 import { CAST } from './cast';
 import type { Bg } from '@/components/Backdrop';
 import { activeOf, ctxOf, isOut, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, type Choice, type Ctx, type Fx, type LoveId, type Post, type Resolve, type Scene, type Story, type SwipeCard } from './story';
+import { jobOf } from './profiles';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -23,7 +24,7 @@ const tvOf = (y: number) => (y < 1995 ? 'phim hoạt hình trên chiếc tivi đ
 const wall = (y: number) => (y < 2011 ? 'kể cho cả xóm' : y <= 2026 ? 'đăng lên Tường' : 'phát lên mạng thực tế ảo');
 /** điểm Học vấn cần để đỗ đại học theo thời: 1990s rất khó (vài % vào được), 2002-2014 thi ba chung, từ 2015 dễ hơn */
 const passMark = (y: number) => (y < 2000 ? 64 : y < 2015 ? 55 : 50);
-const jobOf = (y: number) => (y < 2000 ? 'kế toán hợp tác xã' : y < 2015 ? 'nhân viên ngân hàng' : y <= 2026 ? 'kỹ sư phần mềm' : 'người huấn luyện AI');
+const xemJob = (y: number) => (y < 2000 ? 'kế toán hợp tác xã' : y < 2015 ? 'nhân viên ngân hàng' : y <= 2026 ? 'kỹ sư phần mềm' : 'người huấn luyện AI');
 
 /** "cậu bé" / "cô bé" theo giới người yêu */
 const be = (x: Ctx) => (x.lg === 'm' ? 'cậu bé' : 'cô bé');
@@ -298,7 +299,7 @@ function deckOf(x: Ctx): SwipeCard[] {
     khoi: x.has('dieu') ? 'Hay thả diều. Đang tìm người từng giữ hộ mình một thứ.' : 'Thích những buổi chiều trong ngõ nhỏ.',
     long: x.has('danh_long') ? 'Hồi lớp ba từng bị một đứa đánh cho một trận. Nhớ mãi.' : 'Bán xe độ rồi. Đi xe buýt. Hỏi gì cũng trả lời thật.',
     minh: 'Không giỏi nói chuyện. Giỏi giải đề. Đang học cách nói chuyện.',
-    phong: 'Làm ở bệnh viện, ca đêm nhiều. Tìm người nhắc mình ăn đúng giờ.',
+    phong: x.age < 24 ? 'Sinh viên Y, học như chưa từng được học. Tìm người nhắc mình ăn đúng giờ.' : 'Làm ở bệnh viện, ca đêm nhiều. Tìm người nhắc mình ăn đúng giờ.',
     hai: 'Viết nhạc, hát quán. Nghèo nhưng nhiều bài hát.',
     tuananh: 'Bận. Thẳng tính. Không thích vòng vo.',
     kai: 'Đang học tiếng Việt. Thích phở và những chuyến đi xa.',
@@ -309,7 +310,7 @@ function deckOf(x: Ctx): SwipeCard[] {
     tai: x.lg === 'm' ? 'Dân miệt vườn, có cây đàn với cái giọng mộc. Không phải người trong clip đâu. Mà thôi, đúng là tôi.' : 'Người ta gọi tôi là "bình hoa di động". Tôi đang tập hát mỗi ngày để họ phải đổi cách gọi.',
   };
   // người thật trên app: những ai chưa gặp; ngôi sao chỉ hiện khi Vận đào hoa cao
-  const reals: SwipeCard[] = LOVE_IDS.filter((id) => !x.s.met.includes(id) && !out(x, id) && (!['quan', 'hung', 'tai'].includes(id) || x.s.stats.dao >= 55))
+  const reals: SwipeCard[] = LOVE_IDS.filter((id) => !x.s.met.includes(id) && !out(x, id) && (!['quan', 'hung', 'tai'].includes(id) || (x.s.stats.dao >= 55 && !paper)) && (id !== 'tai' || x.year >= taiYear(x)))
     .sort((p, q) => ((LOVE_IDS.indexOf(p) * 7 + x.age) % 10) - ((LOVE_IDS.indexOf(q) * 7 + x.age) % 10))
     .slice(0, 3)
     .map((id, k) => ({
@@ -319,7 +320,7 @@ function deckOf(x: Ctx): SwipeCard[] {
       look: CAST[id][g],
       where: where(2 + k),
       bio: bio[id],
-      tags: [LOVES[id].job[g === 'm' ? 0 : 1]],
+      tags: [jobOf(id, g, x.age, x.year)],
       bg: ['#f6d5a8', '#f3b7b7', '#bfe0d0'][k % 3],
       box: 51 + k,
       loveId: id,
@@ -754,7 +755,7 @@ const list: Scene[] = [
     who: () => 'xemmat',
     title: 'Buổi xem mắt',
     text: (x) => [
-      `Người xem mắt là con bạn ${x.mom}, làm ${jobOf(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
+      `Người xem mắt là con bạn ${x.mom}, làm ${xemJob(x.year)}, nói chuyện lịch sự và hơi nhạt.`,
       `Cuối buổi, ${x.lg === 'm' ? 'anh ta' : 'cô ta'} hỏi: "Mình thử tìm hiểu nhé?"`,
     ],
     choices: [
@@ -1086,7 +1087,7 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
     who: () => id,
     bg: (x) => (x.year < 2012 ? { place: 'quan', time: 'dusk' } : { place: 'quan', time: 'dusk' }),
     title: (x) => `Hẹn hò với ${x.L(id)}`,
-    text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${LOVES[id].job[x.lg === 'm' ? 0 : 1]}).`, `Đi đâu bây giờ?`],
+    text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}).`, `Đi đâu bây giờ?`],
     choices: order.map(
       (k): Choice => ({
         t: (x) => DATES[k].t(x.year),
@@ -1103,17 +1104,20 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
 }
 
 /* ---------- đi chỗ mới: gặp ai do lựa chọn trước đó và Vận đào hoa ---------- */
+/** clip hát mộc lan truyền từ 2012; livestream phổ biến từ 2016 */
+const taiYear = (x: Ctx) => (x.lg === 'm' ? 2012 : 2016);
+
 const PLACES_MEET: { id: LoveId; ok: (x: Ctx) => boolean; title: string; bg: Bg; text: (x: Ctx) => string }[] = [
   { id: 'duy', ok: (x) => x.s.stats.dao >= 55, title: 'Chuyến tàu Tết', bg: { place: 'pho', time: 'night' }, text: (x) => `Chuyến tàu về quê ăn Tết chật cứng. Người ngồi ghế bên cạnh - ${x.L('duy')} - chia cho ${x.me} nửa gói bánh, rồi hai người nói chuyện suốt đêm.` },
   { id: 'hung', ok: (x) => x.s.stats.duyen >= 45, title: 'Hậu trường concert', bg: { place: 'pho', time: 'night' }, text: (x) =>
       x.lg === 'm'
-        ? `Làm tình nguyện viên ở một concert lớn. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - ca sĩ MV nào cũng trăm triệu view, vừa bùng nổ trên sân khấu - đang ngồi một mình ăn hộp cơm nguội, điện thoại để hình nền con mèo.`
-        : `Làm tình nguyện viên ở buổi ra mắt một phim trăm tỷ. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - nữ diễn viên báo chí vẫn gọi là "lạnh lùng" - đang ngồi bệt dưới đất kể chuyện cười cho cả đoàn nghe.` },
-  { id: 'tai', ok: (x) => x.year >= 2012, title: 'Clip triệu view', bg: { place: 'vuon', time: 'dusk' }, text: (x) =>
+        ? `Làm tình nguyện viên ở một concert lớn. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - ${jobOf('hung', 'm', x.age, x.year)}, vừa bùng nổ trên sân khấu - đang ngồi một mình ăn hộp cơm nguội, điện thoại để hình nền con mèo.`
+        : `Làm tình nguyện viên ở buổi ra mắt một ${x.year < 2012 ? 'bộ phim truyền hình' : x.year < 2017 ? 'phim điện ảnh ăn khách' : 'phim trăm tỷ'}. Đi nhầm vào hậu trường, ${x.me} gặp ${x.L('hung')} - nữ diễn viên báo chí vẫn gọi là "lạnh lùng" - đang ngồi bệt dưới đất kể chuyện cười cho cả đoàn nghe.` },
+  { id: 'tai', ok: (x) => x.year >= taiYear(x), title: 'Clip triệu view', bg: { place: 'vuon', time: 'dusk' }, text: (x) =>
       x.lg === 'm'
         ? `Về miền Tây chơi. Ở bến sông, ${x.me} quay lại cảnh ${x.L('tai')} - chàng trai miệt vườn - ôm cây ghi-ta hát mộc. Sáng hôm sau, clip ấy có một triệu lượt xem, và ${x.L('tai')} nhắn hỏi: "Bạn là người quay clip hả?"`
         : `Lướt mạng thấy ${x.L('tai')} - cô ca sĩ kiêm hot girl bị chê "bình hoa di động" - livestream tập hát lúc hai giờ sáng, giọng khàn mà không chịu nghỉ. ${x.me} để lại một bình luận động viên, và ${x.L('tai')} nhắn lại thật.` },
-  { id: 'phong', ok: () => true, title: 'Buổi hiến máu', bg: { place: 'vanphong', time: 'day' }, text: (x) => `Đi hiến máu ở hội trường. Người lấy máu là ${x.L('phong')}, ${x.lg === 'm' ? 'anh bác sĩ' : 'cô bác sĩ'} trẻ, cười hiền: "Đừng sợ, không đau đâu."` },
+  { id: 'phong', ok: () => true, title: 'Buổi hiến máu', bg: { place: 'vanphong', time: 'day' }, text: (x) => `Đi hiến máu ở hội trường. Người lấy máu là ${x.L('phong')}, ${x.age < 24 ? `${x.lg === 'm' ? 'anh' : 'cô'} sinh viên Y đi tình nguyện` : `${x.lg === 'm' ? 'anh bác sĩ' : 'cô bác sĩ'} trẻ`}, cười hiền: "Đừng sợ, không đau đâu."` },
   { id: 'hai', ok: () => true, title: 'Quán acoustic', bg: { place: 'quan', time: 'night' }, text: (x) => `Quán acoustic cuối phố. ${x.L('hai')} đang hát, nhìn xuống đúng chỗ ${x.me} ngồi.` },
   { id: 'kai', ok: () => true, title: 'Chuyến du lịch', bg: { place: 'congvien', time: 'day' }, text: (x) => `Đi du lịch một mình. Một người nước ngoài - ${x.L('kai')} - cầm bản đồ ngược, hỏi đường bằng tiếng Việt lơ lớ.` },
   { id: 'quan', ok: (x) => x.s.stats.duyen >= 40, title: 'Fan meeting', bg: { place: 'pho', time: 'night' }, text: (x) => `Đi fan meeting cùng ${x.s.bestie}. Cuối buổi, ngôi sao ${x.L('quan')} bất ngờ gọi đúng tên ${x.me} lên sân khấu.` },

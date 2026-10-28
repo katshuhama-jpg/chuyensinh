@@ -103,7 +103,7 @@ const WORLD: Ev[] = [
       { t: 'Hét khản cổ đến phút cuối, ăn mừng cùng nhau', do: (fx, x) => (fx.love(crushOf(x), 12), fx.stat('noi', 4), fx.stat('hoc', -3)), note: (x) => `Lúc chiếc cúp được nâng lên, ${x.L(crushOf(x))} ôm chầm lấy ${x.me}.` },
       { t: 'Xem đến cuối nhưng ngủ gật giữa trận', do: (fx, x) => (fx.love(crushOf(x), 4), fx.stat('tam', 2)), note: (x) => `Tỉnh dậy thì ${x.L(crushOf(x))} đã đắp áo khoác cho ${x.me}.` },
       { t: 'Cá cược với cả hội', do: (fx) => (fx.stat('tien', 5), fx.rel('banthan', 5)) },
-      { t: 'Về ngủ sớm, mai còn đi học, đi làm', do: (fx) => (fx.stat('hoc', 4), fx.stat('tinh', 2)) },
+      { t: (x) => `Về ngủ sớm, mai còn ${x.age < 18 ? 'đi học' : x.age < 23 ? 'lên giảng đường' : 'đi làm'}`, do: (fx) => (fx.stat('hoc', 4), fx.stat('tinh', 2)) },
     ],
   },
   {

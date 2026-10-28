@@ -6,6 +6,7 @@
 import type { Character, Family } from './character';
 import { PROPHECIES } from './fate';
 import { ctxOf, LOVE_IDS, LOVES, type LoveId, type Story } from './story';
+import { jobOf } from './profiles';
 import { spouseName } from './scenes';
 
 export const MIDS: Record<string, { name: string; desc: string }> = {
@@ -41,7 +42,7 @@ export function loveEndOf(c: Character, s: Story) {
   const id = s.loveEnd ?? (s.married ? 'bimeep' : 'docthan');
   const [kind, who] = id.split('_') as [string, LoveId | undefined];
   const n = who ? LOVES[who][lg] : '';
-  if (kind === 'hanhphuc' && who && !LOVE_END[id]) return { id, name: LOVES[who].happy, desc: `Cưới ${n}, ${LOVES[who].job[lg === 'm' ? 0 : 1]}, và hạnh phúc đến tận già.` };
+  if (kind === 'hanhphuc' && who && !LOVE_END[id]) return { id, name: LOVES[who].happy, desc: `Cưới ${n}, ${jobOf(who, lg, 40, 2040)}, và hạnh phúc đến tận già.` };
   const f = LOVE_END[id] ?? LOVE_END[kind];
   return { id, ...f(n) };
 }
