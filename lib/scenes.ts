@@ -346,8 +346,8 @@ const list: Scene[] = [
     who: () => 'khoi',
     title: 'Con diều mắc cây',
     text: (x) => [
-      `Chiều hè, ${x.L('khoi')} - ${be(x)} nhà bên cạnh - đứng khóc dưới gốc bàng. Con diều giấy ${co(x)} tự dán mắc tít trên cành cao.`,
-      `Ngoài ngõ, lũ trẻ đang gọi ${x.me} ra xem ${tvOf(x.year)}.`,
+      `${x.L('khoi')} nhà bên khóc dưới gốc bàng: con diều mắc tít trên cành cao.`,
+      `Ngoài ngõ, lũ trẻ gọi ${x.me} ra xem ${tvOf(x.year)}.`,
     ],
     choices: [
       { t: 'Trèo lên gỡ diều giúp', do: (fx) => (fx.flag('dieu'), fx.love('khoi', 15), fx.stat('noi', 5)), note: (x) => `${x.L('khoi')} sẽ nhớ chuyện này.` },
@@ -364,8 +364,8 @@ const list: Scene[] = [
     who: () => 'long',
     title: 'Đứa nghịch nhất lớp',
     text: (x) => [
-      `Năm lớp ba, ${x.L('long')} ngồi bàn sau, ngày nào cũng ${x.lg === 'm' ? 'giật tóc' : 'giấu dép'} ${x.me}. Hôm nay ${x.lg === 'm' ? 'cậu ta' : 'cô ta'} còn vẽ bậy lên quyển vở mới.`,
-      `${x.L('minh')}, ${x.lg === 'm' ? 'lớp trưởng' : 'lớp phó học tập'} mặt lạnh như tiền, đang cầm sổ ghi tên.`,
+      `${x.L('long')} bàn sau lại ${x.lg === 'm' ? 'giật tóc' : 'giấu dép'} ${x.me}, còn vẽ bậy lên vở mới.`,
+      `${x.L('minh')}, ${x.lg === 'm' ? 'lớp trưởng' : 'lớp phó'} mặt lạnh, đang cầm sổ ghi tên.`,
     ],
     choices: [
       { t: 'Quay xuống đánh lại', do: (fx) => (fx.flag('danh_long'), fx.stat('noi', 10), fx.love('long', 12)), note: (x) => `${x.L('long')} bắt đầu để ý ${x.me}.` },
@@ -435,9 +435,9 @@ const list: Scene[] = [
     who: () => 'he_thong',
     title: 'Đinh!',
     text: (x) => [
-      `Sinh nhật mười sáu, đang thổi nến thì ${x.me} nghe một giọng nói vang lên trong đầu:`,
-      `"Đinh! Hệ Thống Bắt Tôi Yêu đã kích hoạt. Ký chủ ${x.c.name}, nhiệm vụ chính: trước 28 tuổi phải có một người yêu thật lòng. Thất bại sẽ bị phạt: đi xem mắt do ${x.mom} sắp xếp."`,
-      `"Quà tân thủ: một lần nhìn thấu lòng người. Dùng ngay không?"`,
+      `Sinh nhật mười sáu, một giọng nói vang lên trong đầu ${x.me}:`,
+      `"Đinh! Hệ Thống kích hoạt. Nhiệm vụ: trước 28 tuổi có người yêu thật lòng. Thua thì đi xem mắt do ${x.mom} chọn."`,
+      `"Quà tân thủ: nhìn thấu lòng người một lần. Dùng không?"`,
     ],
     choices: [
       {
@@ -576,10 +576,8 @@ const list: Scene[] = [
     who: () => 'he_thong',
     title: 'Mở khóa Mùa yêu',
     text: (x) => [
-      `"Đinh! Ký chủ đã 20 tuổi. Mở khóa Bảng tình duyên."`,
-      `"Luật của bản Hệ Thống: cùng một lúc, tim ký chủ chứa tối đa 5 người. Cả đời gặp tối đa 10 người. Mỗi năm được 2 lượt: nhắn tin, hẹn hò, tỏ tình, quẹt app hay đi chỗ mới."`,
-      `"Thả thính nhiều người thì vui, nhưng bị phát hiện thì đừng trách bản Hệ Thống không nhắc."`,
-      `Hiện có ${activeOf(x.s).length} người trong đời ${x.me}. Đã gặp ${x.s.met.length}/${MAX_LIFE} người.`,
+      `"Đinh! 20 tuổi, mở khóa Bảng tình duyên."`,
+      `"Luật: cùng lúc tối đa 5 người, cả đời 10 người, mỗi năm 2 lượt. Bắt cá hai tay mà bị lộ thì tự chịu."`,
     ],
     choices: [{ t: '▶ Mở Bảng tình duyên', sys: 'Đinh! Mùa yêu bắt đầu.' }],
     next: 'hub@20#1',
@@ -908,9 +906,8 @@ const list: Scene[] = [
     who: () => 'he_thong',
     title: 'Cuốn album cuối cùng',
     text: (x) => [
-      `Bảy mươi lăm tuổi. Một buổi chiều, giọng nói quen thuộc lại vang lên, lần này rất khẽ:`,
-      `"Đinh. Ký chủ ${x.c.name}, bản Hệ Thống sắp phải đi rồi. Trước khi đi, bản Hệ Thống muốn kể một bí mật: bản Hệ Thống từng là một người đã lỡ mất tình yêu, nên mới đi ép người khác phải yêu."`,
-      `"Cảm ơn ký chủ đã sống hết mình."`,
+      `Bảy mươi lăm tuổi, giọng nói quen thuộc vang lên rất khẽ:`,
+      `"Đinh. Bản Hệ Thống sắp đi rồi. Bí mật cuối: bản Hệ Thống từng lỡ mất một tình yêu, nên mới ép người khác phải yêu. Cảm ơn ký chủ đã sống hết mình."`,
     ],
     choices: [{ t: 'Lật album lần cuối' }],
     next: 'end',

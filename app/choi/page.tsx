@@ -23,6 +23,7 @@ import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
 import { openerOf } from '@/lib/openers';
+import { profileOf } from '@/lib/profiles';
 import { GIFT_CAT, type GiftCat } from '@/lib/gifts';
 
 const stageOf = (age: number): Stage => (age < 13 ? 'child' : age >= 60 ? 'elder' : 'adult');
@@ -191,13 +192,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
           </Stage>
         )}
 
-        <div className="textbox px-dim">
-          {sc.text(x).map((p, i) => (
-            <p key={i} className={`tw ${who === 'he_thong' && p.startsWith('"') ? 'ht-line' : ''}`} style={{ animationDelay: `${i * 0.35}s` }}>
-              {p}
-            </p>
-          ))}
-        </div>
+        <TextBox key={shownId + String(!!fb)} lines={sc.text(x)} ht={who === 'he_thong'} />
 
         {post && (
           <Feed
@@ -277,6 +272,30 @@ function Play({ R, char, family, story, fb, onChoose, onNext }: { R: Resolve; ch
 
       </div>
     </main>
+  );
+}
+
+/** Lời kể ngắn: hiện câu đầu (và lời Hệ Thống); phần còn lại gấp lại, bấm "Đọc thêm" mới mở */
+function TextBox({ lines, ht }: { lines: string[]; ht: boolean }) {
+  const [more, setMore] = useState(false);
+  // giữ câu đầu, câu cuối (thường là chuyện cần chọn) và lời Hệ Thống; câu giữa gấp lại
+  const keep = lines.filter((p, i) => i === 0 || i === lines.length - 1 || (ht && p.startsWith('"')));
+  const rest = lines.filter((p) => !keep.includes(p));
+  const shown = more ? lines : keep;
+  if (!lines.length) return null;
+  return (
+    <div className="textbox px-dim">
+      {(more ? lines : lines.filter((p) => shown.includes(p))).map((p, i) => (
+        <p key={i} className={`tw ${ht && p.startsWith('"') ? 'ht-line' : ''}`} style={{ animationDelay: `${i * 0.25}s` }}>
+          {p}
+        </p>
+      ))}
+      {rest.length > 0 && !more && (
+        <button type="button" className="tb-more" onClick={() => setMore(true)}>
+          Đọc thêm ▾
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -376,6 +395,8 @@ function NewFace({ id, x, count }: { id: LoveId; x: Ctx; count: number }) {
           <span>{LOVES[id].job[x.lg === 'm' ? 0 : 1]}</span>
           <small>{LOVES[id].kind}</small>
           <small className="nf-like">Thích {LOVES[id].likesName}</small>
+          <small className="nf-life">⌂ {profileOf(id, x).home}</small>
+          <small className="nf-life">➤ {profileOf(id, x).ride}</small>
         </div>
       </div>
       <div className="nf-count">
@@ -547,6 +568,9 @@ function LoveRow({ id, x, story }: { id: LoveId; x: Ctx; story: Story }) {
         </div>
         <small>
           {LOVES[id].job[x.lg === 'm' ? 0 : 1]} · thích {LOVES[id].likesName}
+        </small>
+        <small>
+          ⌂ {profileOf(id, x).home} · ➤ {profileOf(id, x).ride}
         </small>
         <small className="nb-gift">
           {(() => {

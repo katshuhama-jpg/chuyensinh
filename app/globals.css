@@ -3346,3 +3346,14 @@ p {
   font-size: 18px;
   color: var(--orange);
 }
+.tb-more {
+  align-self: flex-start;
+  font-size: 17px;
+  color: var(--mute);
+  padding: 2px 0;
+}
+.nf-life {
+  color: var(--mute);
+  font-size: 15px;
+  line-height: 1.15;
+}
