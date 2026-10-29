@@ -17,7 +17,7 @@ const LIFE: Record<LoveId, [number, string][]> = {
   quan: [[18, 'đi thi tuyển thực tập sinh'], [22, 'ra mắt, nổi tiếng sau một đêm'], [30, 'bị scandal, rút khỏi showbiz một năm'], [35, 'quay lại, đóng phim điện ảnh'], [50, 'làm giám khảo gameshow']],
   bao: [[22, 'đi làm văn phòng'], [28, 'lên trưởng nhóm'], [35, 'làm clip hài cho công ty, bất ngờ nổi tiếng'], [45, 'mở kênh hài riêng'], [58, 'vẫn kể chuyện cười dở nhất phố']],
   duy: [[20, 'đi tàu xuyên Việt một mình'], [26, 'làm nhiếp ảnh tự do'], [32, 'ra sách ảnh về những sân ga'], [45, 'mở homestay cạnh một ga nhỏ'], [60, 'vẫn đi tàu mỗi tháng']],
-  hung: [[20, 'ra mắt showbiz'], [25, 'thành ngôi sao hạng A'], [32, 'tự lập công ty giải trí'], [40, 'giảm show, dành thời gian cho mèo và game'], [55, 'đi làm từ thiện khắp nơi']],
+  hung: [[20, 'ra mắt showbiz'], [25, 'thành ngôi sao hạng A'], [32, 'tự lập công ty giải trí'], [40, 'giảm show, dành thời gian cho bé capybara và game'], [55, 'đi làm từ thiện khắp nơi']],
   tai: [[20, 'nổi lên từ một clip'], [24, 'ra bài hát đầu tiên'], [30, 'vượt qua anti-fan, đi tour cả nước'], [40, 'về quê mở trường dạy nhạc'], [55, 'hát cho đám cưới của bà con miễn phí']],
 };
 

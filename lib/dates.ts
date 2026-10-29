@@ -121,11 +121,11 @@ export const FLAVOR: Record<LoveId, Flavor> = {
   hung: {
     spot: () => 'Đội mũ kín mặt, đi ăn ốc vỉa hè',
     spotBg: { place: 'pho', time: 'night' },
-    bring: 'một món đồ chơi cho con mèo',
+    bring: 'một bó cỏ tươi cho bé capybara Bơ',
     keep: 'tấm ảnh chụp vội ở hậu trường',
     oops: () => 'Một tay săn ảnh nấp sau cột điện, ống kính dài như cái chày.',
     fix: 'Đứng chắn trước người ấy, đi chậm rãi',
-    bye: { where: 'ở cửa sau, xe quản lý đang đợi', t: 'Dúi món đồ chơi cho con mèo vào tay người ấy', line: '"Nó sẽ thích lắm." Rồi người ấy quay lại ôm vội một cái.' },
+    bye: { where: 'ở cửa sau, xe quản lý đang đợi', t: 'Dúi bó cỏ cho bé Bơ vào tay người ấy', line: '"Bơ sẽ thích lắm." Rồi người ấy quay lại ôm vội một cái.' },
   },
   tai: {
     spot: (y) => (y < 2015 ? 'Về miền Tây, ngồi xuồng hái trái cây' : 'Về miền Tây, ngồi xuồng livestream cho vui'),

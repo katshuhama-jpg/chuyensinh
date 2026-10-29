@@ -53,7 +53,7 @@ const PROFILE: Record<LoveId, P> = {
     ride: (y) => (y < 2005 ? 'tàu hỏa và đôi chân' : fut(y) ? 'tàu cao tốc Bắc - Nam' : 'xe máy cũ, hay đi một mình xuyên Việt'),
   },
   hung: {
-    home: (y, f) => (y < 2008 ? 'biệt thự nhỏ trong hẻm kín, cổng luôn đóng' : f ? 'căn hộ penthouse kín tiếng, phòng khách toàn sách kịch bản' : 'căn hộ penthouse kín tiếng, có cả phòng riêng cho mèo'),
+    home: (y, f) => (y < 2008 ? 'biệt thự nhỏ trong hẻm kín, cổng luôn đóng' : f ? 'căn hộ penthouse kín tiếng, phòng khách toàn sách kịch bản' : 'căn hộ penthouse kín tiếng, có cả hồ bơi nhỏ cho bé capybara Bơ'),
     ride: (y) => (y < 2016 ? 'ô tô có tài xế, ra phố thì đội mũ lưỡi trai' : fut(y) ? 'ô tô tự lái kính tối, nhưng thích đi bộ ban đêm' : 'ô tô có tài xế, trốn fan thì gọi xe ôm công nghệ'),
   },
   tai: {

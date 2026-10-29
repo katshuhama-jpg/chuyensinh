@@ -65,8 +65,8 @@ export const LOVES: Record<LoveId, { m: string; f: string; kind: string; job: [s
   quan: { m: 'Quân', f: 'Mai', kind: 'Ngôi sao màn ảnh', job: ['ca sĩ thần tượng', 'diễn viên'], likes: 'duyen', likesName: 'người duyên dáng, không ham nổi tiếng', happy: 'Cặp Đôi Quốc Dân' },
   bao: { m: 'Bảo', f: 'Trâm', kind: 'Đồng nghiệp hài hước', job: ['đồng nghiệp bàn bên', 'đồng nghiệp bàn bên'], likes: 'tam', likesName: 'người vui tính, hay cười', happy: 'Cười Cả Đời' },
   // hai ngôi sao hư cấu hoàn toàn (tên, quê, tiểu sử đều tự nghĩ), chỉ giữ "vibe" người nổi tiếng
-  hung: { m: 'Hưng', f: 'Diệp', kind: 'Ngôi sao: trước ống kính lạnh lùng, bùng nổ; ở riêng thì nhắng nhít, nuôi mèo, chơi game', job: ['ca sĩ trăm triệu view', 'nữ diễn viên phim trăm tỷ'], likes: 'tinh', likesName: 'người chân thành, coi mình như người thường', happy: 'Ngôi Sao Về Nhà' },
-  tai: { m: 'Tuấn Khang', f: 'Yến', kind: 'Nổi lên từ mạng sau một đêm: phóng khoáng, chân tình, luôn cố vượt qua định kiến', job: ['chàng trai miệt vườn hát mộc', 'ca sĩ kiêm hot girl'], likes: 'noi', likesName: 'người dám đứng cạnh mình trước dư luận', happy: 'Mặc Kệ Thiên Hạ' },
+  hung: { m: 'Hưng', f: 'Diệp', kind: 'Ngôi sao: trước ống kính lạnh lùng, bùng nổ; ở riêng thì nhắng nhít, nuôi một bé capybara tên Bơ', job: ['ca sĩ trăm triệu view', 'nữ diễn viên phim trăm tỷ'], likes: 'tinh', likesName: 'người chân thành, coi mình như người thường', happy: 'Ngôi Sao Về Nhà' },
+  tai: { m: 'Tuấn Khang', f: 'Yến', kind: 'Ca sĩ nhạc miền Tây: giọng ngọt như phù sa, hát bolero lẫn vọng cổ, nổi lên từ một clip hát trên xuồng', job: ['ca sĩ nhạc miền Tây', 'nữ ca sĩ bolero miền Tây'], likes: 'noi', likesName: 'người dám đứng cạnh mình trước dư luận', happy: 'Mặc Kệ Thiên Hạ' },
   duy: { m: 'Duy', f: 'Hạ', kind: 'Người lạ định mệnh', job: ['người lạ trên chuyến tàu', 'người lạ trên chuyến tàu'], likes: 'dao', likesName: 'người có Vận đào hoa cao', happy: 'Định Mệnh Trên Chuyến Tàu' },
 };
 

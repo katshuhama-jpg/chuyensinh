@@ -102,7 +102,7 @@ const P: Record<LoveId, Person> = {
     dream: 'muốn đi một chuyến dài xuyên Việt, không biết bao giờ về',
   },
   hung: {
-    dates: ['Nấu cơm ở nhà, chơi với mèo', 'Ăn bún ốc vỉa hè, đội mũ kín', 'Đi thảm đỏ cùng nhau'],
+    dates: ['Nấu cơm ở nhà, tắm cho bé capybara', 'Ăn bún ốc vỉa hè, đội mũ kín', 'Đi thảm đỏ cùng nhau'],
     secret: 'chưa bao giờ được sống một ngày bình thường từ năm mười bảy tuổi',
     rival: 'người quản lý muốn người ấy giữ hình ảnh độc thân',
     crisis: 'buổi họp báo ra sản phẩm biến thành buổi bị hỏi chuyện yêu đương',
