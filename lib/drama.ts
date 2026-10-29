@@ -13,7 +13,7 @@ import { FLAVOR } from './dates';
 import { xemmatName } from './names';
 import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
 
-type Pool = 'yeu' | 'cuoi' | 'don';
+type Pool = 'yeu' | 'cuoi' | 'don' | 'any';
 type Drama = {
   id: string;
   pool: Pool;
@@ -1143,7 +1143,237 @@ const VICE: Drama[] = [
 /** sau chặng 2, người ấy có thay đổi thật không */
 const changed = (x: Ctx) => x.has('vh_cai') || (x.has('vh_tra') && !x.has('vh_bo')) || (x.has('vh_noi') && !x.has('vh_ganh') && (!pid(x) || x.s.love[pid(x)!] >= 40));
 
-const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...DON];
+/* =========================================================
+   THỜI CUỘC: sự kiện có thật chạm vào chuyện tình. Mỗi sự kiện đổi theo hoàn cảnh (một mình, đang yêu, đã cưới),
+   để lại cờ, và nhiều năm sau còn quay lại (đám cưới, kỷ niệm, cuối đời).
+   ========================================================= */
+/** người đang thương nhất: vợ chồng, người yêu, không thì người thân nhất chưa rời đi */
+const near = (x: Ctx): LoveId | null => {
+  if (pid(x)) return pid(x);
+  const ids = x.s.met.filter((id) => !x.has(`${id}_out`)).sort((a, b) => x.s.love[b] - x.s.love[a]);
+  return ids[0] && x.s.love[ids[0]] >= 25 ? ids[0] : null;
+};
+const nm = (x: Ctx) => (x.s.married ? sp(x) : near(x) ? x.L(near(x)!) : '');
+const regionOfX = (x: Ctx) => {
+  const S = ['TP. Hồ Chí Minh', 'Cần Thơ', 'Đồng Nai', 'Tây Ninh', 'Vĩnh Long', 'Đồng Tháp', 'Cà Mau', 'An Giang', 'Lâm Đồng'];
+  const C = ['Đà Nẵng', 'Huế', 'Quảng Trị', 'Quảng Ngãi', 'Khánh Hòa', 'Gia Lai', 'Đắk Lắk', 'Nghệ An', 'Hà Tĩnh', 'Thanh Hóa'];
+  return S.includes(x.f.province) ? 'nam' : C.includes(x.f.province) ? 'trung' : 'bac';
+};
+const loveNear = (fx: Fx, x: Ctx, d: number) => (x.s.married ? lv(fx, x, d) : near(x) ? fx.love(near(x)!, d) : fx.stat('tam', Math.round(d / 2)));
+const mark = (fx: Fx, x: Ctx, k: string) => {
+  fx.flag(`h_${k}`);
+  const n = x.s.married ? pid(x) ?? 'vc' : near(x);
+  if (n) fx.flag(`h_${k}_${n}`);
+};
+
+export const HIST: Drama[] = [
+  {
+    id: 'h_2000',
+    pool: 'any',
+    callback: true,
+    from: 1999,
+    to: 2000,
+    minAge: 16,
+    maxAge: 40,
+    title: 'Giao thừa thiên niên kỷ',
+    bg: () => ({ place: 'pho', time: 'night', tet: true }),
+    who: (x) => near(x),
+    text: (x) => [
+      'Đêm 31 tháng 12 năm 1999. Báo đài nói mãi về "sự cố Y2K", máy tính cả thế giới có thể loạn. Cả phố vẫn đổ ra đường đếm ngược sang năm 2000.',
+      nm(x) ? `${nm(x)} đứng cạnh ${x.me} giữa đám đông, tay lạnh cóng.` : `${x.me} đứng một mình giữa đám đông, ai cũng có đôi.`,
+    ],
+    choices: [
+      { t: 'Đếm ngược xong thì nắm tay người bên cạnh', if: (x) => !!nm(x), do: (fx, x) => (loveNear(fx, x, 12), mark(fx, x, '2000')), note: () => '🦋 Năm 2000 bắt đầu bằng một cái nắm tay. Cái nắm tay này sẽ còn được nhắc lại.' },
+      { t: 'Ước một điều thật to khi pháo hoa nổ', do: (fx) => (fx.stat('dao', 6), fx.stat('tam', 4)) },
+      { t: 'Hỏi người lạ đứng cạnh: "Bạn ước gì?"', if: (x) => !nm(x), do: (fx) => (fx.meet('duy'), fx.flag('pool_duy'), fx.love('duy', 12), fx.flag('h_2000_duy')), note: () => 'Người lạ ấy cười: "Ước gặp lại bạn năm sau." Rồi lẫn vào đám đông.' },
+    ],
+  },
+  {
+    id: 'h_sars',
+    pool: 'any',
+    callback: true,
+    from: 2003,
+    to: 2003,
+    minAge: 18,
+    maxAge: 60,
+    title: 'Mùa SARS',
+    bg: () => ({ place: 'pho', time: 'day' }),
+    who: (x) => (x.s.met.includes('phong') ? 'phong' : near(x)),
+    text: (x) =>
+      x.s.met.includes('phong') && !x.has('phong_out')
+        ? [`Dịch SARS bùng ở Hà Nội. Bệnh viện nơi ${x.L('phong')} làm bị phong tỏa, nhân viên ở lại trong viện không về.`, `${x.L('phong')} gọi ra từ phòng trực: "Đừng lo. Chỉ là... nhớ thôi."`]
+        : ['Dịch SARS bùng ở Hà Nội. Cả nước đeo khẩu trang, ai ho một tiếng là cả xe buýt quay lại nhìn.', nm(x) ? `${nm(x)} mua cho ${x.me} một hộp khẩu trang, dặn đi dặn lại.` : 'Đường vắng hẳn.'],
+    choices: [
+      { t: 'Ngày nào cũng gửi cơm vào viện, viết giấy dán trên nắp hộp', if: (x) => x.s.met.includes('phong') && !x.has('phong_out'), do: (fx) => (fx.love('phong', 16), fx.flag('h_sars_phong')), note: () => '🦋 Những mảnh giấy dán nắp hộp cơm, người ấy giữ hết.' },
+      { t: 'Ở yên trong nhà, gọi điện mỗi tối', do: (fx, x) => (loveNear(fx, x, 6), fx.stat('khoe', 3)) },
+      { t: 'Đi tình nguyện phát khẩu trang ở bến xe', do: (fx) => (fx.stat('tinh', 6), fx.stat('dao', 3)) },
+    ],
+  },
+  {
+    id: 'h_2008',
+    pool: 'any',
+    callback: true,
+    from: 2008,
+    to: 2009,
+    minAge: 21,
+    maxAge: 58,
+    title: 'Khủng hoảng 2008',
+    bg: () => ({ place: 'pho', time: 'day' }),
+    who: (x) => near(x),
+    text: (x) => [
+      'Lạm phát hơn hai mươi phần trăm, chứng khoán rơi từ đỉnh xuống đáy. Công ty cắt giảm một nửa nhân sự.',
+      `Sáng thứ hai, ${x.me} nhận phong bì: nghỉ việc từ cuối tháng.${nm(x) ? ` Tối ấy về, ${nm(x)} không hỏi gì, chỉ nấu một nồi canh chua.` : ''}`,
+    ],
+    choices: [
+      { t: (x) => (nm(x) ? `Kể hết với ${nm(x)}, cùng nhau tính` : 'Tự xoay xở, không kể ai'), do: (fx, x) => (fx.stat('tien', -10), nm(x) ? (loveNear(fx, x, 12), mark(fx, x, '2008')) : fx.stat('noi', 4)), note: (x) => (nm(x) ? '🦋 Năm khó nhất, hai người ăn mì tôm cả tháng mà vẫn cười. Sau này hay kể lại.' : '') },
+      { t: 'Ra chợ bán hàng, làm lại từ đầu', do: (fx) => (fx.stat('tien', -4), fx.stat('noi', 6), fx.flag('h_2008_lam')), note: () => '🦋 Sạp hàng nhỏ ấy về sau thành một cửa hàng.' },
+      { t: 'Giấu nhà, sáng vẫn đi như đi làm', do: (fx, x) => (fx.stat('tien', -12), fx.stat('tam', -8), loveNear(fx, x, -6)), note: () => 'Ba tháng ngồi quán trà đá cả ngày. Rồi cũng bị phát hiện.' },
+    ],
+  },
+  {
+    id: 'h_bao',
+    pool: 'any',
+    callback: true,
+    from: 2008,
+    to: 2018,
+    minAge: 15,
+    maxAge: 50,
+    if: (x) => (x.year === 2008 || x.year === 2018) && !x.has('ev_dibao') && !x.has('ly_dibao'),
+    title: (x) => `Đêm đi bão AFF Cup ${x.year}`,
+    bg: () => ({ place: 'pho', time: 'night' }),
+    who: (x) => near(x),
+    text: (x) => [
+      x.year === 2008 ? 'Công Vinh đánh đầu ở phút cuối. Việt Nam vô địch AFF Cup sau 12 năm chờ đợi.' : 'Anh Đức ghi bàn. Việt Nam vô địch AFF Cup sau mười năm.',
+      `Cả nước đổ ra đường, cờ đỏ sao vàng kín phố, tiếng còi xe đến ba giờ sáng.${nm(x) ? ` ${nm(x)} đội mũ, cầm cờ, đứng đợi ở cổng.` : ''}`,
+    ],
+    choices: [
+      { t: (x) => (nm(x) ? `Ngồi sau xe ${nm(x)}, hò hét đến khản giọng` : 'Lao ra đường, đi bão một mình'), do: (fx, x) => (loveNear(fx, x, 12), mark(fx, x, 'bao'), fx.stat('noi', 4)), note: (x) => (nm(x) ? '🦋 Lá cờ hôm ấy được cất vào tủ. Nhiều năm sau còn lôi ra.' : '') },
+      { t: 'Đứng ở ban công nhìn xuống, mỉm cười', do: (fx) => fx.stat('tam', 5) },
+      { t: (x) => `Kẹt giữa dòng người, quen một người đi cùng hướng`, if: (x) => !x.s.married, do: (fx) => (fx.meet('bao'), fx.flag('pool_bao'), fx.love('bao', 12), fx.flag('h_bao_bao')), note: () => 'Người ấy hét vào tai: "Số mấy? Mai đi cà phê ăn mừng!"' },
+    ],
+  },
+  {
+    id: 'h_dat',
+    pool: 'any',
+    callback: true,
+    from: 2017,
+    to: 2021,
+    minAge: 25,
+    maxAge: 60,
+    if: (x) => x.year === 2018 || x.year === 2021,
+    title: 'Cơn sốt đất nền',
+    bg: () => ({ place: 'pho', time: 'day' }),
+    who: (x) => near(x),
+    text: (x) => [
+      `Cả xóm bàn chuyện đất nền. Mảnh đất ruộng ngoại thành sáng mua chiều bán đã lãi cả trăm triệu. Môi giới gọi điện cho ${x.me} ngày ba lần.`,
+      nm(x) ? `${nm(x)} hỏi: "Hay mình vay thêm, mua một lô?"` : 'Bạn thân rủ góp chung.',
+    ],
+    choices: [
+      { t: 'Vay ngân hàng, xuống tiền một lô', do: (fx, x) => (fx.flag('h_dat_mua'), fx.stat('tien', 8), loveNear(fx, x, 4)), note: () => '🦋 Lô đất này còn quay lại.' },
+      { t: 'Thôi, tiền ít thì gửi tiết kiệm', do: (fx) => (fx.stat('tien', 3), fx.stat('hoc', 3)) },
+      { t: 'Cãi nhau một trận vì chuyện đất', if: (x) => !!nm(x), do: (fx, x) => (loveNear(fx, x, -8), fx.stat('noi', 3)) },
+    ],
+  },
+  {
+    id: 'h_datbang',
+    pool: 'any',
+    callback: true,
+    from: 2022,
+    to: 2025,
+    if: (x) => x.has('h_dat_mua'),
+    title: 'Đất đóng băng',
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: (x) => near(x),
+    text: (x) => [`Thị trường đóng băng, lô đất mua năm ấy không ai hỏi. Lãi ngân hàng thì tháng nào cũng đến. ${nm(x) ? `${nm(x)} ngồi tính sổ đến khuya.` : ''}`],
+    choices: [
+      { t: 'Bán cắt lỗ, trả hết nợ, nhẹ người', do: (fx, x) => (fx.stat('tien', -14), fx.stat('tam', 6), loveNear(fx, x, 6)) },
+      { t: 'Gồng thêm, tin là đất sẽ lên', do: (fx, x) => (x.year >= 2024 ? (fx.stat('tien', 12), fx.say('Hai năm sau giá hồi lại. Gồng được thì thắng.')) : (fx.stat('tien', -8), fx.stat('tam', -8))) },
+      { t: 'Đổ lỗi cho nhau', if: (x) => !!nm(x), do: (fx, x) => (loveNear(fx, x, -14), fx.stat('tam', -6)) },
+    ],
+  },
+  {
+    id: 'h_covid',
+    pool: 'any',
+    callback: true,
+    from: 2020,
+    to: 2021,
+    minAge: 16,
+    maxAge: 75,
+    title: (x) => (x.year === 2021 && regionOfX(x) === 'nam' ? 'Sài Gòn giãn cách' : 'Mùa COVID'),
+    bg: () => ({ place: 'phong', time: 'day' }),
+    who: (x) => (x.s.met.includes('kai') && !x.has('kai_out') && !x.s.married ? 'kai' : near(x)),
+    text: (x) => {
+      const lines = [x.year === 2021 && regionOfX(x) === 'nam' ? 'Thành phố giãn cách theo Chỉ thị 16. Đường không một bóng người, chỉ nghe còi xe cứu thương.' : 'Cả nước giãn cách xã hội. "Ai ở đâu ở yên đó."'];
+      if (x.s.married) lines.push(`Ba tháng liền ${x.me} và ${sp(x)} ở chung hai mươi bốn tiếng một ngày${x.s.kids ? ', con học online, nhà lúc nào cũng ồn' : ''}.`);
+      else if (x.s.met.includes('kai') && !x.has('kai_out')) lines.push(`Chuyến bay về nước của ${x.L('kai')} bị hủy. ${x.ay.charAt(0).toUpperCase() + x.ay.slice(1)} kẹt lại Việt Nam, không biết đến bao giờ.`);
+      else if (nm(x)) lines.push(`${x.me} và ${nm(x)} kẹt ở hai quận, chỉ gặp nhau qua màn hình.`);
+      else lines.push(`${x.me} ở một mình trong căn phòng trọ, ngày nào cũng nghe bản tin lúc sáu giờ.`);
+      return lines;
+    },
+    choices: [
+      { t: (x) => `Đón ${x.L('kai')} về ở tạm, nấu cho ăn món Việt mỗi ngày`, if: (x) => !x.s.married && x.s.met.includes('kai') && !x.has('kai_out'), do: (fx, x) => (fx.love('kai', 18), fx.flag('h_covid_kai'), fx.stat('tien', -4)), note: (x) => `🦋 ${x.L('kai')} bảo: "Không về được nước, nhưng tìm được nhà."` },
+      { t: 'Ba tháng ở chung: học nấu ăn cùng nhau, tối nào cũng xem phim', if: (x) => x.s.married, do: (fx, x) => (lv(fx, x, x.s.stats.tam >= 45 ? 12 : -10), mark(fx, x, 'covid')), note: (x) => (x.s.stats.tam >= 45 ? '🦋 Hai người thân nhau hơn cả mười năm trước.' : 'Ở chung quá lâu, chuyện nhỏ thành chuyện to.') },
+      { t: (x) => `Đêm nào cũng gọi video với ${nm(x)} đến lúc ngủ quên`, if: (x) => !x.s.married && !!nm(x), do: (fx, x) => (loveNear(fx, x, 10), mark(fx, x, 'covid')), note: () => '🦋 Hết giãn cách, lần đầu gặp lại, hai người ôm nhau giữa đường.' },
+      { t: 'Đăng ký đi tình nguyện ở khu cách ly', do: (fx, x) => (fx.stat('tinh', 8), fx.stat('khoe', -4), x.s.met.includes('phong') || x.s.married ? undefined : (fx.meet('phong'), fx.flag('pool_phong'), fx.love('phong', 12))), note: (x) => (x.s.married || x.s.met.includes('phong') ? 'Bộ đồ bảo hộ nóng như lò, mà lòng thì nhẹ.' : `Trong khu cách ly có một bác sĩ trẻ, mắt thâm quầng, cứ cảm ơn ${x.me} mãi.`) },
+      { t: 'Ở nhà, trồng rau ban công, tự cắt tóc', do: (fx) => (fx.stat('tam', 4), fx.stat('khoe', 2)) },
+    ],
+  },
+  {
+    id: 'h_lu',
+    pool: 'any',
+    callback: true,
+    from: 2020,
+    to: 2024,
+    minAge: 16,
+    maxAge: 75,
+    if: (x) => (x.year === 2020 && regionOfX(x) === 'trung') || (x.year === 2024 && regionOfX(x) === 'bac'),
+    title: (x) => (x.year === 2020 ? 'Lũ lịch sử miền Trung' : 'Bão Yagi'),
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: (x) => near(x),
+    text: (x) => [
+      x.year === 2020 ? 'Tháng mười, lũ chồng lũ. Nước lên đến mái nhà, cả xóm trèo lên nóc chờ ca nô.' : 'Bão Yagi quật đổ cây cả thành phố, mất điện ba ngày, nước sông dâng tràn bãi.',
+      nm(x) ? `Điện thoại còn hai phần trăm pin. Tin nhắn cuối cùng của ${nm(x)}: "Đợi đấy, đang tới."` : 'Điện thoại còn hai phần trăm pin.',
+    ],
+    choices: [
+      { t: (x) => (nm(x) ? `Đợi ${nm(x)}` : 'Đợi đội cứu hộ'), do: (fx, x) => (nm(x) ? (loveNear(fx, x, 14), mark(fx, x, 'lu')) : fx.stat('tam', -2)), note: (x) => (nm(x) ? `🦋 Gần sáng, ${nm(x)} chèo một chiếc thuyền thúng đến, người ướt sũng, cười toe.` : '') },
+      { t: 'Lội ra giúp nhà hàng xóm chuyển đồ lên cao', do: (fx) => (fx.stat('tinh', 6), fx.stat('khoe', -3)) },
+      { t: 'Sau lũ, đi cùng đoàn cứu trợ vào vùng sâu', do: (fx, x) => (fx.stat('tinh', 8), x.s.married ? undefined : (fx.meet('duy'), fx.flag('pool_duy'), fx.love('duy', 10))), note: (x) => (x.s.married ? '' : 'Trong đoàn có một người cầm máy ảnh phim, chụp toàn những khoảnh khắc người ta cười.') },
+    ],
+  },
+];
+
+/** Thời cuộc ở tuổi này (nếu có): dựng thành một cảnh chen trước cảnh `next` */
+export function histAt(age: number, x: Ctx, next: string): Scene | null {
+  const d = HIST.find((h) => fits(h, x));
+  if (!d) return null;
+  return {
+    id: `hs@${age}`,
+    age,
+    chapter: age < 20 ? 'Tuổi teen' : age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già',
+    title: d.title,
+    bg: d.bg,
+    who: d.who,
+    text: d.text,
+    choices: d.choices.map((c) => ({ ...c, do: (fx, cx) => (fx.flag(`dr_${d.id}`), c.do?.(fx, cx)) })),
+    next,
+  };
+}
+
+/** Những dấu thời cuộc đã chạm vào đời này (cho trang cuối đời) */
+export function historyOf(s: { flags: string[] }): string[] {
+  const has = (f: string) => s.flags.includes(f);
+  const out: string[] = [];
+  if (has('h_2000')) out.push('Giao thừa năm 2000, nắm tay một người giữa đám đông.');
+  if (has('h_sars_phong')) out.push('Mùa SARS 2003, những hộp cơm gửi vào bệnh viện bị phong tỏa.');
+  if (has('dr_h_2008')) out.push(has('h_2008') ? 'Khủng hoảng 2008, mất việc, nhưng có người ở bên.' : 'Khủng hoảng 2008, mất việc và tự đứng dậy.');
+  if (has('h_bao')) out.push('Đêm đi bão AFF Cup, cờ đỏ kín phố.');
+  if (has('h_dat_mua')) out.push('Cơn sốt đất nền, một lô đất và một khoản nợ.');
+  if (has('dr_h_covid')) out.push(has('h_covid_kai') ? 'Mùa COVID, một người kẹt lại Việt Nam và tìm được nhà.' : 'Mùa COVID, những ngày giãn cách.');
+  if (has('h_lu')) out.push('Mùa bão lũ, một người chèo thuyền đến trong đêm.');
+  return out;
+}
+
+const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...HIST, ...DON];
 export const DRAMA_IDS = ALL.map((d) => d.id);
 
 function hash(s: string) {
@@ -1170,7 +1400,7 @@ const STAGE: Record<string, (x: Ctx) => boolean> = {
   dixa: (x) => x.age <= 50,
 };
 const fits = (d: Drama, x: Ctx) =>
-  d.pool === poolOf(x) &&
+  (d.pool === poolOf(x) || d.pool === 'any') &&
   (!STAGE[d.id] || STAGE[d.id](x)) &&
   !x.has(`dr_${d.id}`) &&
   x.year >= (d.from ?? 0) &&

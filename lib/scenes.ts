@@ -16,6 +16,7 @@ import { xemmatName } from './names';
 import { regionOf } from './names';
 import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
+import { histAt } from './drama';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -129,6 +130,15 @@ function weddingScene(age: number, next: string): Scene {
       const ex = exAtWedding(x);
       if (ex) lines.push(`Cuối hội trường, ${x.L(ex)} đứng lặng một lúc, gửi phong bì cho ${x.s.bestie} rồi lặng lẽ về trước.`);
       if (x.s.partner === 'khoi' && x.has('dieu')) lines.push('Trên bàn quà cưới có một con diều giấy cũ, buộc nơ đỏ.');
+      // thời cuộc quay lại trong ngày cưới
+      const p = x.s.partner;
+      if (p && x.has(`h_bao_${p}`)) lines.push('MC chiếu tấm ảnh đêm đi bão năm nào: hai đứa ướt sũng, cầm cờ đỏ, cười toe. Cả hội trường hò reo như vừa ghi bàn.');
+      else if (p && x.has(`h_2000_${p}`)) lines.push('Bài phát biểu của chú rể mở đầu: "Đêm giao thừa năm 2000, có một bàn tay lạnh cóng..."');
+      else if (p && x.has(`h_covid_${p}`)) lines.push('Bạn bè trêu: "Hai đứa này yêu qua màn hình cả mùa dịch, giờ mới được đứng gần nhau thế này."');
+      else if (p && x.has(`h_lu_${p}`)) lines.push('Trên sân khấu đặt một chiếc thuyền thúng nhỏ kết hoa. Chỉ hai người hiểu vì sao.');
+      else if (p && x.has(`h_2008_${p}`)) lines.push('Món đầu tiên của tiệc cưới là canh chua, theo đúng yêu cầu của cô dâu chú rể.');
+      else if (p === 'kai' && x.has('h_covid_kai')) lines.push('Gia đình bên kia dự cưới qua màn hình, vì chuyến bay vẫn chưa mở lại.');
+      else if (p === 'phong' && x.has('h_sars_phong')) lines.push('Bánh cưới có một mảnh giấy cắm trên đỉnh, chữ viết tay y như những mảnh giấy dán nắp hộp cơm mùa SARS.');
       return lines;
     },
     choices: [
@@ -2111,6 +2121,22 @@ export const ageOfScene = (id: string) => {
 
 /** Tìm cảnh theo mã cho một nhân vật: cảnh cố định hoặc cảnh động của Mùa yêu */
 export function resolverOf(c: Character, f: Family): Resolve {
+  const inner = innerResolver(c, f);
+  // sự kiện thời cuộc có thật: khi sang năm mới, nếu giữa năm cũ và năm mới có một sự kiện hợp thì chen vào trước
+  return (id, s) => {
+    const sc = inner(id, s);
+    if (!sc || !s.path.length) return sc;
+    const last = s.path[s.path.length - 1].age;
+    if (sc.age <= last) return sc;
+    for (let a = Math.max(last, 15); a <= sc.age; a++) {
+      const h = histAt(a, ctxOf(c, f, s, a), id);
+      if (h) return h;
+    }
+    return sc;
+  };
+}
+
+function innerResolver(c: Character, f: Family): Resolve {
   return (id, s) => {
     const age = ageOfScene(id);
     if (id === 'y22_drama') return dramaScene(ctxOf(c, f, s, 22));

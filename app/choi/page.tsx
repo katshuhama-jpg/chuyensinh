@@ -18,6 +18,7 @@ import { lpcLayers, type Stage } from '@/lib/look';
 import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { activeMission, ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { STARS } from '@/lib/stars';
+import { historyOf } from '@/lib/drama';
 import { commit } from '@/lib/board';
 import { AREAS, areasOf, doAction, lifePathOf, doneThisYear, optionsOf, tallyOf, type AreaKey } from '@/lib/actions';
 import { activeOf, choose, ctxOf, fastForward, isStop, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
@@ -1420,6 +1421,14 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
               <small>
                 {lifePathOf(story)!.desc} (chọn {lifePathOf(story)!.n} năm)
               </small>
+            </div>
+          )}
+          {historyOf(story).length > 0 && (
+            <div className="end-row">
+              <span>Thời cuộc đã chạm vào đời</span>
+              {historyOf(story).map((t, i) => (
+                <small key={i}>• {t}</small>
+              ))}
             </div>
           )}
           <div className="end-row">
