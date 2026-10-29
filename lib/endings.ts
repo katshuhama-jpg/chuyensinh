@@ -25,6 +25,9 @@ export const MIDS: Record<string, { name: string; desc: string }> = {
   danhghen: { name: 'Đánh Ghen Lên Mạng', desc: 'Một clip đánh ghen triệu view, và không ai thắng cả.' },
   lyhon: { name: 'Đường Ai Nấy Đi', desc: 'Ký đơn ly hôn ở tòa, mỗi người một ngả.' },
   luadao: { name: 'Người Yêu Qua Mạng', desc: 'Yêu một tài khoản chưa từng gặp, và mất trắng tiền tiết kiệm.' },
+  cobac: { name: 'Nợ Đỏ Đen', desc: 'Chồng/vợ sa vào cờ bạc, nợ chồng nợ. Ký đơn ly hôn để giữ lại phần đời còn lại.' },
+  ruou: { name: 'Chén Rượu Chia Đôi', desc: 'Rượu vào thì lời ra, lời ra thì nhà tan. Một người phải bước đi trước.' },
+  traigai: { name: 'Người Thứ Ba Có Thật', desc: 'Lá thư, tin nhắn, rồi cả một gia đình khác. Ly hôn, và đứng dậy.' },
   cacahaitay: { name: 'Bắt Cá Hai Tay', desc: 'Bị phát hiện trong nhóm chat ba người, mất cả hai.' },
 };
 
@@ -41,11 +44,13 @@ const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = 
   bimeep: () => ({ name: 'Bị Mẹ Ép Cưới', desc: 'Cưới người xem mắt. Không ồn ào, không cổ tích.' }),
   docthan: () => ({ name: 'Độc Thân Vui Vẻ', desc: 'Không cưới ai, và sống vui theo cách của mình.' }),
   lyhon: (n) => ({ name: 'Đường Ai Nấy Đi', desc: n ? `Từng cưới ${n}, rồi ly hôn. Nửa sau cuộc đời mỗi người một ngả.` : 'Từng cưới, rồi ly hôn. Nửa sau cuộc đời tự đi một mình.' }),
+  quaydau: (n) => ({ name: 'Người Ấy Quay Về', desc: n ? `${n} từng sa ngã, rồi quay về thật. Những năm cuối đời yên hơn cả những năm đầu.` : 'Người ấy từng sa ngã, rồi quay về thật.' }),
+  chiudung: (n) => ({ name: 'Nhẫn Nhịn Cả Đời', desc: n ? `Sống với ${n} đến già. Ngoài kia khen êm ấm, chỉ mình biết cái giá.` : 'Sống tiếp cho êm cửa êm nhà. Chỉ mình biết cái giá.' }),
   nguoicu: () => ({ name: 'Người Cũ Quay Lại', desc: 'Gia đình rạn vỡ sau một lần gặp lại người cũ.' }),
 };
 
 /** Các kết cục của một người (cho Bản đồ tình duyên) */
-export const ROUTE_ENDS = ['hanhphuc', 'dodang', 'chilaban', 'lohen', 'muon', 'duyenno', 'lyhon'] as const;
+export const ROUTE_ENDS = ['hanhphuc', 'dodang', 'chilaban', 'lohen', 'muon', 'duyenno', 'quaydau', 'chiudung', 'lyhon'] as const;
 /** Kết cục chung không gắn với ai */
 export const SOLO_ENDS = ['bimeep', 'cuoivoi', 'docthan', 'nguoicu'] as const;
 
