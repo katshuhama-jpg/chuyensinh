@@ -88,6 +88,13 @@ export function savingOf(s: { stats: { tien: number }; kids?: number; flags: str
   else k = 1 + t / 30;
   // nuôi con: mỗi đứa tốn chừng hai phần ba khoản để dành của một năm, đến khi con lớn
   if (s.kids && age >= 25 && age < 55) k -= 1.6 * s.kids;
+  // trả góp nhà: hai mươi năm, mỗi năm một khoản
+  const gop = s.flags.find((f) => f.startsWith('nha_gop_'));
+  if (gop && age - Number(gop.slice(8)) < 20) k -= 4;
+  // nuôi xe ô tô: xăng, gửi xe, bảo dưỡng
+  if (s.flags.includes('oto')) k -= 1.2;
+  // ở quê làm nông thì để dành được ít hơn ở phố, nhưng tốn ít hơn
+  if (s.flags.includes('o_que') && age >= 22) k *= 0.8;
   // nghèo quá thì cũng chỉ hụt chi một chút mỗi năm, không âm mãi
   return Math.max(-0.5, k) * u;
 }

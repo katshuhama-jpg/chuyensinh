@@ -771,7 +771,7 @@ const TEEN: Life[] = [
     id: 'dibao',
     min: 12,
     max: 19,
-    if: (x) => [2008, 2018].includes(x.year),
+    if: (x) => [2008, 2018].includes(x.year) && !x.has('dr_h_bao'),
     title: 'Đi bão!',
     bg: bg('pho', 'night'),
     who: cw(),
@@ -1059,7 +1059,132 @@ const YOUNG: Life[] = [
   },
 ];
 
-const ALL: Life[] = [...SMALL, ...KID, ...TEEN, ...YOUNG];
+/* =========================================================
+   THÀNH PHỐ HAY NÔNG THÔN: tuổi thơ khác hẳn nhau
+   ========================================================= */
+const rural = (x: Ctx) => !x.f.urban;
+const PLACE: Life[] = [
+  {
+    id: 'q_chantrau',
+    min: 6,
+    max: 11,
+    to: 2010,
+    if: rural,
+    title: 'Đi chăn trâu',
+    bg: bg('vuon', 'dusk'),
+    who: cw(),
+    text: (x) => [`Chiều nào ${x.me} cũng dắt trâu ra bãi. Lũ trẻ chăn trâu đốt rơm nướng khoai, thả diều trên đê.`, `${C(x)} rủ: "Cưỡi trâu đua không?"`],
+    choices: [
+      { t: 'Đua luôn, ngã thì đứng dậy', do: (fx, x) => (fx.stat('noi', 6), fx.love(crush(x), 6), fx.stat('khoe', 3)) },
+      { t: 'Ngồi nướng khoai, kể chuyện ma', do: (fx, x) => (fx.stat('tinh', 5), fx.love(crush(x), 4)) },
+      { t: 'Mang sách ra đọc trên lưng trâu', do: (fx) => (fx.stat('hoc', 6), fx.stat('tam', 2)), note: () => 'Trâu ăn lúa nhà hàng xóm. Tối ấy bị mắng.' },
+    ],
+  },
+  {
+    id: 'q_mua',
+    min: 9,
+    max: 15,
+    if: rural,
+    title: 'Ngày mùa',
+    bg: bg('vuon'),
+    text: (x) => [`Trường cho nghỉ một tuần để học sinh về phụ gặt. ${x.year < 2005 ? 'Cả nhà ra đồng từ bốn giờ sáng, gánh lúa về sân phơi.' : 'Máy gặt đập liên hợp vào đến xã, nhưng nhà mình vẫn gặt tay cho đỡ tiền thuê.'}`],
+    choices: [
+      { t: 'Gặt cùng bố mẹ đến tối mịt', do: (fx) => (fx.rel('bome', 8), fx.stat('khoe', 4), fx.stat('hoc', -2)) },
+      { t: 'Trông em, nấu cơm mang ra đồng', do: (fx) => (fx.rel('bome', 5), fx.stat('tinh', 4)) },
+      { t: 'Trốn lên nhà bạn học bài', do: (fx) => (fx.stat('hoc', 6), fx.rel('bome', -4)) },
+    ],
+  },
+  {
+    id: 'q_dihocxa',
+    min: 11,
+    max: 15,
+    if: rural,
+    title: 'Đường đến trường',
+    bg: bg('ngo'),
+    who: cw(),
+    text: (x) => [`Trường cấp hai cách nhà ${x.year < 2000 ? 'mười cây số đường đất' : 'bảy cây số'}. ${x.year < 2000 ? 'Mùa mưa phải lội qua đoạn ngập, xắn quần đến gối.' : 'Sáng nào cũng đạp xe ngược gió.'} ${C(x)} nhà cùng xóm hay đạp xe cạnh ${x.me}.`],
+    choices: [
+      { t: (x) => `Đèo ${C(x)} khi xe bạn hỏng`, do: (fx, x) => (fx.love(crush(x), 8), fx.stat('khoe', 3)) },
+      { t: 'Đạp nhanh cho kịp giờ, không chờ ai', do: (fx) => (fx.stat('hoc', 4), fx.stat('noi', 2)) },
+      { t: 'Xin ở trọ gần trường', do: (fx) => (fx.stat('hoc', 5), fx.rel('bome', -3), fx.stat('tien', -2)) },
+    ],
+  },
+  {
+    id: 'q_tivi',
+    min: 5,
+    max: 10,
+    to: 1998,
+    if: rural,
+    title: 'Cả xóm xem chung tivi',
+    bg: bg('nha', 'night'),
+    text: (x) => [`Cả xóm chỉ nhà ông trưởng thôn có tivi. Tối thứ bảy, trẻ con ngồi chật sân xem phim. Hôm nay ${x.year < 1990 ? 'điện yếu, hình nhòe như mưa' : 'chiếu phim Tây Du Ký'}.`],
+    choices: [
+      { t: 'Đến sớm giành chỗ hàng đầu', do: (fx) => (fx.stat('noi', 3), fx.stat('tam', 4)) },
+      { t: 'Ngồi ngoài cửa sổ, xem ké', do: (fx) => (fx.stat('tinh', 3), fx.stat('tam', 2)) },
+    ],
+  },
+  {
+    id: 'p_tapthe',
+    min: 5,
+    max: 11,
+    to: 2005,
+    if: (x) => x.f.urban,
+    title: 'Khu tập thể',
+    bg: bg('ngo'),
+    who: cw(),
+    text: (x) => [`Nhà ${x.me} ở tầng bốn khu tập thể, cầu thang chung, bể nước chung. Chiều nào lũ trẻ cũng chơi trốn tìm khắp các tầng.`, `${C(x)} ở tầng dưới hay gõ lên trần nhà làm ám hiệu.`],
+    choices: [
+      { t: 'Gõ lại ba tiếng, xuống chơi ngay', do: (fx, x) => (fx.love(crush(x), 8), fx.stat('tam', 3)) },
+      { t: 'Giành chỗ trốn trong kho chứa đồ', do: (fx) => (fx.stat('noi', 4)) },
+      { t: 'Ở nhà làm bài, tối ra chơi sau', do: (fx) => fx.stat('hoc', 4) },
+    ],
+  },
+  {
+    id: 'p_hocthem',
+    min: 8,
+    max: 15,
+    from: 1995,
+    if: (x) => x.f.urban,
+    title: 'Lịch học thêm kín tuần',
+    bg: bg('lop', 'dusk'),
+    text: (x) => [`Thứ hai Toán, thứ ba Anh, thứ tư Văn, thứ năm ${x.year >= 2010 ? 'lập trình robot' : 'đàn'}, thứ sáu lại Toán. Tối nào ${x.mom} cũng đợi ở cổng trung tâm.`],
+    choices: [
+      { t: 'Học hết, cố cho bố mẹ vui', do: (fx) => (fx.stat('hoc', 8), fx.stat('tam', -5), fx.rel('bome', 4)) },
+      { t: 'Xin bỏ bớt một buổi để đi đá bóng', do: (fx) => (fx.stat('tam', 5), fx.stat('khoe', 3), fx.rel('bome', -2)) },
+      { t: 'Trốn học thêm ra quán net', if: (x) => x.year >= 2002, do: (fx) => (fx.stat('noi', 6), fx.stat('hoc', -3)), note: () => 'Hai tuần sau bị cô giáo gọi điện về nhà.' },
+    ],
+  },
+  {
+    id: 'p_truongdiem',
+    min: 14,
+    max: 15,
+    if: (x) => x.f.urban,
+    title: 'Thi vào lớp chuyên',
+    bg: bg('cong'),
+    text: (x) => [`Cả thành phố đổ xô thi vào ${x.f.province === 'Hà Nội' ? 'Ams, chuyên Sư phạm' : x.f.province === 'TP. Hồ Chí Minh' ? 'Lê Hồng Phong, Phổ thông Năng khiếu' : 'trường chuyên của tỉnh'}. Tỉ lệ chọi một chọi mười lăm.`],
+    choices: [
+      { t: 'Ôn ngày ôn đêm, thi bằng được', do: (fx, x) => (x.s.stats.hoc >= 55 ? (fx.stat('hoc', 8), fx.flag('chuyen'), fx.say('Đỗ! Cả họ gọi điện chúc mừng.')) : (fx.stat('tam', -6), fx.say('Trượt, thiếu nửa điểm. Khóc một tuần.'))) },
+      { t: 'Học trường gần nhà cho nhẹ đầu', do: (fx) => (fx.stat('tam', 5)) },
+    ],
+  },
+  {
+    id: 'p_kexe',
+    min: 12,
+    max: 17,
+    from: 2008,
+    if: (x) => x.f.urban && (x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh'),
+    title: 'Ngập và kẹt xe',
+    bg: bg('pho', 'dusk'),
+    who: cw(),
+    text: (x) => [`Mưa một tiếng, phố ngập đến bánh xe. Đường về kẹt cứng hai cây số. ${C(x)} đứng cạnh ${x.me} dưới mái hiên tiệm thuốc.`],
+    choices: [
+      { t: 'Dắt xe lội nước về cùng nhau', do: (fx, x) => (fx.love(crush(x), 8), fx.stat('noi', 3)) },
+      { t: 'Đứng chờ tạnh, mua hai cốc trà chanh', do: (fx, x) => (fx.love(crush(x), 6), fx.stat('tien', -1)) },
+    ],
+  },
+];
+
+const ALL: Life[] = [...SMALL, ...KID, ...TEEN, ...YOUNG, ...PLACE];
 
 /* =========================================================
    NĂM THÁNG TRÔI QUA: chuyện tự xảy ra, không cần chọn (kiểu 1 in 8 Billion)
@@ -1070,6 +1195,18 @@ type Auto = { id: string; min: number; max: number; from?: number; to?: number; 
 const bigCity = (x: Ctx) => x.f.urban && (x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh');
 const kg = (x: Ctx) => (2.6 + (hash(`${x.s.seed ?? 0}kg`) % 11) / 10).toFixed(1).replace('.', ',');
 const AUTO: Auto[] = [
+  // nông thôn và thành phố: những ngày bình thường khác nhau
+  { id: 'q_moc', min: 5, max: 11, if: (x) => !x.f.urban, t: () => 'Theo anh chị đi mò cua bắt ốc ngoài ruộng, về bị mắng vì lấm lem.' },
+  { id: 'q_dien', min: 3, max: 10, to: 2000, if: (x) => !x.f.urban, t: () => 'Xóm mất điện cả tuần. Tối học bài bằng đèn dầu, sáng mũi đen sì.' },
+  { id: 'q_tat', min: 8, max: 13, if: (x) => !x.f.urban, t: () => 'Cả xóm tát ao bắt cá. Được chia một xâu cá rô, xách về khoe cả nhà.' },
+  { id: 'q_cho', min: 6, max: 12, if: (x) => !x.f.urban, t: (x) => `Theo ${x.mom} ra chợ phiên, được mua một cái bánh rán đường.` },
+  { id: 'q_lua', min: 13, max: 17, if: (x) => !x.f.urban, t: () => 'Hè này đi làm thuê ở xưởng gạch trong làng, được mấy chục nghìn, đưa hết cho bố mẹ.', do: (fx) => fx.rel('bome', 3) },
+  { id: 'q_anhemlenpho', min: 15, max: 18, if: (x) => !x.f.urban, t: () => 'Anh họ đi làm công nhân khu công nghiệp về, mặc áo đẹp, cả xóm xúm lại hỏi chuyện thành phố.' },
+  { id: 'p_thangmay', min: 4, max: 9, from: 2005, if: (x) => x.f.urban, t: () => 'Kẹt thang máy chung cư hai mươi phút, từ đó sợ thang máy.' },
+  { id: 'p_sieuthi', min: 3, max: 8, from: 1998, if: (x) => x.f.urban, t: (x) => `Đi siêu thị với ${x.mom}, nằm lăn ra sàn đòi mua siêu nhân.` },
+  { id: 'p_congvien', min: 6, max: 12, if: (x) => x.f.urban, t: () => 'Chủ nhật được bố đèo ra công viên ăn kem ốc quế, đứng xem người ta chụp ảnh cưới.' },
+  { id: 'p_tienvat', min: 13, max: 17, if: (x) => x.f.urban, t: (x) => `Lớp học thêm đầu tiên của năm, học phí bằng ${x.year >= 2010 ? 'cả tháng lương của bà giúp việc' : 'mấy bao gạo'}.` },
+  { id: 'p_shipper', min: 14, max: 17, from: 2016, if: (x) => x.f.urban, t: () => 'Lần đầu tự đặt đồ ăn qua ứng dụng, nửa đêm shipper gọi cửa, cả nhà giật mình.' },
   // 0-2 tuổi
   { id: 'sinh', min: 0, max: 0, t: (x) => `${x.c.name} chào đời ở ${x.f.urban ? (['Hà Nội', 'TP. Hồ Chí Minh'].includes(x.f.province) ? 'bệnh viện phụ sản' : 'bệnh viện tỉnh') : 'trạm xá xã'}${x.f.province ? `, ${x.f.province}` : ''}, nặng ${kg(x)} cân. ${x.f.siblings.some((s) => s.older) ? 'Anh chị ghé đầu vào nôi nhìn mãi.' : 'Cả nhà thay nhau bế.'}` },
   { id: 'daythang', min: 0, max: 0, t: (x) => `Đầy tháng, ${x.bm === 'ông bà' ? 'bà' : 'bà nội'} đặt tên ở nhà là "${['Bống', 'Cún', 'Mít', 'Su', 'Bin', 'Tôm', 'Bơ', 'Na'][hash(`${x.s.seed ?? 0}ten`) % 8]}".` },
@@ -1247,7 +1384,9 @@ export function lifeAt(age: number, n: number, x: Ctx, next: string): Scene {
   const seed = `${x.s.seed ?? 0}|${x.c.name}|${x.c.birthYear}|${x.f.province}|${age}|${n}`;
   const cands = ALL.filter((l) => fits(l, x));
   // xáo ngẫu nhiên cố định theo đời; chuyện chỉ còn năm nay là hết tuổi thì được ưu tiên một chút
-  const score = (l: Life) => (hash(seed + l.id) % 1000) - (l.max === age ? 250 : 0);
+  // chuyện riêng của quê hay phố được ưu tiên, để tuổi thơ hai nơi khác hẳn nhau
+  const local = new Set(PLACE.map((p) => p.id));
+  const score = (l: Life) => (hash(seed + l.id) % 1000) - (l.max === age ? 250 : 0) - (local.has(l.id) ? 450 : 0);
   const l = cands.sort((a, b) => score(a) - score(b))[0];
   if (!l) return { id, age, chapter, title: '', text: () => [], choices: [], next, skip: () => true };
   return {

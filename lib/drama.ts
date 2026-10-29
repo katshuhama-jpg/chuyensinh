@@ -1346,7 +1346,8 @@ export const HIST: Drama[] = [
 
 /** Thời cuộc ở tuổi này (nếu có): dựng thành một cảnh chen trước cảnh `next` */
 export function histAt(age: number, x: Ctx, next: string): Scene | null {
-  const d = HIST.find((h) => fits(h, x));
+  // thời cuộc và chuyện quê hay phố: chen vào đúng năm
+  const d = [...HIST, ...PLACE_DR].find((h) => fits(h, x));
   if (!d) return null;
   return {
     id: `hs@${age}`,
@@ -1561,7 +1562,64 @@ export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
   };
 }
 
-const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...HIST, ...MONEY, ...DON];
+/* =========================================================
+   QUÊ HAY PHỐ: lớn lên rồi vẫn khác
+   ========================================================= */
+const PLACE_DR: Drama[] = [
+  {
+    id: 'q_giuccuoi',
+    pool: 'any',
+    minAge: 20,
+    maxAge: 24,
+    if: (x) => !x.f.urban && !x.s.married && !x.has('daihoc'),
+    callback: true,
+    title: 'Ở quê, hai mươi tuổi là muộn',
+    bg: () => ({ place: 'nha', time: 'day' }),
+    who: () => 'mom',
+    text: (x) => [`Bạn cùng lớp ở xóm đã cưới gần hết, có đứa bế con thứ hai. ${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} bảo: "Nhà ông Tư có ${x.lg === 'm' ? 'thằng con' : 'đứa con gái'} hiền lành, mai sang chơi."`],
+    choices: [
+      { t: 'Gặp thử cho mẹ vui', do: (fx) => (fx.rel('bome', 8), fx.flag('q_gapthu')), note: () => '🦋 Gặp một lần, cả xóm đã đồn hai đứa sắp cưới.' },
+      { t: 'Xin lên thành phố làm vài năm đã', do: (fx) => (fx.flag('q_lenpho'), fx.rel('bome', -6), fx.stat('noi', 5)) },
+      { t: '"Con có người trong lòng rồi"', if: (x) => x.s.met.some((id) => x.s.love[id] >= 40), do: (fx) => (fx.rel('bome', -2), fx.stat('tinh', 4)) },
+    ],
+  },
+  {
+    id: 'q_kcn',
+    pool: 'any',
+    minAge: 18,
+    maxAge: 21,
+    from: 1998,
+    if: (x) => !x.f.urban && !x.has('daihoc'),
+    callback: true,
+    title: 'Lên khu công nghiệp',
+    bg: () => ({ place: 'pho', time: 'dusk' }),
+    who: () => null,
+    text: (x) => [`Nửa làng thanh niên đã đi làm công nhân ở khu công nghiệp ${x.year >= 2010 ? 'Bắc Ninh, Bình Dương' : 'Đồng Nai, Bình Dương'}. Lương tháng gấp ba làm ruộng, ở trọ mười người một phòng.`],
+    choices: [
+      { t: 'Khăn gói lên đường', do: (fx, x) => (fx.flag('dilam'), fx.flag('q_congnhan'), fx.cash(unitOf(x.year, x.age) * 4), fx.rel('bome', -4), fx.stat('khoe', -3)), note: () => '🦋 Ca đêm ở xưởng, ai cũng tìm một người để dựa vào.' },
+      { t: 'Ở lại làm ruộng, đỡ đần bố mẹ', do: (fx) => (fx.flag('o_que'), fx.rel('bome', 8), fx.stat('tinh', 4)) },
+      { t: 'Học nghề sửa xe, may, làm tóc ở thị trấn', do: (fx) => (fx.flag('dilam'), fx.stat('hoc', 4), fx.stat('tien', 4)) },
+    ],
+  },
+  {
+    id: 'p_onhabome',
+    pool: 'any',
+    minAge: 25,
+    maxAge: 33,
+    if: (x) => x.f.urban && (x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh'),
+    title: 'Ở với bố mẹ hay ra riêng',
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: (x) => (x.s.partner ?? 'mom') as ReturnType<NonNullable<Scene['who']>>,
+    text: (x) => [`Giá thuê căn hộ một phòng ở ${x.f.province} bằng nửa tháng lương. Nhà bố mẹ thì ba thế hệ chung một tầng, đi đâu về muộn cũng có người hỏi.${x.s.married ? ` ${sp(x)} không nói, nhưng thở dài mỗi tối.` : ''}`],
+    choices: [
+      { t: 'Ở với bố mẹ, để dành tiền mua nhà', do: (fx, x) => (fx.cash(unitOf(x.year, x.age) * 6), fx.rel('bome', 4), x.s.married ? lv(fx, x, -6) : fx.stat('tam', -3)) },
+      { t: 'Thuê riêng, tự do là trên hết', do: (fx, x) => (fx.cash(-unitOf(x.year, x.age) * 4), fx.stat('tam', 6), x.s.married ? lv(fx, x, 8) : fx.stat('noi', 3)) },
+      { t: 'Chuyển ra ngoại thành, rẻ mà xa', do: (fx) => (fx.stat('khoe', -2), fx.stat('tien', 3)) },
+    ],
+  },
+];
+
+const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...HIST, ...MONEY, ...PLACE_DR, ...DON];
 export const DRAMA_IDS = ALL.map((d) => d.id);
 
 function hash(s: string) {

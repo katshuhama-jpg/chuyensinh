@@ -18,7 +18,7 @@ import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
 import { memoLine } from './story';
 import { bankruptAt, histAt } from './drama';
-import { annivAgeIn, midlifeAt } from './midlife';
+import { annivAgeIn, branchAt, midlifeAt } from './midlife';
 import { moneyFit, moneyLabelOf, moneyLoveScene, windfallAt } from './lovemoney';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
@@ -1051,6 +1051,7 @@ const list: Scene[] = [
       { t: 'Sinh con ngay năm nay', do: (fx, x) => (fx.kids(1), fx.rel('con', 55), fx.stat('tien', -10), hasPartner(x) && fx.love(P(x), 5)), sys: 'Đinh! Mở khóa danh hiệu "Phụ huynh mất ngủ". Bản Hệ Thống xin phép làm bảo mẫu ảo.' },
       { t: 'Đợi mua được nhà rồi mới sinh', do: (fx) => (fx.kids(1), fx.rel('con', 45), fx.stat('tien', 10)) },
       { t: 'Sinh hai đứa cho vui nhà', do: (fx) => (fx.kids(2), fx.rel('con', 55), fx.stat('tien', -20), fx.stat('tam', -5)) },
+      { t: (x) => (x.f.urban ? 'Sinh ba đứa, nhà đông mới vui' : 'Sinh ba đứa, ở quê có đất có vườn, lo gì'), do: (fx) => (fx.kids(3), fx.rel('con', 50), fx.stat('tien', -28), fx.stat('tam', -8), fx.stat('khoe', -4)), sys: 'Đinh! Ký chủ vừa mở chế độ "nhà trẻ tại gia". Bản Hệ Thống cầu chúc sức khỏe.' },
       { t: 'Chưa muốn có con', do: (fx, x) => (fx.kids(0), fx.stat('tam', 5), hasPartner(x) && fx.love(P(x), -5)) },
     ],
     next: 'dr@34',
@@ -2217,6 +2218,11 @@ export function resolverOf(c: Character, f: Family): Resolve {
     if (an !== null) {
       const ma = midlifeAt(an, ctxOf(c, f, s, an), id);
       if (ma) return ma;
+    }
+    // ngã rẽ sau cưới (nhà, xe, làm ăn, con cái) đến hạn: chen vào đúng năm
+    for (let a = last + 1; a <= sc.age; a++) {
+      const br = branchAt(a, ctxOf(c, f, s, a), id);
+      if (br) return br;
     }
     // những năm giữa đời không có chuyện lớn: vẫn sống từng năm, có dòng tự trôi và thỉnh thoảng dừng hỏi
     if (sc.age > last + 1) {

@@ -5,7 +5,7 @@
  */
 
 import { LOVE_IDS, type Ctx, type Fx, type LoveId, type Scene } from './story';
-import { fmtVND, unitOf } from './money';
+import { fmtVND, priceAt, unitOf } from './money';
 import { xemmatName } from './names';
 import { newsOfLoves } from './lives';
 import { newsOf } from './world';
@@ -217,4 +217,270 @@ export function midlifeAt(age: number, x: Ctx, next: string): Scene | null {
     feed: (cx) => lines(cx).map((t) => ({ age, year: cx.year, t })),
     choices: [{ t: '▶ Sống tiếp' }],
   };
+}
+
+/* =========================================================
+   NGÃ RẼ SAU CƯỚI: mua nhà hay mua xe, vay vốn làm ăn, thuê nhà, đẻ mấy đứa.
+   Mỗi lựa chọn mở một nhánh riêng, vài năm sau rẽ tiếp thành nhánh mới.
+   ========================================================= */
+type Branch = { id: string; due: (x: Ctx) => boolean; scene: (x: Ctx, base: Pick<Scene, 'id' | 'age' | 'chapter' | 'next'>) => Scene };
+/** tuổi lúc cờ được cắm (cờ dạng ten_<tuổi>) */
+const since = (x: Ctx, pre: string) => {
+  const f = x.s.flags.find((g) => g.startsWith(pre) && /\d+$/.test(g));
+  return f ? x.age - Number(f.slice(pre.length)) : -1;
+};
+/** tiền trả trước khi mua nhà trả góp: thành phố lớn đắt gấp đôi tỉnh */
+const downOf = (x: Ctx) => priceAt(x.f.province === 'Hà Nội' || x.f.province === 'TP. Hồ Chí Minh' ? 500_000_000 : 200_000_000, x.year);
+const roll = (x: Ctx, k: string) => pick(x, k, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+const who = (x: Ctx) => (x.s.partner ?? null) as ReturnType<NonNullable<Scene['who']>>;
+
+const BRANCHES: Branch[] = [
+  {
+    // khoản tiền lớn đầu tiên sau cưới
+    id: 'br_mua',
+    due: (x) => x.s.married && ym(x) >= 2 && x.age >= 25 && !x.has('br_mua'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Khoản để dành đầu tiên',
+      who,
+      bg: () => ({ place: 'nha', time: 'night' }),
+      text: (cx) => [
+        `Cưới được ${ym(cx)} năm, hai vợ chồng ngồi tính sổ. ${cash(cx) > 0 ? `Trong tài khoản có ${fmtVND(cash(cx))}.` : 'Tiền để dành chưa được bao nhiêu.'}`,
+        cx.f.urban ? `Giá nhà ${cx.f.province} mỗi năm một cao. Bạn bè thì đứa mua xe, đứa mở quán.` : `Bố mẹ bảo: "Đất nhà còn một mảnh, về đây mà xây." Bạn bè trên phố thì rủ góp vốn làm ăn.`,
+        `${sp(cx)} hỏi: "Mình làm gì với số tiền này?"`,
+      ],
+      choices: [
+        {
+          t: (cx) => `Mua căn hộ trả góp hai mươi năm (trả trước ${fmtVND(downOf(cx))})`,
+          if: (cx) => (cx.f.urban || cx.has('daihoc')) && cash(cx) >= downOf(cx),
+          do: (fx, cx) => (fx.flag('br_mua'), fx.flag(`nha_gop_${cx.age}`), fx.flag('ms_nha'), fx.flag('nha_chung'), fx.cash(-downOf(cx)), lv(fx, cx, 6), fx.stat('tam', 4)),
+          note: () => '🦋 Có nhà rồi. Hai mươi năm tới, tháng nào cũng có một khoản trả góp.',
+        },
+        {
+          t: (cx) => `Về quê xây nhà trên đất bố mẹ cho (${fmtVND(priceAt(250_000_000, cx.year))}, thiếu thì vay)`,
+          if: (cx) => !cx.f.urban,
+          do: (fx, cx) => (fx.flag('br_mua'), fx.flag('nha_xay'), fx.flag('ms_nha'), fx.flag('o_que'), fx.cash(-priceAt(250_000_000, cx.year)), fx.rel('bome', 10), lv(fx, cx, cx.c.gender === 'f' ? -4 : 4)),
+          note: (cx) => (cx.c.gender === 'f' ? '🦋 Ở gần nhà chồng, chuyện mẹ chồng nàng dâu sẽ khác.' : '🦋 Ở gần bố mẹ, nhưng việc làm thì xa.'),
+        },
+        {
+          t: (cx) => `Mua ô tô cũ (${fmtVND(priceAt(250_000_000, cx.year))})`,
+          if: (cx) => cx.year >= 2005 && cash(cx) >= priceAt(250_000_000, cx.year),
+          do: (fx, cx) => (fx.flag('br_mua'), fx.flag(`oto_${cx.age}`), fx.flag('oto'), fx.flag('ms_xe'), fx.cash(-priceAt(250_000_000, cx.year)), fx.stat('duyen', 4), lv(fx, cx, 4)),
+          note: () => '🦋 Có xe rồi thì đi đâu cũng tiện. Mà tiền xăng, tiền gửi xe cũng đều tay.',
+        },
+        {
+          t: (cx) => `Vay thêm, mở ${cx.year >= 2015 ? 'cửa hàng online kiêm kho hàng' : cx.year >= 2000 ? 'cửa hàng' : 'sạp hàng ở chợ'} (${fmtVND(priceAt(150_000_000, cx.year))} vốn)`,
+          do: (fx, cx) => (fx.flag('br_mua'), fx.flag(`kd_${cx.age}`), fx.cash(-priceAt(150_000_000, cx.year)), fx.stat('noi', 6)),
+          note: () => '🦋 Làm chủ thì không ai sai bảo. Nhưng cũng không ai trả lương.',
+        },
+        {
+          t: 'Cứ thuê nhà, gửi tiết kiệm cho chắc',
+          do: (fx, cx) => (fx.flag('br_mua'), fx.flag(`thue_${cx.age}`), fx.stat('hoc', 3), lv(fx, cx, -2)),
+        },
+      ],
+    }),
+  },
+  {
+    // trả góp nhà: lãi suất tăng
+    id: 'br_laisuat',
+    due: (x) => since(x, 'nha_gop_') >= 4 && !x.has('br_laisuat'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Lãi suất thả nổi',
+      who,
+      bg: () => ({ place: 'nha', time: 'night' }),
+      text: (cx) => [`Hết ưu đãi, lãi vay mua nhà nhảy lên gần gấp đôi. Mỗi tháng trả góp ngốn quá nửa lương hai vợ chồng.${cx.s.kids ? ' Con lại sắp vào học.' : ''}`],
+      choices: [
+        { t: 'Cả hai làm thêm buổi tối, gồng tiếp', do: (fx, cx) => (fx.flag('br_laisuat'), fx.cash(U(cx) * 6), fx.stat('khoe', -6), lv(fx, cx, 4)), note: () => 'Ba năm không đi đâu chơi. Nhưng căn nhà vẫn là của mình.' },
+        { t: 'Cho thuê bớt một phòng', do: (fx, cx) => (fx.flag('br_laisuat'), fx.cash(U(cx) * 4), lv(fx, cx, -4), fx.stat('tam', -3)) },
+        {
+          t: 'Bán nhà, quay lại đi thuê',
+          do: (fx, cx) => {
+            fx.flag('br_laisuat');
+            fx.unflag('ms_nha');
+            for (const g of cx.s.flags) if (g.startsWith('nha_gop_')) fx.unflag(g);
+            fx.flag(`thue_${cx.age}`);
+            fx.cash(U(cx) * 14);
+            lv(fx, cx, -6);
+          },
+          note: () => '🦋 Bán xong thì nhẹ nợ. Nhưng lại bắt đầu những năm chuyển trọ.',
+        },
+      ],
+    }),
+  },
+  {
+    // xe nhà: chuyến đi xa, hoặc gánh nặng
+    id: 'br_oto',
+    due: (x) => since(x, 'oto_') >= 3 && !x.has('br_oto'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Chiếc xe nhà mình',
+      who,
+      bg: () => ({ place: 'pho', time: 'dusk' }),
+      text: (cx) => [`Xe mua được ba năm. ${cx.s.kids ? 'Con đòi đi biển từ đầu hè.' : `${sp(cx)} bảo lâu lắm rồi hai người chưa đi đâu xa.`} Còn tiền xăng, tiền bảo dưỡng, tiền gửi xe thì tháng nào cũng đều tay.`],
+      choices: [
+        {
+          t: 'Cả nhà lái xe xuyên Việt một tuần',
+          do: (fx, cx) => (fx.flag('br_oto'), fx.cash(-U(cx) * 2), lv(fx, cx, 12), cx.s.kids ? fx.rel('con', 10) : fx.stat('tam', 6), pid(cx) && fx.photo({ who: pid(cx)!, place: 'Chuyến xuyên Việt', bg: { place: 'pho', time: 'dusk' }, line: 'Đèo Hải Vân, gió lộng, cả nhà hát sai lời một bài hát cũ.' })),
+          note: () => '▣ Một tấm ảnh vừa vào album kỷ niệm.',
+        },
+        { t: 'Bán xe, đi xe máy cho nhẹ', do: (fx, cx) => (fx.flag('br_oto'), fx.unflag('oto'), fx.unflag('ms_xe'), fx.cash(U(cx) * 7), fx.stat('tam', 2)) },
+        { t: 'Chạy xe công nghệ cuối tuần cho xe tự nuôi xe', if: (cx) => cx.year >= 2016, do: (fx, cx) => (fx.flag('br_oto'), fx.cash(U(cx) * 5), fx.stat('khoe', -3), lv(fx, cx, -3)) },
+      ],
+    }),
+  },
+  {
+    // làm ăn năm thứ ba
+    id: 'br_kd',
+    due: (x) => since(x, 'kd_') >= 3 && !x.has('br_kd'),
+    scene: (x, base) => {
+      const good = x.s.stats.tien + x.s.stats.hoc + roll(x, 'kd') * 8 >= 110;
+      return {
+        ...base,
+        title: good ? 'Làm ăn khấm khá' : 'Cửa hàng ế ẩm',
+        who,
+        bg: () => ({ place: 'quan', time: 'day' }),
+        text: (cx) => [
+          good ? `Năm thứ ba, cửa hàng có khách quen, tháng nào cũng có lãi. Có người gợi ý vay thêm mở chi nhánh thứ hai.` : `Năm thứ ba, cửa hàng vẫn lỗ. Tiền vay ngân hàng đến hạn, ${sp(cx)} bắt đầu mất ngủ.`,
+        ],
+        choices: good
+          ? [
+              { t: 'Vay thêm, mở chi nhánh thứ hai', do: (fx, cx) => (fx.flag('br_kd'), fx.flag(`kd2_${cx.age}`), fx.cash(-U(cx) * 25), fx.stat('noi', 6)), note: () => '🦋 Lớn hơn thì lãi to hơn. Lỗ cũng to hơn.' },
+              { t: 'Giữ nhỏ thôi, chắc ăn', do: (fx, cx) => (fx.flag('br_kd'), fx.cash(U(cx) * 12), lv(fx, cx, 6)) },
+              { t: 'Bán lại cửa hàng được giá, nghỉ ngơi', do: (fx, cx) => (fx.flag('br_kd'), fx.cash(U(cx) * 30), fx.stat('tam', 6)) },
+            ]
+          : [
+              { t: 'Đóng cửa, cắt lỗ, đi làm thuê lại', do: (fx, cx) => (fx.flag('br_kd'), fx.cash(-U(cx) * 6), fx.stat('tam', -4), fx.stat('hoc', 4)) },
+              { t: 'Vay tiếp, gồng thêm', do: (fx, cx) => (fx.flag('br_kd'), roll(cx, 'kd2') >= 6 ? (fx.cash(U(cx) * 20), fx.say('Năm sau thị trường quay lại. Gồng được thì thắng.')) : (fx.cash(-U(cx) * 30), fx.stat('tam', -10), fx.say('Gồng thêm một năm, nợ gấp đôi.'))) },
+              { t: (cx) => `Nhờ ${sp(cx)} bán vàng cưới cứu`, if: (cx) => cx.s.married, do: (fx, cx) => (fx.flag('br_kd'), fx.cash(U(cx) * 6), lv(fx, cx, x.s.stats.tam >= 45 ? 6 : -10)) },
+            ],
+      };
+    },
+  },
+  {
+    // chi nhánh thứ hai: giàu to hay vỡ to
+    id: 'br_kd2',
+    due: (x) => since(x, 'kd2_') >= 3 && !x.has('br_kd2'),
+    scene: (x, base) => {
+      const win = roll(x, 'kd3') + x.s.stats.tien / 20 >= 7;
+      return {
+        ...base,
+        title: win ? 'Chuỗi cửa hàng' : 'Vỡ nợ chi nhánh',
+        who,
+        bg: () => ({ place: 'pho', time: 'day' }),
+        text: () => [win ? 'Hai cửa hàng thành năm. Báo địa phương viết bài về "doanh nhân trẻ". Họ hàng bắt đầu gọi điện nhờ vả.' : 'Chi nhánh mới vắng khách, kéo sập luôn cửa hàng đầu. Nhà cung cấp kéo đến đòi nợ.'],
+        choices: win
+          ? [
+              { t: 'Mua nhà to, đón bố mẹ lên ở cùng', do: (fx, cx) => (fx.flag('br_kd2'), fx.cash(U(cx) * 40), fx.flag('ms_nha'), fx.rel('bome', 12)) },
+              { t: 'Giữ tiền, chia lãi cho nhân viên', do: (fx, cx) => (fx.flag('br_kd2'), fx.cash(U(cx) * 60), fx.stat('tinh', 6)) },
+              { t: 'Ăn mừng, đổi xe sang, sống như người giàu', do: (fx, cx) => (fx.flag('br_kd2'), fx.cash(U(cx) * 30), fx.stat('noi', 6), lv(fx, cx, -4), fx.flag('giau_khoe')), note: () => '🦋 Tiền nhiều thì người tìm đến cũng nhiều.' },
+            ]
+          : [
+              { t: 'Bán hết, trả nợ, làm lại từ con số không', do: (fx, cx) => (fx.flag('br_kd2'), fx.cash(-U(cx) * 20), fx.stat('tam', -8)) },
+              { t: 'Vay nóng bên ngoài để cứu', do: (fx, cx) => (fx.flag('br_kd2'), fx.cash(-U(cx) * 50), fx.stat('tam', -12)), note: () => '🦋 Lãi vay nóng không ngủ bao giờ.' },
+            ],
+      };
+    },
+  },
+  {
+    // đi thuê: chủ nhà lấy lại nhà
+    id: 'br_thue',
+    due: (x) => since(x, 'thue_') >= 4 && !x.has('br_thue') && !x.has('ms_nha'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Chủ nhà lấy lại nhà',
+      who,
+      bg: () => ({ place: 'pho', time: 'day' }),
+      text: (cx) => [`Chủ nhà báo trước một tháng: con trai họ cưới vợ, cần lại căn nhà. Lại một lần chuyển trọ${cx.s.kids ? ', con lại phải đổi trường' : ''}.`],
+      choices: [
+        { t: (cx) => `Dồn hết tiền, mua căn nhỏ ở ngoại ô trả góp (trả trước ${fmtVND(downOf(cx) / 2)})`, if: (cx) => cash(cx) >= downOf(cx) / 2, do: (fx, cx) => (fx.flag('br_thue'), fx.flag(`nha_gop_${cx.age}`), fx.flag('ms_nha'), fx.cash(-downOf(cx) / 2), lv(fx, cx, 6)) },
+        { t: 'Chuyển ra ngoại thành, rẻ hơn mà xa hơn', do: (fx, cx) => (fx.flag('br_thue'), fx.cash(U(cx) * 2), fx.stat('khoe', -3)) },
+        { t: (cx) => (cx.f.urban ? 'Thôi, cả nhà về quê' : 'Về quê, xây nhà trên đất bố mẹ'), do: (fx, cx) => (fx.flag('br_thue'), fx.flag('o_que'), fx.flag('ms_nha'), fx.cash(-U(cx) * 6), fx.rel('bome', 10), fx.stat('tam', 4)) },
+      ],
+    }),
+  },
+  {
+    // một con: có sinh thêm không
+    id: 'br_them',
+    due: (x) => x.s.married && x.s.kids === 1 && x.age >= 36 && x.age <= 41 && !x.has('br_them'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Thêm một đứa nữa?',
+      who,
+      bg: () => ({ place: 'nha', time: 'dusk' }),
+      text: (cx) => [`Con đầu đã đi học. ${cx.year < 2005 ? 'Ông bà giục: "Sinh thêm đứa nữa cho có anh có em."' : `Đứa nhỏ hỏi: "Sao bạn con có em mà con không có?"`} ${sp(cx)} nhìn ${cx.me}, chờ.`],
+      choices: [
+        { t: 'Sinh thêm một đứa', do: (fx, cx) => (fx.flag('br_them'), fx.kids(2), fx.rel('con', 6), fx.stat('khoe', -3), lv(fx, cx, 6)), note: () => '🦋 Nhà có hai đứa, chuyện cũng gấp đôi.' },
+        { t: 'Một là đủ, dồn sức cho con', do: (fx, cx) => (fx.flag('br_them'), fx.rel('con', 4), lv(fx, cx, -2)) },
+      ],
+    }),
+  },
+  {
+    // chưa có con: chọn đường nào
+    id: 'br_khongcon',
+    due: (x) => x.s.married && !x.s.kids && x.age >= 37 && x.age <= 44 && !x.has('br_khongcon'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Nhà chỉ có hai người',
+      who,
+      bg: () => ({ place: 'nha', time: 'night' }),
+      text: (cx) => [`${cx.age} tuổi, nhà vẫn chỉ có hai người. Họ hàng hỏi mãi, ${cx.c.gender === 'f' ? 'mẹ chồng' : 'mẹ vợ'} thì đi chùa cầu tự.`, `${sp(cx)} hỏi nhỏ: "Mình có muốn thật không?"`],
+      choices: [
+        {
+          t: (cx) => `Đi làm thụ tinh nhân tạo (${fmtVND(U(cx) * 15)})`,
+          if: (cx) => cx.year >= 2000,
+          do: (fx, cx) => {
+            fx.flag('br_khongcon');
+            fx.cash(-U(cx) * 15);
+            if (roll(cx, 'ivf') >= 4) (fx.kids(1), fx.rel('con', 60), lv(fx, cx, 10), fx.say('Lần thứ hai thì có tin vui. Hai người ôm nhau khóc ở hành lang bệnh viện.'));
+            else (lv(fx, cx, 4), fx.stat('tam', -8), fx.say('Ba lần, ba lần không được. Nhưng hai người vẫn nắm tay nhau về.'));
+          },
+        },
+        { t: 'Nhận một đứa trẻ về nuôi', do: (fx, cx) => (fx.flag('br_khongcon'), fx.flag('connuoi'), fx.kids(1), fx.rel('con', 50), lv(fx, cx, 8)), note: () => '🦋 Không cùng máu mủ, nhưng cùng một mái nhà.' },
+        { t: 'Sống hai vợ chồng son, đi khắp nơi', do: (fx, cx) => (fx.flag('br_khongcon'), fx.flag('vcson'), lv(fx, cx, 8), fx.stat('tam', 8)), note: () => '🦋 Năm nào cũng một chuyến đi xa, chỉ hai người.' },
+      ],
+    }),
+  },
+  {
+    // hai đứa trở lên: anh em tranh nhau
+    id: 'br_anhem',
+    due: (x) => (x.s.kids ?? 0) >= 2 && x.age >= 41 && x.age <= 48 && !x.has('br_anhem'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Hai đứa lại cãi nhau',
+      who: () => 'mom',
+      bg: () => ({ place: 'nha', time: 'day' }),
+      text: (cx) => [`Đứa lớn bảo bố mẹ thiên vị em. Đứa nhỏ khóc vì anh chị giành ${cx.year >= 2012 ? 'cái máy tính bảng' : 'cái tivi'}.${(cx.s.kids ?? 0) >= 3 ? ' Đứa thứ ba thì nhân lúc lộn xộn ăn hết bánh.' : ''}`],
+      choices: [
+        { t: 'Ngồi nghe từng đứa nói', do: (fx) => (fx.flag('br_anhem'), fx.rel('con', 10), fx.stat('tinh', 4)) },
+        { t: 'Phạt cả hai cho công bằng', do: (fx) => (fx.flag('br_anhem'), fx.rel('con', -4), fx.stat('noi', 2)) },
+        { t: 'Cho đứa lớn đi học xa, đứa nhỏ ở nhà', do: (fx, cx) => (fx.flag('br_anhem'), fx.cash(-U(cx) * 6), fx.rel('con', 2)) },
+      ],
+    }),
+  },
+  {
+    // ba đứa: học phí
+    id: 'br_bacon',
+    due: (x) => (x.s.kids ?? 0) >= 3 && x.age >= 44 && x.age <= 50 && !x.has('br_bacon'),
+    scene: (x, base) => ({
+      ...base,
+      title: 'Học phí ba đứa',
+      who,
+      bg: () => ({ place: 'nha', time: 'night' }),
+      text: (cx) => [`Đầu năm học, ba bộ sách, ba suất học thêm, ba bộ đồng phục. Cộng lại hết ${fmtVND(U(cx) * 6)}.`],
+      choices: [
+        { t: 'Vay thêm cho con học đủ', do: (fx, cx) => (fx.flag('br_bacon'), fx.cash(-U(cx) * 6), fx.rel('con', 8)) },
+        { t: 'Bớt học thêm, tự kèm con buổi tối', do: (fx) => (fx.flag('br_bacon'), fx.stat('khoe', -3), fx.rel('con', 6)) },
+        { t: 'Đứa lớn nghỉ học sớm, đi làm phụ', do: (fx) => (fx.flag('br_bacon'), fx.rel('con', -12), fx.stat('tien', 4)), note: () => '🦋 Đứa lớn sẽ nhớ chuyện này cả đời.' },
+      ],
+    }),
+  },
+];
+
+/** ngã rẽ sau cưới đến hạn ở tuổi này */
+export function branchAt(age: number, x: Ctx, next: string): Scene | null {
+  if (age < 22 || age > 60) return null;
+  const b = BRANCHES.find((r) => r.due(x));
+  if (!b) return null;
+  return b.scene(x, { id: `br@${age}`, age, chapter: age < 30 ? 'Tuổi trẻ' : 'Lập gia đình', next });
 }

@@ -5,6 +5,8 @@ import { FIRST_SCENE, resolverOf } from '../lib/scenes';
 import { commit } from '../lib/board';
 import { ctxOf, txt, visibleChoices } from '../lib/story';
 const fate = rollFate();
+if (process.argv[3] === 'que') fate.family = { ...fate.family, urban: false, province: 'Nghệ An', district: undefined };
+if (process.argv[3] === 'pho') fate.family = { ...fate.family, urban: true, province: 'Hà Nội', district: undefined };
 const c = { ...defaultCharacter(fate.gender), name: fate.name, birthYear: Number(process.argv[2]) || fate.birthYear };
 const R = resolverOf(c, fate.family);
 let s = newStory(fate, FIRST_SCENE);
