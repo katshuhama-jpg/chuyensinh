@@ -4441,3 +4441,37 @@ p {
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* khung ngã rẽ đóng lại: trượt xuống, mờ dần (bản chụp nội dung cuối, không bấm được) */
+.lb-veil.out {
+  pointer-events: none;
+  animation: lb-fade-out 0.26s ease-in both;
+}
+.lb-veil.out .lb-sheet {
+  animation: lb-down 0.26s cubic-bezier(0.4, 0, 1, 1) both;
+}
+@keyframes lb-fade-out {
+  to {
+    background: rgba(20, 14, 30, 0);
+  }
+}
+@keyframes lb-down {
+  to {
+    transform: translateY(30%);
+    opacity: 0;
+  }
+}
+/* dòng nhắc nổi ở trên cùng, không đè lên nhật ký hay lựa chọn */
+.lb-toast {
+  top: calc(10px + env(safe-area-inset-top));
+  bottom: auto;
+  background: var(--bg-deep);
+  box-shadow: 0 0 0 3px var(--accent), 4px 4px 0 3px rgba(0, 0, 0, 0.45);
+  animation: lb-toast-in 0.25s ease-out both;
+}
+@keyframes lb-toast-in {
+  from {
+    transform: translate(-50%, -16px);
+    opacity: 0;
+  }
+}

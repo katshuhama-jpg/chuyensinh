@@ -172,7 +172,8 @@ function Board({
       const f = onCommit(i, note);
       setFb(null);
       const msg = f && !quiet ? [...f.sys, ...f.notes][0] : null;
-      if (msg) setToast(msg);
+      // đang trong chuỗi ngã rẽ thì gom lại, hiện ba dòng gần nhất khi khung đóng
+      if (msg) setToast((t) => (t ? `${t}\n${msg}`.split('\n').slice(-3).join('\n') : msg));
     },
     [onCommit, setFb],
   );
@@ -182,15 +183,17 @@ function Board({
     if (age > prevAge.current && !isFeed) {
       const n = age - prevAge.current;
       const line = `⏩ ${n > 1 ? `${n} năm trôi qua` : 'Một năm trôi qua'}. Năm ${char.birthYear + age}, ${x.me} ${age} tuổi.`;
-      setToast((t) => (t ? `${t}\n${line}` : line));
+      setToast((t) => (t ? `${t}\n${line}`.split('\n').slice(-3).join('\n') : line));
     }
     prevAge.current = age;
   }, [age]); // eslint-disable-line react-hooks/exhaustive-deps
+  // dòng nhắc chỉ hiện khi không có khung ngã rẽ che, và chỉ đếm giờ lúc đang hiện
+  const [toastHold, setToastHold] = useState(false);
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toastHold) return;
     const t = setTimeout(() => setToast(null), 4500);
     return () => clearTimeout(t);
-  }, [toast]);
+  }, [toast, toastHold]);
 
   // đồng hồ: mỗi nhịp hiện một năm; hết các năm thì sang cảnh tiếp
   useEffect(() => {
@@ -227,6 +230,15 @@ function Board({
   const pending = isFeed ? lines.slice(0, shown) : [];
   const log = [...(story.log ?? []), ...pending.map((l) => ({ ...l, k: 'feed' as const }))].reverse();
   const decide = !!sc && born && ((!isFeed && (!auto || stop)) || !!fb);
+  // khung ngã rẽ: giữ lại một nhịp khi đóng để trượt xuống êm; ngã rẽ kế tiếp đến ngay thì chỉ đổi nội dung, không trượt lại
+  const [sheetOn, setSheetOn] = useState(decide);
+  const lastSheet = useRef<ReactNode>(null);
+  useEffect(() => {
+    setToastHold(decide);
+    if (decide) return setSheetOn(true);
+    const t = setTimeout(() => setSheetOn(false), 260);
+    return () => clearTimeout(t);
+  }, [decide]);
   const xa = ctxOf(char, family, story, curAge);
   const tally = tallyOf(story);
   const span = Math.max(80, lifespanOf(char, story));
@@ -398,15 +410,21 @@ function Board({
         />
       )}
 
-      {toast && (
+      {toast && !decide && (
         <div className="lb-toast px" role="status" onClick={() => setToast(null)}>
           {toast}
         </div>
       )}
 
+      {!decide && sheetOn && lastSheet.current && (
+        <div className="lb-veil out" aria-hidden="true">
+          <div className="lb-sheet px">{lastSheet.current}</div>
+        </div>
+      )}
+
       {decide && (
         <div className="lb-veil">
-          <div className="lb-sheet px" role="dialog" aria-modal="true" aria-label="Một ngã rẽ">
+          <div className="lb-sheet px" role="dialog" aria-modal="true" aria-label="Một ngã rẽ" ref={(el) => void (el && (lastSheet.current = <div dangerouslySetInnerHTML={{ __html: el.innerHTML }} />))}>
             <div className="lb-sh">
               <span>
                 {fb ? 'CHUYỆN VỪA XẢY RA' : 'MỘT NGÃ RẼ'} · {age} tuổi · {char.birthYear + age}
