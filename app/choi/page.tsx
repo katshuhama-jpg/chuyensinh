@@ -1508,12 +1508,13 @@ function MilestoneSheet({ m, x, onPick }: { m: Milestone; x: Ctx; onPick: (i: nu
         <h2 className="ms-title">{m.title(x)}</h2>
         <p className="mt-hint">{m.sub(x)}</p>
         <p className="ms-wallet">
-          {mByParents(m) ? 'Bố mẹ có thể lo cho con' : 'Tài sản đang có'}: <b>{fmtVND(have)}</b>
+          {mByParents(m) ? 'Bố mẹ có thể lo cho con' : have < 0 ? 'Đang nợ' : 'Tài sản đang có'}: <b>{fmtVND(have)}</b>
         </p>
         <div className="choices lb-acts">
           {opts.map((o, i) => {
             const cost = mPrice(m, o, x);
-            const lock = cost > have;
+            // không tốn tiền thì luôn chọn được (kể cả khi đang nợ)
+            const lock = cost > 0 && cost > have;
             return (
               <button key={i} type="button" className={`opt px ms-opt ${lock ? 'lock' : ''}`} disabled={lock} onClick={() => onPick(i)}>
                 <b>{txt(o.t, x)}</b>
