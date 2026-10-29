@@ -4,7 +4,7 @@
  * Nội dung cảnh nằm ở lib/scenes.ts.
  */
 
-import { fmtVND as fmtMoney, savingOf, unitOf } from './money';
+import { fmtGold, fmtVND as fmtMoney, goldPrice, savingOf, unitOf } from './money';
 import type { Character, Family, Gender, Look } from './character';
 import type { Bg } from '@/components/Backdrop';
 
@@ -125,6 +125,10 @@ export interface StoryCore {
   memo?: { age: number; who: LoveId; t: string; d: number; used?: boolean }[];
   /** tài sản bằng tiền thật (VNĐ), cộng dồn theo năm; âm là đang nợ */
   cash?: number;
+  /** tuổi của mình lúc từng đứa con chào đời */
+  kidBorn?: number[];
+  /** vàng cưới còn giữ (chỉ) */
+  gold?: number;
 }
 
 export interface LogLine {
@@ -283,6 +287,10 @@ export interface Fx {
   /** xóa nợ, làm lại từ con số không */
   clearDebt: () => void;
   kids: (n: number) => void;
+  /** thêm/bớt vàng (chỉ) */
+  gold: (chi: number) => void;
+  /** bán vàng (cả, hoặc `chi` chỉ): tiền vào tài khoản, trả về số tiền bán được */
+  sellGold: (chi?: number) => number;
   /** chụp một tấm ảnh vào album kỷ niệm */
   photo: (p: Omit<Photo, 'age' | 'year'>) => void;
   loveEnd: (id: string) => void;
@@ -420,12 +428,27 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
       s.loveEnd = null;
     },
     divorce: () => {
-      if (s.partner && s.partner !== 'xemmat') fx.flag(`${s.partner}_out`);
+      if (s.partner && s.partner !== 'xemmat') (fx.flag(`${s.partner}_out`), fx.flag(`vccu_${s.partner}`));
       s.married = false;
       s.partner = null;
       fx.flag('lyhon');
     },
-    kids: (n) => (s.kids = n),
+    kids: (n) => {
+      const b = (s.kidBorn ?? []).slice(0, Math.min(n, s.kids ?? 0));
+      // đời cũ chưa ghi tuổi sinh: con đã có coi như sinh năm 33
+      while (b.length < Math.min(n, s.kids ?? 0)) b.push(33 + b.length * 3);
+      while (b.length < n) b.push(scene.age);
+      s.kidBorn = b;
+      s.kids = n;
+    },
+    gold: (d) => (s.gold = Math.max(0, (s.gold ?? 0) + d)),
+    sellGold: (chi) => {
+      const n = Math.min(s.gold ?? 0, chi ?? s.gold ?? 0);
+      const v = Math.round(n * goldPrice(c.birthYear + scene.age));
+      s.gold = (s.gold ?? 0) - n;
+      fx.cash(v);
+      return v;
+    },
     photo: (p) => {
       s.album = [...(s.album ?? []), { ...p, age: scene.age, year: c.birthYear + scene.age }];
     },
@@ -462,7 +485,7 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     },
   };
   const x = ctxOf(c, f, s, scene.age);
-  const before = { love: { ...s.love }, stats: { ...s.stats }, rel: { ...s.rel }, cash: s.cash ?? 0 };
+  const before = { love: { ...s.love }, stats: { ...s.stats }, rel: { ...s.rel }, cash: s.cash ?? 0, gold: s.gold ?? 0, kids: s.kids ?? 0 };
   ch.do?.(fx, x);
   // hệ quả nhìn thấy được: lựa chọn vừa rồi đổi những gì
   {
@@ -483,6 +506,9 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     }
     const dc = (s.cash ?? 0) - before.cash;
     if (Math.abs(dc) >= 1000) parts.push(`Tiền ${dc > 0 ? '+' : '-'}${fmtMoney(Math.abs(dc))}`);
+    const dg = (s.gold ?? 0) - before.gold;
+    if (dg) parts.unshift(`Vàng ${dg > 0 ? '+' : '-'}${fmtGold(Math.abs(dg))}`);
+    if ((s.kids ?? 0) > before.kids) parts.unshift(`Con +${(s.kids ?? 0) - before.kids}`);
     if (parts.length) fb.delta = parts.slice(0, 4).join(' · ');
     // lựa chọn lớn với một người: người ấy sẽ nhớ
     const ids = LOVE_IDS.filter((id) => Math.abs(s.love[id] - before.love[id]) >= 8 && s.met.includes(id));

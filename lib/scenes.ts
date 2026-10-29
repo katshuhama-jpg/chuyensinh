@@ -24,7 +24,8 @@ import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
 import { GIFT_CAT, GIFT_PREF, GIFT_VND, shelfOf } from './gifts';
-import { cashOf, fmtVND, pointsOf, priceAt } from './money';
+import { cashOf, fmtGold, fmtVND, pointsOf, priceAt } from './money';
+import { eldest, weddingGold } from './family';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -131,6 +132,13 @@ function weddingScene(age: number, next: string): Scene {
         `${open}. Tiệc cưới ở ${x.year > 2030 ? `${venue(x)}, MC là một giọng AI đọc lời chúc bằng ba thứ tiếng` : venue(x)}.`,
         `${spouseName(x)} ${look}, cứ quay sang nhìn ${x.me} rồi cười ngượng.`,
       ];
+      // vàng cưới: của để dành đầu tiên của hai vợ chồng, nhiều năm sau còn dùng đến
+      const g = weddingGold(x);
+      lines.push(
+        x.year < 1990
+          ? `Lúc trao của hồi môn, ${x.c.gender === 'f' ? 'mẹ' : `mẹ ${spouseName(x)}`} tháo đôi bông tai vàng đeo cho cô dâu, ông bà hai bên góp thêm cái nhẫn. Tổng cộng ${fmtGold(g)} vàng.`
+          : `Đến màn trao vàng, hai họ lần lượt lên đeo cho cô dâu: dây chuyền, kiềng, nhẫn, bông tai. Đếm lại được ${fmtGold(g)} vàng${g >= 15 ? ', cô dâu đeo nặng cả cổ' : ''}.`,
+      );
       const ex = exAtWedding(x);
       if (ex) lines.push(`Cuối hội trường, ${x.L(ex)} đứng lặng một lúc, gửi phong bì cho ${x.s.bestie} rồi lặng lẽ về trước.`);
       if (x.s.partner === 'khoi' && x.has('dieu')) lines.push('Trên bàn quà cưới có một con diều giấy cũ, buộc nơ đỏ.');
@@ -145,7 +153,8 @@ function weddingScene(age: number, next: string): Scene {
       else if (p === 'phong' && x.has('h_sars_phong')) lines.push('Bánh cưới có một mảnh giấy cắm trên đỉnh, chữ viết tay y như những mảnh giấy dán nắp hộp cơm mùa SARS.');
       return lines;
     },
-    choices: [
+    choices: (
+      [
       {
         t: 'Cầm micro, nói vài lời trước hai họ',
         do: (fx, x) => {
@@ -177,10 +186,16 @@ function weddingScene(age: number, next: string): Scene {
         },
         note: (x) => (exAtWedding(x) ? `🦋 ${x.L(exAtWedding(x)!)} sẽ nhớ buổi tối này.` : ''),
       },
-    ],
+    ] as Choice[]
+    ).map((ch): Choice => ({
+      ...ch,
+      do: (fx, x) => (ch.do?.(fx, x), fx.gold(weddingGold(x))),
+      note: (x) => [txtOf(ch.note, x), `▣ ${fmtGold(weddingGold(x))} vàng cưới cất vào hộp gỗ trong tủ. Có ngày sẽ cần đến.`].filter(Boolean).join(' '),
+    })),
     next,
   };
 }
+const txtOf = (t: string | ((x: Ctx) => string) | undefined, x: Ctx) => (typeof t === 'function' ? t(x) : (t ?? ''));
 
 /** người ấy đi đâu khi mình xin thêm thời gian mà chưa đủ thân để được chờ */
 const LEAVE: Record<LoveId, string> = {
@@ -1037,7 +1052,8 @@ const list: Scene[] = [
     age: 33,
     chapter: CH.nha,
     bg: () => ({ place: 'nha', time: 'dusk' }),
-    skip: (x) => !x.s.married,
+    // chuyện con cái giờ đến đúng lúc: một năm sau cưới (ngã rẽ br_con ở midlife.ts)
+    skip: () => true,
     title: 'Chuyện con cái',
     text: (x) => [
       vary(x, 'con', [
@@ -1110,7 +1126,7 @@ const list: Scene[] = [
       `Công ty đề nghị ${x.me} lên trưởng phòng, đổi lại phải đi công tác xa nửa năm.`,
       vary(x, 'viec', [
         `${x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ'} đã yếu, dạo này hay quên trước quên sau.`,
-        x.s.kids ? 'Con sắp thi chuyển cấp, tối nào cũng hỏi bài.' : x.s.married ? `${spouseName(x)} vừa ốm một trận, gầy rộc đi.` : 'Con mèo ở nhà già rồi, ai trông nó nửa năm?',
+        x.s.kids && eldest(x) >= 9 && eldest(x) <= 17 ? 'Con sắp thi chuyển cấp, tối nào cũng hỏi bài.' : x.s.kids && eldest(x) < 9 ? 'Con còn nhỏ, chiều nào cũng phải có người đón.' : x.s.married ? `${spouseName(x)} vừa ốm một trận, gầy rộc đi.` : 'Con mèo ở nhà già rồi, ai trông nó nửa năm?',
         x.s.married ? `Tối qua ${spouseName(x)} hỏi nhỏ: "Bao giờ mình mới có một kỳ nghỉ thật sự?"` : `${x.s.bestie} bảo: "Đi đi. Mà đi rồi nhớ về, đừng quên bạn bè."`,
       ]),
     ],
@@ -1137,7 +1153,11 @@ const list: Scene[] = [
       ];
       if (x.s.married) lines.push(`${spouseName(x)} tóc đã bạc, sáng nào cũng pha trà chờ ${x.me} dậy.`);
       else lines.push(`${x.s.bestie} vẫn rủ ${x.me} đi tập dưỡng sinh mỗi sáng.`);
-      if (x.s.kids) lines.push(x.s.kids > 1 ? 'Hai đứa con đã lớn, đứa đầu sắp cưới.' : 'Đứa con đã lớn, vừa dẫn người yêu về ra mắt.');
+      if (x.s.kids) {
+        const e = eldest(x);
+        const ks = x.s.kids > 1 ? `${x.s.kids === 2 ? 'Hai' : 'Ba'} đứa con` : 'Đứa con';
+        lines.push(e >= 30 ? `${ks} đã có gia đình riêng, cuối tuần dắt cháu về.` : e >= 24 ? `${ks} đã đi làm, đứa đầu vừa dẫn người yêu về ra mắt.` : e >= 18 ? `${ks} đang học đại học, nhà vắng hẳn.` : `Con muộn nên giờ mới ${e} tuổi. Bạn bè lên chức ông bà, ${x.me} vẫn đi họp phụ huynh.`);
+      }
       return lines;
     },
     choices: [
@@ -1268,11 +1288,13 @@ export function candidatesOf(x: Ctx): LoveId[] {
     (x.has('ac_phuot') && (id === 'duy' || id === 'kai') ? 4 : 0);
   const rnd = (id: LoveId) => (LOVE_IDS.indexOf(id) * 7 + x.age + (x.s.seed ?? 0)) % 11;
   const fresh = LOVE_IDS.filter((id) => !x.s.met.includes(id) && ok(id)).sort((a, b) => boost(b) - boost(a) || rnd(a) - rnd(b));
-  const list = [...met, ...fresh].slice(0, 10 - Math.max(0, x.s.met.length - met.length)).slice(0, 10);
+  // sáu người một lượt: đủ để chọn, không ngợp
+  const N = 6;
+  const list = [...met, ...fresh].slice(0, N - Math.max(0, Math.min(2, x.s.met.length - met.length))).slice(0, N);
   // luôn có ít nhất một ngôi sao trong danh sách (nếu còn ngôi sao nào hợp thời)
   if (!list.some((id) => STARS.includes(id))) {
     const st = STARS.find((id) => ok(id) && !out(x, id));
-    if (st) list.splice(Math.min(list.length, 9), 1, st);
+    if (st) list.splice(Math.min(list.length, N - 1), 1, st);
   }
   return list;
 }
@@ -2203,9 +2225,10 @@ export function resolverOf(c: Character, f: Family): Resolve {
     if (!sc || !s.path.length) return sc;
     const last = s.path[s.path.length - 1].age;
     if (sc.age <= last) return sc;
-    for (let a = Math.max(last, 15); a <= sc.age; a++) {
-      const h = histAt(a, ctxOf(c, f, s, a), id);
-      if (h) return h;
+    // chuyện thời cuộc ngay trong năm vừa rồi
+    if (last >= 15) {
+      const h0 = histAt(last, ctxOf(c, f, s, last), id);
+      if (h0) return h0;
     }
     // nợ quá sức thì phá sản trước khi sang chuyện khác
     const ps = bankruptAt(sc.age, ctxOf(c, f, s, sc.age), id);
@@ -2213,15 +2236,16 @@ export function resolverOf(c: Character, f: Family): Resolve {
     // giàu lên lần đầu: thử lòng người bên cạnh
     const gl = windfallAt(sc.age, ctxOf(c, f, s, sc.age), id);
     if (gl) return gl;
-    // kỷ niệm ngày cưới: chen vào đúng năm, kể cả năm đã có chuyện khác
-    const an = annivAgeIn({ s }, last, sc.age);
-    if (an !== null) {
-      const ma = midlifeAt(an, ctxOf(c, f, s, an), id);
-      if (ma) return ma;
-    }
-    // ngã rẽ sau cưới (nhà, xe, làm ăn, con cái) đến hạn: chen vào đúng năm
+    // từng năm một, đúng thứ tự thời gian: thời cuộc, kỷ niệm ngày cưới, ngã rẽ sau cưới (ở đâu, con cái, nhà, xe, làm ăn)
     for (let a = last + 1; a <= sc.age; a++) {
-      const br = branchAt(a, ctxOf(c, f, s, a), id);
+      const ax = ctxOf(c, f, s, a);
+      const h = a >= 15 ? histAt(a, ax, id) : null;
+      if (h) return h;
+      if (annivAgeIn({ s }, a - 1, a) !== null) {
+        const ma = midlifeAt(a, ax, id);
+        if (ma) return ma;
+      }
+      const br = branchAt(a, ax, id);
       if (br) return br;
     }
     // những năm giữa đời không có chuyện lớn: vẫn sống từng năm, có dòng tự trôi và thỉnh thoảng dừng hỏi

@@ -75,7 +75,7 @@ export function fmtVND(v: number) {
 
 /** Tiền để dành được trong một năm (VNĐ): bé thì lì xì bỏ heo đất, lớn thì tiền lương trừ chi tiêu.
  *  Điểm Tài chính là "khả năng kiếm tiền"; con nhỏ thì tốn kém, về già có lương hưu ít ỏi. */
-export function savingOf(s: { stats: { tien: number }; kids?: number; flags: string[]; marriedAge?: number | null }, year: number, age: number) {
+export function savingOf(s: { stats: { tien: number }; kids?: number; kidBorn?: number[]; flags: string[]; marriedAge?: number | null }, year: number, age: number) {
   const u = unitOf(year, age);
   const t = s.stats.tien;
   const work = s.flags.includes('dilam');
@@ -87,7 +87,11 @@ export function savingOf(s: { stats: { tien: number }; kids?: number; flags: str
   else if (age < 60) k = t / 7 - 1;
   else k = 1 + t / 30;
   // nuôi con: mỗi đứa tốn chừng hai phần ba khoản để dành của một năm, đến khi con lớn
-  if (s.kids && age >= 25 && age < 55) k -= 1.6 * s.kids;
+  // (tính theo tuổi thật của từng đứa: từ lúc chào đời đến năm hai mươi hai tuổi)
+  if (s.kids) {
+    const born = s.kidBorn?.length ? s.kidBorn.slice(0, s.kids) : Array.from({ length: s.kids }, (_, i) => 33 + i * 3);
+    k -= 1.6 * born.filter((b) => age >= b && age - b < 22).length;
+  }
   // trả góp nhà: hai mươi năm, mỗi năm một khoản
   const gop = s.flags.find((f) => f.startsWith('nha_gop_'));
   if (gop && age - Number(gop.slice(8)) < 20) k -= 4;
@@ -105,4 +109,26 @@ export function cashOf(s: { cash?: number; stats: { tien: number } }, year: numb
 /** "12 triệu" hoặc "Nợ 12 triệu" */
 export function fmtCash(v: number) {
   return v < 0 ? `Nợ ${fmtVND(-v)}` : fmtVND(v);
+}
+
+/** giá một lượng (cây) vàng SJC theo năm, VNĐ đúng năm (số tròn, để kể chuyện) */
+const GOLD: [number, number][] = [
+  [1975, 300_000], [1985, 1_200_000], [1990, 2_800_000], [1995, 4_500_000], [2000, 5_100_000], [2005, 8_800_000],
+  [2008, 18_000_000], [2011, 45_000_000], [2013, 36_000_000], [2016, 35_000_000], [2020, 55_000_000], [2023, 70_000_000],
+  [2024, 85_000_000], [2025, 120_000_000], [2026, 150_000_000],
+];
+/** giá một chỉ vàng năm y (sau 2026 giả định tăng 4% một năm) */
+export function goldPrice(y: number) {
+  if (y >= 2026) return (GOLD[GOLD.length - 1][1] * Math.pow(1.04, y - 2026)) / 10;
+  if (y <= GOLD[0][0]) return GOLD[0][1] / 10;
+  const i = GOLD.findIndex(([a]) => a > y);
+  const [a0, v0] = GOLD[i - 1];
+  const [a1, v1] = GOLD[i];
+  return (v0 + ((v1 - v0) * (y - a0)) / (a1 - a0)) / 10;
+}
+/** "7 chỉ" · "1 cây" · "1 cây 5 chỉ" */
+export function fmtGold(chi: number) {
+  const c = Math.floor(chi / 10);
+  const r = chi % 10;
+  return c ? `${c} cây${r ? ` ${r} chỉ` : ''}` : `${r} chỉ`;
 }

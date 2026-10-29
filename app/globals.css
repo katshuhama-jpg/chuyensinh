@@ -4536,3 +4536,8 @@ p {
 .lb-stage .stage-ts.play .ts {
   margin-top: -38px;
 }
+
+/* hồ sơ trong màn chọn người: nút chọn ở cuối */
+.ld-act { width: 100%; margin-top: 14px; }
+.ld-veil.ld-solid { background: rgba(14, 10, 26, 0.72); }
+.nb-h .nb-x { white-space: nowrap; }

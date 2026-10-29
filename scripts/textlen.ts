@@ -13,7 +13,7 @@ for (let i = 0; i < 300; i++) {
   const R = resolverOf(c, f.family);
   for (let k = 0; k < 400 && s.scene !== 'end'; k++) {
     const sc = R(s.scene, s)!;
-    const x = ctxOf(c, f.family, s, ageOfScene(s.scene));
+    const x = ctxOf(c, f.family, s, sc.age);
     const t = sc.text(x);
     const n = t.join(' ').length;
     total += n; scenes++;

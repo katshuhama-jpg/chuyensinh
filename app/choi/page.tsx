@@ -1,5 +1,6 @@
 'use client';
 
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { composeStrip } from '@/lib/lpc';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -23,7 +24,8 @@ import { historyOf } from '@/lib/drama';
 import { moneyLabelOf } from '@/lib/lovemoney';
 import { commit } from '@/lib/board';
 import { AREAS, doAction, doMilestone, lifePathOf, mByParents, milestoneDue, mOptions, mPrice, mWealth, optionsOf, tallyOf, type AreaKey, type Milestone } from '@/lib/actions';
-import { cashOf, fmtCash, fmtVND, pointsOf, priceAt } from '@/lib/money';
+import { cashOf, fmtCash, fmtGold, fmtVND, goldPrice, pointsOf, priceAt } from '@/lib/money';
+import { bornOf } from '@/lib/family';
 import { activeOf, choose, ctxOf, canRewind, fastForward, isStop, prevOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
@@ -593,11 +595,12 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
   // đang xem phản hồi thì vẫn vẽ cảnh vừa chọn (bước cuối trong path)
   const last = story.path[story.path.length - 1];
   const shownId = fb ? last.scene : story.scene;
-  const age = ageOfScene(shownId);
   // lúc xem phản hồi, vẽ cảnh bằng trạng thái ngay trước lựa chọn (người yêu có thể vừa chia tay)
   const before = (fb && prevOf(story)) || story;
-  const x = ctxOf(char, family, before, age);
   const sc = R(shownId, before)!;
+  // tuổi theo cảnh thật sự hiện ra (cảnh chen vào giữa năm có thể sớm hơn id gốc), để lựa chọn khớp với lúc chọn
+  const age = sc?.age ?? ageOfScene(shownId);
+  const x = ctxOf(char, family, before, age);
   const opts = visibleChoices(sc, x);
   const who = sc.who?.(x) ?? null;
   // sang chương mới thì hiện màn chương
@@ -1017,17 +1020,36 @@ function Slot({ id, x, open, onOpen }: { id: LoveId; x: Ctx; open: boolean; onOp
 function PickPeople({ x, ids, onDone }: { x: Ctx; ids: LoveId[]; onDone: (ids: LoveId[]) => void }) {
   const [sel, setSel] = useState<LoveId[]>([]);
   const done = useRef(false);
+  const [view, setView] = useState<LoveId | null>(null);
   const toggle = (id: LoveId) => setSel((v) => (v.includes(id) ? v.filter((k) => k !== id) : v.length >= 3 ? v : [...v, id]));
   return (
     <div className="choices pick">
       <p className="pk-h">
-        Đã chọn <b>{sel.length}</b>/3 · {ids.length} người đang chờ
+        Đã chọn <b>{sel.length}</b>/3 · chạm vào từng người để xem hồ sơ
       </p>
       <div className="pk-grid">
         {ids.map((id) => (
-          <PickCard key={id} id={id} x={x} on={sel.includes(id)} onTap={() => toggle(id)} />
+          <PickCard key={id} id={id} x={x} on={sel.includes(id)} onTap={() => setView(id)} />
         ))}
       </div>
+      {view &&
+        createPortal(
+        <LoveDetail
+          solid
+          id={view}
+          x={x}
+          story={x.s}
+          st={`${STARS.includes(view) ? '★ Ngôi sao · ' : ''}${x.s.met.includes(view) ? statusOf(x.s, view) : 'Người mới'}`}
+          back="‹ Danh sách"
+          onClose={() => setView(null)}
+          action={
+            sel.includes(view)
+              ? { label: '✕ BỎ CHỌN', on: () => (toggle(view), setView(null)) }
+              : { label: sel.length >= 3 ? 'ĐÃ ĐỦ 3 NGƯỜI' : `♥ CHỌN TÌM HIỂU ${x.L(view).toUpperCase()}`, disabled: sel.length >= 3, on: () => (toggle(view), setView(null)) }
+          }
+        />,
+        document.body,
+      )}
       <button
         type="button"
         className="btn-main"
@@ -1201,6 +1223,9 @@ function Assets({ x, story }: { x: Ctx; story: Story }) {
   const has = (f: string) => story.flags.includes(f);
   const rows: [string, string][] = [[cash < 0 ? 'Đang nợ' : x.age < 15 ? 'Heo đất' : 'Tiền để dành', fmtCash(cash).replace('Nợ ', '')]];
   if (has('ms_nha') || has('nha_chung') || has('nha_rieng')) rows.push(['Nhà', has('nha_rieng') ? 'đứng tên mình' : has('nha_chung') || story.married ? 'đứng tên hai vợ chồng' : 'đứng tên mình']);
+  if (!has('ms_nha') && story.married) rows.push(['Chỗ ở', has('o_chung') ? 'ở chung với bố mẹ' : story.flags.some((f) => f.startsWith('thue_')) ? 'đi thuê' : 'chưa tính']);
+  if ((story.gold ?? 0) > 0) rows.push(['Vàng cưới', `${fmtGold(story.gold ?? 0)} (≈ ${fmtVND((story.gold ?? 0) * goldPrice(x.year))})`]);
+  if (story.kids) rows.push(['Con', bornOf(story).map((b, i) => `${i === 0 ? 'đứa lớn' : i === 1 ? 'đứa thứ hai' : 'đứa thứ ba'} ${Math.max(0, x.age - b)} tuổi`).join(', ')]);
   if (has('ms_xe')) rows.push(['Xe', 'đã có xe riêng']);
   if (has('h_dat_mua')) rows.push(['Đất', 'một lô đất nền mua lúc sốt']);
   if (story.married) rows.push(['Tiền nhà', has('quychung') ? 'quỹ chung, mỗi người góp' : has('dr_nopluong') ? 'đưa hết cho bạn đời giữ' : has('dr_quyden') ? 'nộp lương, còn giữ quỹ đen' : 'chưa bàn rõ']);
@@ -1339,16 +1364,16 @@ const signOf = (v: number, n: string) =>
   v >= 80 ? `${n} nhìn bạn như thể cả thế giới chỉ còn một người.` : v >= 60 ? `${n} hay tìm cớ gặp bạn.` : v >= 40 ? `${n} trả lời tin nhắn rất nhanh.` : v >= 20 ? `${n} coi bạn là bạn tốt.` : `${n} mới chỉ biết tên bạn.`;
 
 /** Hồ sơ chi tiết một người: ảnh, nghề, nhà, xe, chỉ số của người ấy (mạng nhện), độ thân, gu */
-function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: Story; st: string; onClose: () => void }) {
+function LoveDetail({ id, x, story, st, onClose, back = '‹ Sổ tay', action, solid }: { id: LoveId; x: Ctx; story: Story; st: string; onClose: () => void; back?: string; action?: { label: string; on: () => void; disabled?: boolean }; solid?: boolean }) {
   const layers = useMemo(() => lpcLayers(CAST[id][x.lg], x.lg, 'adult'), [id, x.lg]);
   const pf = profileOf(id, x);
   const p = PERSONA[id];
   return (
-    <div className="nb-veil ld-veil" onClick={(e) => (e.stopPropagation(), onClose())}>
+    <div className={`nb-veil ld-veil${solid ? ' ld-solid' : ''}`} onClick={(e) => (e.stopPropagation(), onClose())}>
       <div className="nb-sheet px" role="dialog" aria-modal="true" aria-label={`Hồ sơ ${x.L(id)}`} onClick={(e) => e.stopPropagation()}>
         <div className="nb-h">
-          <button type="button" className="nb-x" onClick={onClose} aria-label="Quay lại sổ tay">
-            ‹ Sổ tay
+          <button type="button" className="nb-x" onClick={onClose} aria-label="Quay lại">
+            {back}
           </button>
           <b>HỒ SƠ {x.L(id).toUpperCase()}</b>
         </div>
@@ -1376,6 +1401,11 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
         <div className="mt-h">TÌNH CẢM VỚI BẠN</div>
         <Hearts v={story.love[id]} />
         <p className="mt-hint">{signOf(story.love[id], x.L(id))}</p>
+        {action && (
+          <button type="button" className="btn-main ld-act" disabled={action.disabled} onClick={action.on}>
+            {action.label}
+          </button>
+        )}
       </div>
     </div>
   );

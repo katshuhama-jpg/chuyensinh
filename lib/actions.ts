@@ -193,6 +193,8 @@ export interface Milestone {
   title: (x: Ctx) => string;
   sub: (x: Ctx) => string;
   opts: MOpt[];
+  /** đời đã rẽ qua chuyện này ở chỗ khác (vd đã mua nhà) thì không hỏi nữa */
+  skip?: (s: Story) => boolean;
 }
 
 const land = (y: number) => (y >= 2001 && y <= 2007) || (y >= 2015 && y <= 2021);
@@ -287,10 +289,11 @@ export const MILESTONES: Milestone[] = [
     age: 35,
     place: 'nha',
     title: () => 'Một căn nhà',
+    skip: (s) => s.flags.includes('ms_nha') || s.flags.includes('br_mua'),
     sub: (x) => `${x.me} ba mươi lăm tuổi. Có nên mua nhà?`,
     opts: [
-      { k: 'nha', t: 'Mua căn hộ chung cư, trả góp 20 năm', vnd: 600_000_000, do: (fx) => (fx.stat('tam', 6), fx.rel('con', 4), fx.flag('ms_nha')), note: '🦋 Có nhà rồi, nhưng còn món nợ dài.' },
-      { k: 'nha', t: 'Xây nhà trên đất bố mẹ cho', vnd: 400_000_000, do: (fx) => (fx.rel('bome', 6), fx.stat('tam', 4), fx.flag('ms_nha')) },
+      { k: 'nha', t: 'Mua căn hộ chung cư, trả góp 20 năm', vnd: 600_000_000, do: (fx, x) => (fx.stat('tam', 6), fx.rel('con', 4), fx.flag('ms_nha'), fx.flag('br_mua'), fx.flag(`nha_gop_${x.age}`)), note: '🦋 Có nhà rồi, nhưng còn món nợ dài.' },
+      { k: 'nha', t: 'Xây nhà trên đất bố mẹ cho', vnd: 400_000_000, do: (fx) => (fx.rel('bome', 6), fx.stat('tam', 4), fx.flag('ms_nha'), fx.flag('br_mua'), fx.flag('nha_xay')) },
       { k: 'tien', t: 'Tiếp tục thuê, dồn tiền làm ăn', do: (fx) => (fx.stat('tien', 8), fx.stat('tam', -2)) },
       { k: 'minh', t: 'Dọn về quê, sống chậm lại', do: (fx) => (fx.stat('tam', 6), fx.stat('khoe', 3), fx.stat('tien', -2)) },
     ],
@@ -303,7 +306,7 @@ export const MILESTONES: Milestone[] = [
     sub: (x) => `Nửa đời người. ${x.me} nghĩ đến những năm sau.`,
     opts: [
       { k: 'tien', t: 'Gửi tiết kiệm cho tuổi già', do: (fx) => (fx.stat('tien', 6), fx.stat('tam', 3)) },
-      { k: 'nha', t: 'Cho con đi du học', vnd: 1_000_000_000, when: (x) => x.s.kids > 0, do: (fx) => (fx.rel('con', 12), fx.stat('tam', 2)) },
+      { k: 'nha', t: 'Cho con đi du học', vnd: 1_000_000_000, when: (x) => x.s.kids > 0 && x.age - (x.s.kidBorn?.[0] ?? 33) >= 15 && x.age - (x.s.kidBorn?.[0] ?? 33) <= 22 && !x.has('kc_18'), do: (fx) => (fx.rel('con', 12), fx.stat('tam', 2)) },
       { k: 'dulich', t: (x) => (x.s.married ? 'Đi du lịch nước ngoài cùng vợ chồng' : 'Đi du lịch nước ngoài một chuyến'), vnd: 60_000_000, do: (fx, x) => (fx.stat('tam', 8), x.s.partner && x.s.partner !== 'xemmat' ? fx.love(x.s.partner, 8) : undefined) },
       { k: 'minh', t: 'Khám sức khỏe tổng quát, tập thể dục đều', vnd: 5_000_000, do: (fx) => (fx.stat('khoe', 8), fx.stat('tam', 2)) },
     ],
@@ -334,7 +337,7 @@ export function milestoneDue(s: Story, age: number): Milestone | null {
   let due: Milestone | null = null;
   MILESTONES.forEach((m, i) => {
     const next = MILESTONES[i + 1];
-    if (age >= m.age && (!next || age < next.age) && !mDone(s, m)) due = m;
+    if (age >= m.age && (!next || age < next.age) && !mDone(s, m) && !m.skip?.(s)) due = m;
   });
   return due;
 }

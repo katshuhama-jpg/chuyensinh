@@ -8,6 +8,8 @@
  * Có chuyện cài cờ, nhiều năm sau mới "nổ" lại (hiệu ứng cánh bướm).
  */
 
+import { eldest, goldOf, goldText, kidsWord, youngest } from './family';
+import { fmtGold } from './money';
 import type { Bg } from '@/components/Backdrop';
 import { FLAVOR } from './dates';
 import { xemmatName } from './names';
@@ -410,7 +412,7 @@ const CUOI: Drama[] = [
     bg: () => ({ place: 'nha', time: 'day' }),
     who: () => 'mom',
     text: (x) => [
-      `${InLaw(x)} lên trông cháu. Cháu sốt thì xông lá, cháu khóc thì bế rong, ăn thì phải "ăn cho chắc bụng".`,
+      `${x.has('ba_trong') ? `Từ hồi đứa thứ hai chào đời, ${inLaw(x)} ở hẳn trên này trông cháu.` : `${InLaw(x)} lên trông cháu.`} Cháu sốt thì xông lá, cháu khóc thì bế rong, ăn thì phải "ăn cho chắc bụng".`,
       `${x.me} thì đọc sách nuôi con kiểu ${x.year < 2010 ? 'bác sĩ dặn' : 'trên mạng'}. Hai thế hệ, hai cách nuôi.`,
     ],
     choices: [
@@ -469,7 +471,7 @@ const CUOI: Drama[] = [
     title: 'Việc nhà của ai?',
     bg: () => ({ place: 'nha', time: 'night' }),
     who,
-    text: (x) => [`Chín giờ tối. Bát chưa rửa, quần áo chưa phơi, con chưa tắm. ${sp(x)} đang nằm xem ${x.year < 2010 ? 'thời sự' : 'điện thoại'}.`],
+    text: (x) => [`Chín giờ tối. Bát chưa rửa, quần áo chưa phơi${x.s.kids && youngest(x) <= 10 ? ', con chưa tắm' : ''}. ${sp(x)} đang nằm xem ${x.year < 2010 ? 'thời sự' : 'điện thoại'}.`],
     choices: [
       { t: 'Lập bảng phân công dán tủ lạnh', do: (fx, x) => (fx.stat('hoc', 4), lv(fx, x, 4)), note: () => 'Tuần đầu đúng bảng. Tuần sau bảng rơi sau tủ.' },
       { t: 'Thuê người giúp việc theo giờ', if: (x) => x.s.stats.tien >= 40, do: (fx, x) => (fx.stat('tien', -10), lv(fx, x, 6), fx.stat('tam', 6)) },
@@ -490,9 +492,9 @@ const CUOI: Drama[] = [
         : `Căn hộ hai phòng ngủ, ${money(x.year, 3000)}, vay ngân hàng 20 năm. ${sp(x)} cầm tờ giấy tính lãi, tay hơi run.`,
     ],
     choices: [
-      { t: 'Vay, cắn răng trả góp', do: (fx, x) => (fx.stat('tien', -15), lv(fx, x, 6), fx.flag('dr_conhanha')), note: () => '🦋 Hai mươi năm là một quãng dài.' },
+      { t: 'Vay, cắn răng trả góp', do: (fx, x) => (fx.stat('tien', -15), lv(fx, x, 6), fx.flag('dr_conhanha'), fx.flag('br_mua'), fx.flag('ms_nha'), fx.flag(`nha_gop_${x.age}`)), note: () => '🦋 Hai mươi năm là một quãng dài.' },
       { t: 'Ở thuê tiếp, để tiền đi chơi', do: (fx, x) => (fx.stat('tam', 8), fx.stat('tien', 4), fx.rel('bome', -4)) },
-      { t: 'Về quê xây nhà', do: (fx, x) => (fx.stat('tinh', 6), fx.stat('tien', -6), fx.rel('bome', 8)) },
+      { t: 'Về quê xây nhà', do: (fx, x) => (fx.stat('tinh', 6), fx.stat('tien', -6), fx.rel('bome', 8), fx.flag('br_mua'), fx.flag('ms_nha'), fx.flag('nha_xay'), fx.flag('o_que')) },
     ],
   },
   {
@@ -662,7 +664,7 @@ const CUOI: Drama[] = [
     title: 'Một người đi xa',
     bg: () => ({ place: 'pho', time: 'night' }),
     who,
-    text: (x) => [`${sp(x)} được cử đi ${x.year >= 2010 ? 'dự án ở nước ngoài' : 'công trình trên núi'} một năm, lương gấp ba.${x.s.kids ? ' Nhà còn con nhỏ.' : ''}`],
+    text: (x) => [`${sp(x)} được cử đi ${x.year >= 2010 ? 'dự án ở nước ngoài' : 'công trình trên núi'} một năm, lương gấp ba.${x.s.kids && youngest(x) < 12 ? ' Nhà còn con nhỏ.' : ''}`],
     choices: [
       { t: 'Đi đi, ở nhà có mình lo', do: (fx, x) => (fx.stat('tien', 12), fx.stat('tam', -6), lv(fx, x, 4), fx.flag('dr_xanha')), note: () => '🦋 Một năm xa nhà, nhiều chuyện có thể xảy ra.' },
       { t: 'Không đi, tiền nào cũng không bằng ở cạnh nhau', do: (fx, x) => (lv(fx, x, 8), fx.stat('tien', -4)) },
@@ -776,6 +778,12 @@ const CUOI: Drama[] = [
       { t: 'Nhớ lại năm xưa, gật đầu luôn', do: (fx, x) => (fx.rel('con', 15), lv(fx, x, 6)), note: () => 'Năm xưa mình cũng từng bị nhìn như thế.' },
       { t: 'Hỏi chuyện sính lễ trước', do: (fx, x) => (fx.rel('con', -10), fx.stat('tien', 6)) },
       { t: 'Bảo con: "Con thấy hạnh phúc là được"', do: (fx, x) => (fx.rel('con', 12), fx.stat('tinh', 4)) },
+      {
+        t: (x) => `Mở hộp gỗ, lấy ${fmtGold(x.s.gold ?? 0)} vàng cưới năm xưa làm của hồi môn cho con`,
+        if: (x) => (x.s.gold ?? 0) > 0,
+        do: (fx, x) => (fx.gold(-(x.s.gold ?? 0)), fx.rel('con', 18), lv(fx, x, 8)),
+        note: (x) => `🦋 Số vàng hai họ đeo cho ${x.c.gender === 'f' ? x.me : sp(x)} năm ${x.s.marriedAge != null ? x.c.birthYear + x.s.marriedAge : 'ấy'}, giờ lại đeo cho thế hệ sau.`,
+      },
     ],
   },
   {
@@ -1022,7 +1030,11 @@ const VICE: Drama[] = [
       x.has('vh_noi') ? `Lời hứa năm ấy không giữ được.` : x.has('vh_bo') ? `🦋 "Chơi cho vui" năm nào giờ thành thế này.` : `Sổ tiết kiệm riêng vẫn còn nguyên trong ngăn tủ.`,
     ],
     choices: [
-      { t: 'Bán vàng cưới trả nợ một lần, bắt viết cam kết', do: (fx, x) => (fx.flag('vh_tra'), fx.stat('tien', -20), lv(fx, x, 6)), note: () => 'Tờ cam kết có chữ ký, có cả dấu vân tay.' },
+      {
+        t: (x) => (goldOf(x) > 0 ? `Bán ${goldText(x)}, trả nợ một lần, bắt viết cam kết` : 'Rút sổ tiết kiệm trả nợ một lần, bắt viết cam kết'),
+        do: (fx, x) => (fx.flag('vh_tra'), goldOf(x) > 0 && fx.sellGold(), fx.stat('tien', -20), lv(fx, x, 6)),
+        note: (x) => (goldOf(x) > 0 ? 'Hộp gỗ đựng vàng cưới giờ trống. Tờ cam kết có chữ ký, có cả dấu vân tay.' : 'Tờ cam kết có chữ ký, có cả dấu vân tay.'),
+      },
       { t: 'Gọi họp hai bên gia đình, đưa đi cai', do: (fx, x) => (fx.flag('vh_cai'), fx.rel('bome', 6), lv(fx, x, -4)), sys: () => sys('Ký chủ vừa mở hội đồng gia tộc. Bản Hệ Thống đứng nép vào góc.') },
       { t: 'Báo công an chuyện đòi nợ, đưa con về nhà ngoại ở tạm', if: (x) => x.year >= 1995, do: (fx, x) => (fx.flag('vh_tach'), lv(fx, x, -14), fx.stat('noi', 6)) },
       { t: 'Gánh hết, không nói với ai', do: (fx, x) => (fx.flag('vh_ganh'), fx.stat('tien', x.has('vh_giu') ? -8 : -25), fx.stat('tam', -10), fx.stat('khoe', -6)), note: (x) => (x.has('vh_giu') ? '🦋 Sổ tiết kiệm riêng năm ấy đỡ được một nửa.' : 'Tóc bắt đầu bạc từ năm ấy.') },
@@ -1483,20 +1495,35 @@ const MONEY: Drama[] = [
     who: () => null,
     text: (x) => [
       x.year < 2010
-        ? `Đêm mưa, trộm cạy cửa sổ, lấy sạch tiền và vàng cất trong tủ. Sáng ra chỉ còn cái khóa bị bẻ.`
+        ? `Đêm mưa, trộm cạy cửa sổ, lấy sạch tiền${goldOf(x) > 0 ? ` và ${fmtGold(goldOf(x))} vàng cưới` : ''} cất trong tủ. Sáng ra chỉ còn cái khóa bị bẻ.`
         : `Một số lạ tự xưng công an, đọc đúng tên, số căn cước: "Tài khoản của ${x.c.gender === 'f' ? 'chị' : 'anh'} liên quan đường dây rửa tiền, chuyển hết sang tài khoản tạm giữ để xác minh."`,
     ],
     choices: [
-      { t: (x) => (x.year < 2010 ? 'Báo công an, lắp thêm khóa' : 'Làm theo vì sợ'), do: (fx, x) => (x.year < 2010 ? fx.lose(0.25) : fx.lose(0.7), fx.stat('tam', -6)) },
-      { t: (x) => (x.year < 2010 ? 'Từ nay gửi tiền ngân hàng' : 'Cúp máy, gọi lên đúng số tổng đài công an'), do: (fx, x) => (x.year < 2010 ? (fx.lose(0.25), fx.stat('hoc', 3)) : (fx.stat('hoc', 4), fx.say('Là lừa đảo. Giữ được hết tiền.'))) },
+      { t: (x) => (x.year < 2010 ? 'Báo công an, lắp thêm khóa' : 'Làm theo vì sợ'), do: (fx, x) => (x.year < 2010 ? (fx.lose(0.25), fx.gold(-goldOf(x))) : fx.lose(0.7), fx.stat('tam', -6)) },
+      { t: (x) => (x.year < 2010 ? 'Từ nay gửi tiền ngân hàng' : 'Cúp máy, gọi lên đúng số tổng đài công an'), do: (fx, x) => (x.year < 2010 ? (fx.lose(0.25), fx.gold(-goldOf(x)), fx.stat('hoc', 3)) : (fx.stat('hoc', 4), fx.say('Là lừa đảo. Giữ được hết tiền.'))) },
     ],
   },
 ];
 
 /** Phá sản: nợ quá sức (chừng hơn 8 năm để dành) thì đời rẽ một ngã khác */
+/** món nợ bắt đầu từ đâu: nhắc lại đúng lựa chọn năm ấy */
+const causeOf = (x: Ctx) => {
+  const at = (pre: string) => {
+    const f = x.s.flags.find((g) => g.startsWith(pre) && /\d+$/.test(g));
+    return f ? Number(f.slice(pre.length)) : null;
+  };
+  if (at('kd2_') !== null) return `🦋 Mọi chuyện bắt đầu từ chi nhánh thứ hai, vay để mở năm ${at('kd2_')} tuổi.`;
+  if (at('kd_') !== null) return `🦋 Mọi chuyện bắt đầu từ cửa hàng mở bằng tiền vay năm ${at('kd_')} tuổi.`;
+  if (viceOf(x)) return `🦋 Mọi chuyện bắt đầu từ ${viceOf(x) === 'cobac' ? 'những ván bài' : viceOf(x) === 'ruou' ? 'những cuộc nhậu' : 'những lần đi đêm'} của ${sp(x)}.`;
+  if (at('nha_gop_') !== null) return `🦋 Khoản trả góp căn hộ mua năm ${at('nha_gop_')} tuổi cứ thế đè lên mỗi tháng.`;
+  return '🦋 Không có cú ngã nào lớn, chỉ là những khoản vay nhỏ cộng dồn qua từng năm.';
+};
 export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
   const debt = -(x.s.cash ?? 0);
   if (age < 22 || debt < U(x) * 60 || x.has(`ps_${Math.floor(age / 10)}`)) return null;
+  // cửa hàng mới mở thì cho ba năm gồng (chuyện làm ăn năm thứ ba sẽ quyết)
+  const kd = x.s.flags.find((g) => /^kd2?_\d+$/.test(g));
+  if (kd && age - Number(kd.split('_')[1]) < 3 && !x.has(kd.startsWith('kd2') ? 'br_kd2' : 'br_kd')) return null;
   const parents = x.f.parents !== 'Không còn bố mẹ' && age < 55;
   return {
     id: `ps@${age}`,
@@ -1512,6 +1539,7 @@ export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
           ? `${sp(cx)} ngồi đối diện, không nói gì, rồi nắm lấy tay ${cx.me}: "Mình làm lại."`
           : `${sp(cx)} ngồi đối diện, tay xoay mãi chiếc nhẫn cưới. Va li đã để sẵn ở cửa.`
         : 'Căn phòng tối om, chỉ còn tiếng quạt.',
+      causeOf(cx),
       ...(cx.s.married && pid(cx) && cx.has(`noikhoac_${pid(cx)}`) ? [`🦋 "Hồi yêu nhau ${cx.goi} bảo lương ${cx.goi} cao lắm cơ mà." Lời nói khoác năm nào giờ mới lộ.`] : []),
       ...(cx.s.married && cx.has('nha_chung') ? ['🦋 Căn nhà đứng tên hai người, giờ phải bán. Nhưng cũng là cùng nhau quyết.'] : []),
       ...(cx.s.married && cx.has('nha_rieng') ? ['🦋 Căn nhà chỉ đứng tên mình, giờ người kia cũng chẳng muốn giữ giùm.'] : []),
@@ -1552,7 +1580,12 @@ export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
           fx.stat('tam', -14);
           fx.rel('banthan', -20);
           fx.rel('bome', -15);
-          if (cx.s.married) (fx.loveEnd(pid(cx) ? `lyhon_${pid(cx)}` : 'lyhon'), fx.divorce());
+          if (cx.s.married) {
+            const name = sp(cx);
+            fx.loveEnd(pid(cx) ? `lyhon_${pid(cx)}` : 'lyhon');
+            fx.divorce();
+            fx.say(cx.s.kids ? `${name} ở lại với ${kidsWord(cx)}, một mình gánh nốt phần nợ.` : `${name} ở lại, một mình đối mặt với chủ nợ.`);
+          }
           fx.mid('phasan');
           fx.say('Một chiếc xe khách đêm, một cái tên mới, một cuộc đời làm lại ở nơi không ai quen.');
         },
@@ -1639,9 +1672,19 @@ const poolOf = (x: Ctx): Pool => (x.s.married ? 'cuoi' : x.s.partner ? 'yeu' : '
 const ym = (x: Ctx) => (x.s.marriedAge == null ? 0 : x.age - x.s.marriedAge);
 const STAGE: Record<string, (x: Ctx) => boolean> = {
   giuluong: (x) => ym(x) <= 3,
-  oriengs: (x) => ym(x) <= 4,
-  nuoicon: (x) => x.s.kids > 0 && x.age <= 45,
-  muanha: (x) => !x.has('ev_chungcu') && x.age <= 45,
+  // ở đâu sau cưới: đã có cảnh năm đầu (br_o) thì thôi
+  oriengs: (x) => ym(x) <= 4 && !x.has('br_o') && !x.has('ms_nha'),
+  // bà lên trông cháu: chỉ khi đứa út còn nhỏ
+  nuoicon: (x) => x.s.kids > 0 && youngest(x) <= 3 && x.f.parents !== 'Không còn bố mẹ',
+  muanha: (x) => !x.has('ev_chungcu') && !x.has('br_mua') && !x.has('ms_nha') && x.age <= 45,
+  vieccnha: (x) => ym(x) <= 20,
+  luongcao: (x) => x.age <= 50,
+  laman: (x) => x.age <= 46,
+  trungnien: (x) => x.age <= 50,
+  contrai: (x) => youngest(x) <= 8 && x.age <= 44 && !x.has('connuoi'),
+  hocthem: (x) => eldest(x) >= 14 && eldest(x) <= 17,
+  concuoi: (x) => eldest(x) >= 24,
+  p_onhabome: (x) => !x.s.married,
   // kỷ niệm 10 năm giờ là cảnh hẹn hò lại ở những năm giữa đời
   muoinam: () => false,
   dixa: (x) => x.age <= 50,

@@ -22,7 +22,7 @@ for (let i = 0; i < N; i++) {
   try {
     for (let k = 0; k < 400 && s.scene !== 'end'; k++) {
       const sc = R(s.scene, s)!;
-      const x = ctxOf(c, fate.family, s, ageOfScene(s.scene));
+      const x = ctxOf(c, fate.family, s, sc.age);
       if (s.scene === 't17_thi') {
         const e = c.birthYear + 17 < 2000 ? '<2000' : c.birthYear + 17 < 2015 ? '2000-14' : '2015+';
         const p = (pass[e] ??= [0, 0]);

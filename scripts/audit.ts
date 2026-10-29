@@ -72,7 +72,7 @@ for (let i = 0; i < N; i++) {
   const R = resolverOf(c, fam);
   for (let k = 0; k < 400 && s.scene !== 'end'; k++) {
     const sc = R(s.scene, s)!;
-    const age = ageOfScene(s.scene);
+    const age = sc.age;
     const x = ctxOf(c, fam, s, age);
     const opts = visibleChoices(sc, x);
     const lines = [txt(sc.title, x), ...sc.text(x), ...opts.map((o) => txt(o.t, x))];

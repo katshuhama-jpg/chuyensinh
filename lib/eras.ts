@@ -227,7 +227,8 @@ const SLOTS: Record<number, Ev[]> = {
     },
     {
       id: 'dinhat',
-      if: (x) => x.f.parents !== 'Không còn bố mẹ',
+      // chỉ những nhà thật sự có mẹ đi làm xa, hoặc nhà nghèo ở quê (khoảng 1/5)
+      if: (x) => x.f.parents === 'Bố mẹ đi làm xa' || (x.f.parents !== 'Không còn bố mẹ' && !x.f.urban && (x.f.wealth === 'Nhà nông' || x.f.wealth === 'Lao động phổ thông') && ((x.s.seed ?? 0) >> 3) % 5 === 0),
       from: 2014,
       to: 2100,
       title: (x) => (x.year <= 2026 ? 'Mẹ đi Nhật' : 'Mẹ đi làm xa'),
@@ -527,7 +528,8 @@ const SLOTS: Record<number, Ev[]> = {
       id: 'orieng',
       from: 1975,
       to: 2100,
-      if: (x) => x.s.married,
+      // chuyện ở đâu sau cưới giờ đến đúng năm đầu (ngã rẽ br_o)
+      if: (x) => x.s.married && !x.has('br_o') && !x.has('ms_nha') && x.s.marriedAge != null && x.age - x.s.marriedAge <= 3,
       title: (x) => (x.year < 2005 ? 'Về làm dâu' : 'Ở chung hay ra riêng'),
       bg: () => ({ place: 'nha', time: 'dusk' }),
       who: (x) => (x.bm === 'ông bà' ? null : 'mom'),
@@ -579,7 +581,7 @@ const SLOTS: Record<number, Ev[]> = {
       id: 'chungcu',
       from: 2013,
       to: 2100,
-      if: (x) => x.s.married && !x.has('dr_muanha'),
+      if: (x) => x.s.married && !x.has('dr_muanha') && !x.has('br_mua') && !x.has('ms_nha'),
       title: 'Căn hộ trả góp',
       bg: () => ({ place: 'pho', time: 'day' }),
       text: (x) => [
@@ -587,9 +589,9 @@ const SLOTS: Record<number, Ev[]> = {
         `${sp(x)} nhìn ${x.me}: "Có nhà rồi mới yên tâm sinh thêm đứa nữa."`,
       ],
       choices: [
-        { t: 'Ký, vay ngân hàng', do: (fx) => (fx.stat('tien', -10), fx.stat('tam', 6), fx.rel('con', 6)) },
+        { t: 'Ký, vay ngân hàng', do: (fx, x) => (fx.flag('br_mua'), fx.flag('ms_nha'), fx.flag(`nha_gop_${x.age}`), fx.stat('tien', -10), fx.stat('tam', 6), fx.rel('con', 6)) },
         { t: 'Thuê tiếp, để tiền cho con học', do: (fx) => (fx.stat('tien', 6), fx.rel('con', 4)) },
-        { t: 'Về quê xây nhà', do: (fx) => (fx.rel('bome', 8), fx.stat('tien', 4), fx.stat('tam', 4)) },
+        { t: 'Về quê xây nhà', do: (fx) => (fx.flag('br_mua'), fx.flag('ms_nha'), fx.flag('nha_xay'), fx.flag('o_que'), fx.rel('bome', 8), fx.stat('tien', -8), fx.stat('tam', 4)) },
       ],
     },
   ],
@@ -599,7 +601,8 @@ const SLOTS: Record<number, Ev[]> = {
       id: 'truongdiem',
       from: 2000,
       to: 2100,
-      if: (x) => x.s.kids > 0,
+      // con vào lớp sáu thật: đứa lớn mười, mười một tuổi
+      if: (x) => x.s.kids > 0 && x.age - (x.s.kidBorn?.[0] ?? 33) >= 10 && x.age - (x.s.kidBorn?.[0] ?? 33) <= 12,
       title: 'Con nhà người ta',
       bg: () => ({ place: 'cong', time: 'day' }),
       text: (x) => [
@@ -623,7 +626,7 @@ const SLOTS: Record<number, Ev[]> = {
       title: 'Tìm lại mối tình đầu',
       bg: () => ({ place: 'phong', time: 'dusk' }),
       text: (x) => [
-        `Đứa cháu dạy ${x.me} dùng ${x.year <= 2026 ? 'mạng xã hội' : 'kính tìm người'}. Gõ thử một cái tên cũ, ${x.L(firstLove(x))}, và một gương mặt tóc bạc hiện ra, vẫn nụ cười ấy.`,
+        `${x.s.kids && x.age - (x.s.kidBorn?.[0] ?? 33) >= 30 ? 'Đứa cháu' : x.s.kids ? 'Đứa con' : 'Đứa cháu họ'} dạy ${x.me} dùng ${x.year <= 2026 ? 'mạng xã hội' : 'kính tìm người'}. Gõ thử một cái tên cũ, ${x.L(firstLove(x))}, và một gương mặt tóc bạc hiện ra, vẫn nụ cười ấy.`,
         x.s.married ? `${sp(x)} đang tưới cây ngoài ban công.` : 'Căn phòng yên tĩnh đến mức nghe rõ tiếng đồng hồ.',
       ],
       choices: [

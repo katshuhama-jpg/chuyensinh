@@ -17,7 +17,7 @@ for (let i = 0; i < N; i++) {
     // màn chọn 3 người: luôn chọn người cần nhắm
     if (s.scene.startsWith('fo@') && !s.flags.includes(`pksel_${target}`)) s.flags.push(`pksel_${target}`);
     const sc = R(s.scene, s)!;
-    const x = ctxOf(c, fate.family, s, ageOfScene(s.scene));
+    const x = ctxOf(c, fate.family, s, sc.age);
     const o = visibleChoices(sc, x);
     const score = (ch: (typeof o)[number]) => {
       const t = typeof ch.t === 'function' ? ch.t(x) : ch.t;
