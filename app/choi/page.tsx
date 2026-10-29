@@ -1311,10 +1311,10 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
     <div className="nb-veil ld-veil" onClick={(e) => (e.stopPropagation(), onClose())}>
       <div className="nb-sheet px" role="dialog" aria-modal="true" aria-label={`Hồ sơ ${x.L(id)}`} onClick={(e) => e.stopPropagation()}>
         <div className="nb-h">
-          <b>HỒ SƠ</b>
-          <button type="button" className="nb-x" onClick={onClose} aria-label="Đóng">
-            ✕
+          <button type="button" className="nb-x" onClick={onClose} aria-label="Quay lại sổ tay">
+            ‹ Sổ tay
           </button>
+          <b>HỒ SƠ {x.L(id).toUpperCase()}</b>
         </div>
         <div className="ld-top">
           <span className="ld-photo">

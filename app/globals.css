@@ -4475,3 +4475,23 @@ p {
     opacity: 0;
   }
 }
+
+/* hồ sơ mở từ sổ tay: phủ kín sổ tay (cùng chỗ, cùng chiều cao), không còn hai khung chồng nhau */
+.ld-veil {
+  z-index: 55;
+  background: transparent;
+  animation: none;
+}
+.nb-veil:not(.ld-veil) > .nb-sheet,
+.ld-veil > .nb-sheet {
+  height: 86dvh;
+  max-height: 86dvh;
+}
+.ld-veil > .nb-sheet {
+  box-shadow: 0 -4px 0 0 var(--accent);
+  animation: lb-in 0.18s ease-out both;
+}
+/* dòng nhắc nằm dưới các khung mở ra */
+.lb-toast {
+  z-index: 45;
+}
