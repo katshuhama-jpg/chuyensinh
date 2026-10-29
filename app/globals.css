@@ -4528,3 +4528,11 @@ p {
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+
+/* khung cảnh trên bảng đời thấp hơn chừng 13%: cắt bớt phần trần, tường phía trên */
+.lb-stage .stage-ts.play {
+  overflow: hidden;
+}
+.lb-stage .stage-ts.play .ts {
+  margin-top: -38px;
+}

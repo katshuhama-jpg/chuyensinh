@@ -390,7 +390,7 @@ function Board({
                   onClick={() => {
                     const r = doAction(R, char, family, story, curAge, area, i);
                     const name = AREAS.find((a) => a.k === area)!.t;
-                    const add = [{ age: curAge, year, t: `${name}: ${r.t}`, k: 'pick' as const }, ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: curAge, year, t, k: 'note' as const }))];
+                    const add = [{ age: curAge, year, t: `${name}: ${r.t}`, k: 'pick' as const }, ...(r.fb.delta ? [{ age: curAge, year, t: `→ ${r.fb.delta}`, k: 'note' as const }] : []), ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: curAge, year, t, k: 'note' as const }))];
                     onStory({ ...r.s, focus: area, log: [...(r.s.log ?? []), ...add].slice(-500) });
                     setToast([...r.fb.sys, ...r.fb.notes][0] ?? `${name}: ${r.t}`);
                     setArea(null);
@@ -410,18 +410,14 @@ function Board({
           x={ctxOf(char, family, story, ageNow)}
           onPick={(i) => {
             const r = doMilestone(R, char, family, story, ageNow, ms, i);
-            const add = [{ age: ageNow, year: char.birthYear + ageNow, t: `${ms.title(xa)}: ${r.t}`, k: 'pick' as const }, ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: ageNow, year: char.birthYear + ageNow, t, k: 'note' as const }))];
+            const add = [{ age: ageNow, year: char.birthYear + ageNow, t: `${ms.title(xa)}: ${r.t}`, k: 'pick' as const }, ...(r.fb.delta ? [{ age: ageNow, year: char.birthYear + ageNow, t: `→ ${r.fb.delta}`, k: 'note' as const }] : []), ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: ageNow, year: char.birthYear + ageNow, t, k: 'note' as const }))];
             onStory({ ...r.s, log: [...(r.s.log ?? []), ...add].slice(-500) });
             setToast([...r.fb.sys, ...r.fb.notes][0] ?? `${ms.title(xa)}: ${r.t}`);
           }}
         />
       )}
 
-      {toast && !decide && (
-        <div className="lb-toast px" role="status" onClick={() => setToast(null)}>
-          {toast}
-        </div>
-      )}
+
 
       {!decide && sheetOn && lastSheet.current && (
         <div className="lb-veil out" aria-hidden="true">
