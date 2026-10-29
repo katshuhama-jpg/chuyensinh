@@ -39,6 +39,7 @@ const LOVE_END: Record<string, (n: string) => { name: string; desc: string }> = 
   dodang: (n) => ({ name: 'Cưới Rồi Mới Biết', desc: `Cưới ${n}, yêu nhiều nhưng không hợp nhau ở những điều quan trọng.` }),
   chilaban: (n) => ({ name: 'Mãi Là Bạn', desc: `${n} quý mình thật lòng, nhưng chỉ như một người bạn.` }),
   lohen: (n) => ({ name: 'Lỡ Một Nhịp', desc: `Yêu ${n}, nhưng không đến được với nhau.` }),
+  muonxm: () => ({ name: 'Tình Muộn', desc: 'Qua nửa đời mới gặp người cùng mình đi nốt quãng còn lại.' }),
   duyenno: (n) => ({ name: 'Duyên Nợ Xem Mắt', desc: `Đi xem mắt cho mẹ vui, người ngồi đối diện lại là ${n}. Hai người cưới sau ba tháng.` }),
   muon: (n) => ({ name: 'Tình Muộn', desc: `Ngoài bốn mươi mới về chung một nhà với ${n}.` }),
   cuoivoi: () => ({ name: 'Cưới Vội', desc: 'Cưới khi còn chưa hiểu nhau, rồi cả đời tập hiểu.' }),

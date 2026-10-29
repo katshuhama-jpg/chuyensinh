@@ -17,6 +17,7 @@ import { regionOf } from './names';
 import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
 import { bankruptAt, histAt } from './drama';
+import { annivAgeIn, midlifeAt } from './midlife';
 import { moneyFit, moneyLabelOf, moneyLoveScene, windfallAt } from './lovemoney';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
@@ -2196,6 +2197,17 @@ export function resolverOf(c: Character, f: Family): Resolve {
     // giàu lên lần đầu: thử lòng người bên cạnh
     const gl = windfallAt(sc.age, ctxOf(c, f, s, sc.age), id);
     if (gl) return gl;
+    // kỷ niệm ngày cưới: chen vào đúng năm, kể cả năm đã có chuyện khác
+    const an = annivAgeIn({ s }, last, sc.age);
+    if (an !== null) {
+      const ma = midlifeAt(an, ctxOf(c, f, s, an), id);
+      if (ma) return ma;
+    }
+    // những năm giữa đời không có chuyện lớn: vẫn sống từng năm, có dòng tự trôi và thỉnh thoảng dừng hỏi
+    if (sc.age > last + 1) {
+      const ml = midlifeAt(last + 1, ctxOf(c, f, s, last + 1), id);
+      if (ml) return ml;
+    }
     return sc;
   };
 }

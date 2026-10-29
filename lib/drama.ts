@@ -1584,7 +1584,8 @@ const STAGE: Record<string, (x: Ctx) => boolean> = {
   oriengs: (x) => ym(x) <= 4,
   nuoicon: (x) => x.s.kids > 0 && x.age <= 45,
   muanha: (x) => !x.has('ev_chungcu') && x.age <= 45,
-  muoinam: (x) => ym(x) >= 9 && ym(x) <= 12,
+  // kỷ niệm 10 năm giờ là cảnh hẹn hò lại ở những năm giữa đời
+  muoinam: () => false,
   dixa: (x) => x.age <= 50,
 };
 const fits = (d: Drama, x: Ctx) =>
