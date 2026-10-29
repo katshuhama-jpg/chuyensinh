@@ -28,6 +28,7 @@ export const MIDS: Record<string, { name: string; desc: string }> = {
   cobac: { name: 'Nợ Đỏ Đen', desc: 'Chồng/vợ sa vào cờ bạc, nợ chồng nợ. Ký đơn ly hôn để giữ lại phần đời còn lại.' },
   ruou: { name: 'Chén Rượu Chia Đôi', desc: 'Rượu vào thì lời ra, lời ra thì nhà tan. Một người phải bước đi trước.' },
   traigai: { name: 'Người Thứ Ba Có Thật', desc: 'Lá thư, tin nhắn, rồi cả một gia đình khác. Ly hôn, và đứng dậy.' },
+  phasan: { name: 'Trắng Tay', desc: 'Nợ chồng nợ, một chuyến xe đêm, một cái tên mới ở nơi không ai quen.' },
   cacahaitay: { name: 'Bắt Cá Hai Tay', desc: 'Bị phát hiện trong nhóm chat ba người, mất cả hai.' },
 };
 

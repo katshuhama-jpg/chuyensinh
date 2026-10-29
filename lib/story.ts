@@ -273,6 +273,12 @@ export interface Fx {
   cancelWedding: () => void;
   /** bạn thân phản bội: từ nay bạn thân là người khác */
   newBestie: (name: string) => void;
+  /** cộng/trừ tiền thật (VNĐ đúng năm); điểm Tài chính đi theo */
+  cash: (vnd: number) => void;
+  /** mất một phần tài sản đang có (0-1) */
+  lose: (part: number) => void;
+  /** xóa nợ, làm lại từ con số không */
+  clearDebt: () => void;
   kids: (n: number) => void;
   /** chụp một tấm ảnh vào album kỷ niệm */
   photo: (p: Omit<Photo, 'age' | 'year'>) => void;
@@ -371,6 +377,18 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
       s.married = true;
       s.marriedAge = scene.age;
     },
+    cash: (vnd) => {
+      const u = unitOf(c.birthYear + scene.age, scene.age);
+      s.cash = (s.cash ?? 0) + vnd;
+      s.stats.tien = clamp(s.stats.tien + vnd / u);
+    },
+    lose: (part) => {
+      const have = Math.max(0, s.cash ?? 0);
+      fx.cash(-have * part);
+    },
+    clearDebt: () => {
+      if ((s.cash ?? 0) < 0) s.cash = 0;
+    },
     newBestie: (name) => {
       fx.flag(`bestie_cu`);
       s.bestie = name;
@@ -440,17 +458,26 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     next = `drop@${scene.age}`;
   }
   // bỏ qua các cảnh không hợp với nhánh hiện tại
-  for (let guard = 0; guard < 50; guard++) {
-    const sc = resolve(next, s);
-    if (!sc) break;
-    const xs = ctxOf(c, f, s, sc.age);
-    if (!sc.skip || !sc.skip(xs)) break;
-    next = txt(sc.next, xs);
-  }
-  s.scene = next;
+  const skipOn = () => {
+    for (let guard = 0; guard < 50; guard++) {
+      const sc = resolve(next, s);
+      if (!sc) break;
+      const xs = ctxOf(c, f, s, sc.age);
+      if (!sc.skip || !sc.skip(xs)) break;
+      next = txt(sc.next, xs);
+    }
+  };
+  skipOn();
   // mỗi năm trôi qua: cộng khoản để dành của năm ấy (bé: lì xì vào heo đất; lớn: lương trừ chi tiêu)
   const na = next === 'end' ? scene.age + 1 : resolve(next, s)?.age ?? scene.age;
-  for (let a = scene.age; a < na; a++) s.cash = (s.cash ?? 0) + savingOf(s, c.birthYear + a, a);
+  for (let a = scene.age; a < na; a++) {
+    s.cash = (s.cash ?? 0) + savingOf(s, c.birthYear + a, a);
+    // nợ thì đẻ lãi mỗi năm
+    if (s.cash < 0) s.cash *= 1.06;
+  }
+  // tiền đổi có thể làm cảnh chen ngang (phá sản) xuất hiện hoặc biến mất: bỏ qua thêm một lượt
+  skipOn();
+  s.scene = next;
   return { s, fb };
 }
 

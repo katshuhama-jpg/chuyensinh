@@ -89,7 +89,7 @@ export function savingOf(s: { stats: { tien: number }; kids?: number; flags: str
   // nuôi con: mỗi đứa tốn chừng hai phần ba khoản để dành của một năm, đến khi con lớn
   if (s.kids && age >= 25 && age < 55) k -= 1.6 * s.kids;
   // nghèo quá thì cũng chỉ hụt chi một chút mỗi năm, không âm mãi
-  return Math.max(-1, k) * u;
+  return Math.max(-0.5, k) * u;
 }
 /** tài sản đang có; đời cũ chưa có sổ tiền thì ước theo điểm Tài chính */
 export function cashOf(s: { cash?: number; stats: { tien: number } }, year: number, age: number) {

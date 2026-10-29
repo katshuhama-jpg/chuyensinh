@@ -11,6 +11,7 @@
 import type { Bg } from '@/components/Backdrop';
 import { FLAVOR } from './dates';
 import { xemmatName } from './names';
+import { fmtVND, unitOf } from './money';
 import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
 
 type Pool = 'yeu' | 'cuoi' | 'don' | 'any';
@@ -1269,7 +1270,7 @@ export const HIST: Drama[] = [
       nm(x) ? `${nm(x)} hỏi: "Hay mình vay thêm, mua một lô?"` : 'Bạn thân rủ góp chung.',
     ],
     choices: [
-      { t: 'Vay ngân hàng, xuống tiền một lô', do: (fx, x) => (fx.flag('h_dat_mua'), fx.stat('tien', 8), loveNear(fx, x, 4)), note: () => '🦋 Lô đất này còn quay lại.' },
+      { t: (x) => `Vay ngân hàng, xuống tiền một lô (${fmtVND(unitOf(x.year, x.age) * 15)})`, do: (fx, x) => (fx.flag('h_dat_mua'), fx.cash(-unitOf(x.year, x.age) * 15), loveNear(fx, x, 4)), note: () => '🦋 Lô đất này còn quay lại.' },
       { t: 'Thôi, tiền ít thì gửi tiết kiệm', do: (fx) => (fx.stat('tien', 3), fx.stat('hoc', 3)) },
       { t: 'Cãi nhau một trận vì chuyện đất', if: (x) => !!nm(x), do: (fx, x) => (loveNear(fx, x, -8), fx.stat('noi', 3)) },
     ],
@@ -1286,8 +1287,8 @@ export const HIST: Drama[] = [
     who: (x) => near(x),
     text: (x) => [`Thị trường đóng băng, lô đất mua năm ấy không ai hỏi. Lãi ngân hàng thì tháng nào cũng đến. ${nm(x) ? `${nm(x)} ngồi tính sổ đến khuya.` : ''}`],
     choices: [
-      { t: 'Bán cắt lỗ, trả hết nợ, nhẹ người', do: (fx, x) => (fx.stat('tien', -14), fx.stat('tam', 6), loveNear(fx, x, 6)) },
-      { t: 'Gồng thêm, tin là đất sẽ lên', do: (fx, x) => (x.year >= 2024 ? (fx.stat('tien', 12), fx.say('Hai năm sau giá hồi lại. Gồng được thì thắng.')) : (fx.stat('tien', -8), fx.stat('tam', -8))) },
+      { t: 'Bán cắt lỗ, trả hết nợ, nhẹ người', do: (fx, x) => (fx.cash(unitOf(x.year, x.age) * 9), fx.stat('tam', 6), loveNear(fx, x, 6)), note: () => 'Bán được hơn nửa giá mua. Mất một khoản, nhưng ngủ được.' },
+      { t: 'Gồng thêm, tin là đất sẽ lên', do: (fx, x) => (x.year >= 2024 ? (fx.cash(unitOf(x.year, x.age) * 22), fx.say('Hai năm sau giá hồi lại, bán lãi gấp rưỡi. Gồng được thì thắng.')) : (fx.cash(-unitOf(x.year, x.age) * 4), fx.stat('tam', -8), fx.say('Lãi ngân hàng cứ chạy, đất vẫn nằm im.'))) },
       { t: 'Đổ lỗi cho nhau', if: (x) => !!nm(x), do: (fx, x) => (loveNear(fx, x, -14), fx.stat('tam', -6)) },
     ],
   },
@@ -1373,7 +1374,181 @@ export function historyOf(s: { flags: string[] }): string[] {
   return out;
 }
 
-const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...HIST, ...DON];
+/* =========================================================
+   TIỀN BẠC: tài sản có thể mất, nợ có thể chồng chất, đến mức phá sản.
+   ========================================================= */
+const U = (x: Ctx) => unitOf(x.year, x.age);
+/** số ngẫu nhiên cố định theo đời và lượt chơi (quay lại vẫn ra cùng kết quả) */
+const roll = (x: Ctx, salt: number) => (hash(`${x.s.seed ?? 0}|${x.s.path.length}|${salt}`) % 1000) / 1000;
+const cashNow = (x: Ctx) => x.s.cash ?? 0;
+const tien = (v: number) => fmtVND(Math.abs(v));
+const MONEY: Drama[] = [
+  {
+    id: 'm_hui',
+    pool: 'any',
+    minAge: 24,
+    maxAge: 70,
+    to: 2015,
+    if: (x) => cashNow(x) > U(x) * 5 && !x.has('ev_vohui'),
+    title: 'Vỡ hụi',
+    bg: () => ({ place: 'ngo', time: 'dusk' }),
+    who: () => 'mom',
+    text: (x) => [`Chơi hụi với bà Năm đầu ngõ đã ba năm, tháng nào cũng góp đều. Sáng nay cả xóm kéo đến: bà Năm ôm tiền bỏ trốn trong đêm. Phần của ${x.me} là ${tien(cashNow(x) * 0.4)}.`],
+    choices: [
+      { t: 'Cùng cả xóm làm đơn lên phường', do: (fx, x) => (fx.lose(0.3), fx.stat('noi', 4), fx.say(`Một năm sau đòi lại được chút ít. Phần lớn coi như mất.`)) },
+      { t: 'Thôi, của đi thay người', do: (fx) => (fx.lose(0.4), fx.stat('tam', -4), fx.stat('tinh', 3)) },
+      { t: 'Tự đi tìm bà Năm', do: (fx, x) => (roll(x, 3) < 0.35 ? (fx.lose(0.1), fx.say('Tìm được bà ở nhà người em dưới quê. Đòi về được gần hết.')) : (fx.lose(0.4), fx.stat('khoe', -3), fx.say('Đi ba tỉnh, không thấy bóng.'))) },
+    ],
+  },
+  {
+    id: 'm_dacap',
+    pool: 'any',
+    minAge: 24,
+    maxAge: 65,
+    from: 2006,
+    if: (x) => cashNow(x) > U(x) * 6,
+    title: (x) => (x.year < 2017 ? 'Hội thảo đa cấp' : 'Dự án đầu tư lãi 5% mỗi tháng'),
+    bg: () => ({ place: 'quan', time: 'night' }),
+    who: (x) => near(x),
+    text: (x) => [
+      x.year < 2017
+        ? `Người bạn cũ rủ đi "hội thảo cơ hội kinh doanh". Diễn giả mặc vest, lên xe sang, hứa ba năm có nhà.`
+        : `Nhóm Chat "Cộng đồng tự do tài chính" khoe ảnh lãi mỗi ngày. Người quen nhắn: "Bỏ ${tien(cashNow(x) * 0.6)} vào, tháng sau lãi đủ đi du lịch."`,
+    ],
+    choices: [
+      { t: 'Bỏ tiền vào, một lần cho đổi đời', do: (fx, x) => { const v = cashNow(x) * 0.6; fx.lose(0.6); fx.flag('m_luadao'); loveNear(fx, x, -6); fx.say(`Ba tháng đầu lãi đều. Tháng thứ tư, ${x.year < 2017 ? 'công ty đóng cửa, diễn giả biến mất' : 'sàn đóng, nhóm Chat giải tán'}. Mất ${tien(v)}.`); }, sys: () => 'Đinh! Bản Hệ Thống đã cố nháy mắt cảnh báo. Ký chủ không nhìn.' },
+      { t: 'Hỏi thêm người hiểu biết rồi từ chối', do: (fx) => (fx.stat('hoc', 4), fx.stat('tam', 2)), note: () => 'Một năm sau, báo đưa tin cả đường dây bị bắt.' },
+      { t: 'Bỏ một ít cho biết', do: (fx) => (fx.lose(0.15), fx.stat('hoc', 2)) },
+    ],
+  },
+  {
+    id: 'm_baolanh',
+    pool: 'any',
+    minAge: 25,
+    maxAge: 65,
+    title: 'Ký bảo lãnh',
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: (x) => near(x),
+    text: (x) => [`${x.s.bestie} đến nhà lúc nửa đêm, mắt đỏ hoe: cần vay ngân hàng ${tien(U(x) * 25)} để cứu cửa hàng, chỉ cần ${x.me} ký bảo lãnh. "Tháng nào tớ cũng trả đều, cậu không phải lo."`],
+    choices: [
+      { t: 'Ký, bạn thân thì phải giúp', do: (fx, x) => (fx.rel('banthan', 10), roll(x, 7) < 0.5 ? (fx.cash(-U(x) * 25), fx.rel('banthan', -40), fx.say(`Nửa năm sau ${x.s.bestie} cắt liên lạc. Ngân hàng gửi giấy đòi nợ về nhà ${x.me}.`)) : fx.say(`${x.s.bestie} trả đủ từng tháng. Tết năm sau mang sang một giỏ quà to.`)) },
+      { t: 'Cho vay một ít tiền mặt thay vì ký', do: (fx, x) => (fx.cash(-U(x) * 4), fx.rel('banthan', 4)) },
+      { t: 'Từ chối, dù mất lòng', do: (fx) => (fx.rel('banthan', -12), fx.stat('noi', 3)) },
+    ],
+  },
+  {
+    id: 'm_benh',
+    pool: 'any',
+    minAge: 28,
+    maxAge: 75,
+    title: 'Viện phí',
+    bg: () => ({ place: 'pho', time: 'night' }),
+    who: (x) => (x.s.married ? who(x) : 'mom'),
+    text: (x) => [
+      `${x.s.married ? sp(x) : x.bm === 'ông bà' ? 'Bà' : 'Bố'} nhập viện cấp cứu, phải mổ gấp. ${x.year >= 2010 ? 'Bảo hiểm chỉ chi một phần.' : 'Hồi ấy chưa ai có bảo hiểm.'} Viện phí và thuốc men khoảng ${tien(U(x) * 18)}.`,
+      cashNow(x) < U(x) * 18 ? `Trong tài khoản không đủ.` : 'Tiền tiết kiệm bao năm, giờ dồn hết vào đây.',
+    ],
+    choices: [
+      { t: 'Lo bằng mọi giá, vay thêm nếu thiếu', do: (fx, x) => (fx.cash(-U(x) * 18), x.s.married ? lv(fx, x, 14) : fx.rel('bome', 14), fx.stat('khoe', -3)), note: () => 'Ca mổ thành công. Sổ tiết kiệm thì trống trơn.' },
+      { t: (x) => (x.year >= 2015 ? 'Kêu gọi quyên góp trên mạng' : 'Đi vay khắp họ hàng'), do: (fx, x) => (fx.cash(-U(x) * 9), fx.stat('tam', -4)) },
+      { t: 'Chuyển về viện tuyến dưới cho đỡ tốn', do: (fx, x) => (fx.cash(-U(x) * 6), x.s.married ? lv(fx, x, -8) : fx.rel('bome', -6)) },
+    ],
+  },
+  {
+    id: 'm_thua',
+    pool: 'any',
+    minAge: 27,
+    maxAge: 62,
+    if: (x) => x.has('ac_quan') || x.has('h_2008_lam') || x.s.stats.tien >= 55,
+    title: 'Làm ăn thua lỗ',
+    bg: () => ({ place: 'quan', time: 'day' }),
+    who: (x) => near(x),
+    text: (x) => [`${x.has('ac_quan') ? 'Quán' : 'Cửa hàng'} của ${x.me} ế ba tháng liền. ${x.year >= 2020 ? 'Tiền mặt bằng tăng gấp rưỡi, khách thì chuyển hết sang đặt hàng online.' : 'Phố bên mở thêm năm hàng giống hệt.'} Mỗi tháng lỗ ${tien(U(x) * 2)}.`],
+    choices: [
+      { t: 'Vay thêm, gồng tiếp một năm', do: (fx, x) => (roll(x, 11) < 0.4 ? (fx.cash(U(x) * 10), fx.say('Năm sau khách quay lại. Gồng được thì thắng.')) : (fx.cash(-U(x) * 24), fx.stat('tam', -8), fx.say('Gồng thêm một năm, lỗ gấp đôi.'))) },
+      { t: 'Cắt lỗ, sang nhượng ngay', do: (fx, x) => (fx.cash(-U(x) * 6), fx.stat('hoc', 3)) },
+      { t: 'Đổi cách làm: bán online, livestream', if: (x) => x.year >= 2016, do: (fx, x) => (fx.cash(x.s.stats.duyen >= 50 ? U(x) * 8 : -U(x) * 4), fx.stat('noi', 4)) },
+    ],
+  },
+  {
+    id: 'm_trom',
+    pool: 'any',
+    minAge: 23,
+    maxAge: 80,
+    if: (x) => cashNow(x) > U(x) * 3,
+    title: (x) => (x.year < 2010 ? 'Trộm vào nhà' : 'Cuộc gọi giả công an'),
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: () => null,
+    text: (x) => [
+      x.year < 2010
+        ? `Đêm mưa, trộm cạy cửa sổ, lấy sạch tiền và vàng cất trong tủ. Sáng ra chỉ còn cái khóa bị bẻ.`
+        : `Một số lạ tự xưng công an, đọc đúng tên, số căn cước: "Tài khoản của ${x.c.gender === 'f' ? 'chị' : 'anh'} liên quan đường dây rửa tiền, chuyển hết sang tài khoản tạm giữ để xác minh."`,
+    ],
+    choices: [
+      { t: (x) => (x.year < 2010 ? 'Báo công an, lắp thêm khóa' : 'Làm theo vì sợ'), do: (fx, x) => (x.year < 2010 ? fx.lose(0.25) : fx.lose(0.7), fx.stat('tam', -6)) },
+      { t: (x) => (x.year < 2010 ? 'Từ nay gửi tiền ngân hàng' : 'Cúp máy, gọi lên đúng số tổng đài công an'), do: (fx, x) => (x.year < 2010 ? (fx.lose(0.25), fx.stat('hoc', 3)) : (fx.stat('hoc', 4), fx.say('Là lừa đảo. Giữ được hết tiền.'))) },
+    ],
+  },
+];
+
+/** Phá sản: nợ quá sức (chừng hơn 8 năm để dành) thì đời rẽ một ngã khác */
+export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
+  const debt = -(x.s.cash ?? 0);
+  if (age < 22 || debt < U(x) * 60 || x.has(`ps_${Math.floor(age / 10)}`)) return null;
+  const parents = x.f.parents !== 'Không còn bố mẹ' && age < 55;
+  return {
+    id: `ps@${age}`,
+    age,
+    chapter: age < 30 ? 'Tuổi trẻ' : age < 60 ? 'Lập gia đình' : 'Tuổi già',
+    title: 'Trắng tay',
+    bg: () => ({ place: 'nha', time: 'night' }),
+    who: (cx) => (cx.s.married ? who(cx) : null),
+    text: (cx) => [
+      `Nợ đã lên ${tien(debt)}. Lãi mẹ đẻ lãi con, ${cx.year >= 2016 ? 'điện thoại réo cả ngày, có số còn nhắn cho cả bạn bè trong danh bạ' : 'chủ nợ đến tận cổng mỗi tối'}.`,
+      cx.s.married ? `${sp(cx)} ngồi đối diện, không nói gì, tay xoay mãi chiếc nhẫn cưới.` : 'Căn phòng trọ tối om, chỉ còn tiếng quạt.',
+    ],
+    choices: [
+      {
+        t: 'Bán hết, trả nợ, thuê trọ làm lại từ đầu',
+        do: (fx, cx) => {
+          fx.flag(`ps_${Math.floor(age / 10)}`);
+          fx.flag('phasan');
+          fx.clearDebt();
+          fx.stat('tien', -30);
+          fx.stat('tam', -10);
+          fx.stat('noi', 6);
+          if (cx.s.married) lv(fx, cx, low(cx, 50) ? -12 : 10);
+          fx.say(cx.s.married && !low(cx, 50) ? `${sp(cx)} bảo: "Mất nhà thì thuê nhà. Còn hai đứa mình là còn tất cả."` : 'Ngày dọn ra khỏi nhà, hàng xóm đứng xem. Ngẩng mặt mà đi.');
+        },
+        sys: () => 'Đinh! Tài sản về 0. Nhưng Bản Hệ Thống thấy ký chủ vẫn còn nguyên khí phách.',
+      },
+      {
+        t: (cx) => `Về nhờ ${cx.bm}, bán mảnh đất hương hỏa`,
+        if: () => parents,
+        do: (fx) => (fx.flag(`ps_${Math.floor(age / 10)}`), fx.flag('phasan'), fx.clearDebt(), fx.rel('bome', -10), fx.stat('tinh', 6), fx.stat('tam', -6)),
+        note: (cx) => `${cx.bm === 'ông bà' ? 'Bà' : 'Bố'} chỉ nói một câu: "Còn người là còn của." Câu ấy nhớ cả đời.`,
+      },
+      {
+        t: 'Bỏ trốn đi tỉnh khác, cắt hết liên lạc',
+        do: (fx, cx) => {
+          fx.flag(`ps_${Math.floor(age / 10)}`);
+          fx.flag('trono');
+          fx.clearDebt();
+          fx.stat('tien', -40);
+          fx.stat('tam', -14);
+          fx.rel('banthan', -20);
+          fx.rel('bome', -15);
+          if (cx.s.married) (fx.loveEnd(pid(cx) ? `lyhon_${pid(cx)}` : 'lyhon'), fx.divorce());
+          fx.mid('phasan');
+          fx.say('Một chiếc xe khách đêm, một cái tên mới, một cuộc đời làm lại ở nơi không ai quen.');
+        },
+      },
+    ],
+    next,
+  };
+}
+
+const ALL: Drama[] = [...YEU, ...CUOI, ...VICE, ...HIST, ...MONEY, ...DON];
 export const DRAMA_IDS = ALL.map((d) => d.id);
 
 function hash(s: string) {
@@ -1402,6 +1577,8 @@ const STAGE: Record<string, (x: Ctx) => boolean> = {
 const fits = (d: Drama, x: Ctx) =>
   (d.pool === poolOf(x) || d.pool === 'any') &&
   (!STAGE[d.id] || STAGE[d.id](x)) &&
+  // chuyện tiền bạc: khoảng một nửa số đời gặp, mỗi đời nhiều nhất hai lần
+  (!d.id.startsWith('m_') || (((x.s.seed ?? 0) >> 4) % 2 === 0 && x.s.flags.filter((g) => g.startsWith('dr_m_')).length < 2)) &&
   !x.has(`dr_${d.id}`) &&
   x.year >= (d.from ?? 0) &&
   x.year <= (d.to ?? 9999) &&

@@ -16,7 +16,7 @@ import { xemmatName } from './names';
 import { regionOf } from './names';
 import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
-import { histAt } from './drama';
+import { bankruptAt, histAt } from './drama';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -2186,6 +2186,9 @@ export function resolverOf(c: Character, f: Family): Resolve {
       const h = histAt(a, ctxOf(c, f, s, a), id);
       if (h) return h;
     }
+    // nợ quá sức thì phá sản trước khi sang chuyện khác
+    const ps = bankruptAt(sc.age, ctxOf(c, f, s, sc.age), id);
+    if (ps) return ps;
     return sc;
   };
 }
