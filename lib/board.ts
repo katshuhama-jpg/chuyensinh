@@ -80,6 +80,7 @@ export function commit(R: Resolve, c: Character, f: Family, before0: Story, i: n
   else {
     const opt = visibleChoices(sc, x0)[i];
     add.push({ age: age0, year: x0.year, t: `${txt(sc.title, x0)}: ${opt ? txt(opt.t, x0) : ''}`, k: 'pick' });
+    if (r.fb.delta) add.push({ age: age0, year: x0.year, t: `→ ${r.fb.delta}`, k: 'note' });
     for (const n of [...r.fb.notes.slice(0, 2), ...r.fb.sys.slice(0, 1)]) add.push({ age: age0, year: x0.year, t: n, k: 'note' });
     for (const m of r.fb.mids) add.push({ age: age0, year: x0.year, t: `★ Kết cục giữa chừng: ${MIDS[m]?.name ?? m}`, k: 'note' });
     for (const id of r.fb.met) add.push({ age: age0, year: x0.year, t: `♥ Gặp ${x0.L(id)} lần đầu.`, k: 'note' });

@@ -22,7 +22,7 @@ for (let k = 0; k < 700 && s.scene !== 'end'; k++) {
   const pref = o.findIndex((ch) => /Gật đầu|Tỏ tình|Hẹn|★/.test(txt(ch.t, x)));
   if (pref >= 0 && Math.random() < 0.7) idx = pref;
   const r = commit(R, c, fate.family, s, sc.kind === 'feed' ? 0 : idx);
-  if (sc.kind !== 'feed') console.log(`   -> chọn ${idx + 1}${[...r.fb.notes, ...r.fb.sys].length ? ' | ' + [...r.fb.notes, ...r.fb.sys].join(' / ') : ''}`);
+  if (sc.kind !== 'feed') console.log(`   -> chọn ${idx + 1}${r.fb.delta ? ' [' + r.fb.delta + ']' : ''}${[...r.fb.notes, ...r.fb.sys].length ? ' | ' + [...r.fb.notes, ...r.fb.sys].join(' / ') : ''}`);
   s = r.s;
 }
 console.log(`\n# Kết: cưới=${s.married} loveEnd=${s.loveEnd} con=${s.kids} đã gặp=${s.met.join(',')}`);

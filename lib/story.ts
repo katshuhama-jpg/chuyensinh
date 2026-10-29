@@ -4,7 +4,7 @@
  * Nội dung cảnh nằm ở lib/scenes.ts.
  */
 
-import { savingOf, unitOf } from './money';
+import { fmtVND as fmtMoney, savingOf, unitOf } from './money';
 import type { Character, Family, Gender, Look } from './character';
 import type { Bg } from '@/components/Backdrop';
 
@@ -121,6 +121,8 @@ export interface StoryCore {
   mood?: number[];
   /** trọng tâm đang chọn, đổi lúc nào cũng được */
   focus?: string;
+  /** những lựa chọn lớn với từng người, để nhiều năm sau người ấy nhắc lại */
+  memo?: { age: number; who: LoveId; t: string; d: number; used?: boolean }[];
   /** tài sản bằng tiền thật (VNĐ), cộng dồn theo năm; âm là đang nợ */
   cash?: number;
 }
@@ -335,6 +337,10 @@ export interface Feedback {
   mids: string[];
   /** người mới gặp ở lựa chọn này */
   met: LoveId[];
+  /** lựa chọn vừa rồi đã đổi gì: "Khôi ♥ +12 · Vui vẻ +5 · Tiền -2 triệu" */
+  delta?: string;
+  /** cảnh này nhắc lại lựa chọn cũ nào */
+  memo?: string;
 }
 
 /** Những người đang có trong đời (đã gặp, chưa buông) */
@@ -347,6 +353,18 @@ export type Resolve = (id: string, s: Story) => Scene | undefined;
 /**
  * Chọn một lựa chọn: chụp trạng thái, áp thay đổi, ghi ngã rẽ, tìm cảnh kế tiếp (bỏ qua các cảnh có skip).
  */
+/** lựa chọn cũ (cách đây từ hai năm) với người này mà người ấy sẽ nhắc lại */
+export function memoFor(s: StoryCore, id: LoveId, age: number) {
+  return (s.memo ?? []).find((e) => e.who === id && !e.used && age - e.age >= 2) ?? null;
+}
+/** dòng nhắc lại lựa chọn cũ, đặt ở đầu cảnh */
+export function memoLine(s: StoryCore, id: LoveId, age: number, name: string) {
+  const m = memoFor(s, id, age);
+  if (!m) return null;
+  const t = m.t.replace(/\s*[★♥]\s*$/u, '').replace(/^["“(]+|["”)]+$/g, '');
+  return m.d > 0 ? `🦋 ${name} vẫn nhớ năm ${m.age} tuổi, bạn đã chọn: "${t}".` : `🦋 ${name} chưa quên chuyện năm ${m.age} tuổi, khi bạn chọn: "${t}".`;
+}
+
 export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx: number): { s: Story; fb: Feedback } {
   const scene = resolve(s0.scene, s0)!;
   const x0 = ctxOf(c, f, s0, scene.age);
@@ -443,7 +461,37 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     },
   };
   const x = ctxOf(c, f, s, scene.age);
+  const before = { love: { ...s.love }, stats: { ...s.stats }, rel: { ...s.rel }, cash: s.cash ?? 0 };
   ch.do?.(fx, x);
+  // hệ quả nhìn thấy được: lựa chọn vừa rồi đổi những gì
+  {
+    const parts: string[] = [];
+    for (const id of LOVE_IDS) {
+      const d = Math.round(s.love[id] - before.love[id]);
+      if (d && s.met.includes(id)) parts.push(`${name(id)} ♥ ${d > 0 ? '+' : ''}${d}`);
+    }
+    for (const k of STAT_KEYS) {
+      if (k === 'tien') continue;
+      const d = Math.round(s.stats[k] - before.stats[k]);
+      if (Math.abs(d) >= 3) parts.push(`${STAT_LABEL[k]} ${d > 0 ? '+' : ''}${d}`);
+    }
+    const RL: Record<string, string> = { bome: x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ', banthan: 'Bạn thân', con: 'Con cái' };
+    for (const k of Object.keys(s.rel) as (keyof typeof s.rel)[]) {
+      const d = Math.round(s.rel[k] - before.rel[k]);
+      if (Math.abs(d) >= 3) parts.push(`${RL[k]} ${d > 0 ? '+' : ''}${d}`);
+    }
+    const dc = (s.cash ?? 0) - before.cash;
+    if (Math.abs(dc) >= 1000) parts.push(`Tiền ${dc > 0 ? '+' : '-'}${fmtMoney(Math.abs(dc))}`);
+    if (parts.length) fb.delta = parts.slice(0, 4).join(' · ');
+    // lựa chọn lớn với một người: người ấy sẽ nhớ
+    const ids = LOVE_IDS.filter((id) => Math.abs(s.love[id] - before.love[id]) >= 8 && s.met.includes(id));
+    const t0 = txt(ch.t, x0);
+    if (t0 && !t0.startsWith('▶')) for (const id of ids) s.memo = [...(s.memo ?? []), { age: scene.age, who: id, t: t0, d: s.love[id] - before.love[id] }].slice(-40);
+    // cảnh này đã nhắc lại một lựa chọn cũ: đánh dấu đã dùng
+    const w = scene.who?.(x0);
+    const m = typeof w === 'string' && (LOVE_IDS as string[]).includes(w) ? memoFor(s0, w as LoveId, scene.age) : null;
+    if (m && s.memo) s.memo = s.memo.map((e) => (e.age === m.age && e.who === m.who && e.t === m.t ? { ...e, used: true } : e));
+  }
   const note = txt(ch.note, x);
   if (note) fb.notes.unshift(note);
   const sys = txt(ch.sys, x);

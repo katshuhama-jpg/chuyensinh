@@ -16,6 +16,7 @@ import { xemmatName } from './names';
 import { regionOf } from './names';
 import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
+import { memoLine } from './story';
 import { bankruptAt, histAt } from './drama';
 import { annivAgeIn, midlifeAt } from './midlife';
 import { moneyFit, moneyLabelOf, moneyLoveScene, windfallAt } from './lovemoney';
@@ -2180,7 +2181,21 @@ export const ageOfScene = (id: string) => {
 
 /** Tìm cảnh theo mã cho một nhân vật: cảnh cố định hoặc cảnh động của Mùa yêu */
 export function resolverOf(c: Character, f: Family): Resolve {
-  const inner = innerResolver(c, f);
+  const inner0 = innerResolver(c, f);
+  // cảnh có một người đứng cạnh: người ấy nhắc lại lựa chọn cũ của mình với họ (cánh bướm thấy được)
+  const inner: Resolve = (id, s) => {
+    const sc = inner0(id, s);
+    if (!sc) return sc;
+    return {
+      ...sc,
+      text: (x) => {
+        const base = sc.text(x);
+        const w = sc.who?.(x);
+        const line = typeof w === 'string' && (LOVE_IDS as string[]).includes(w) ? memoLine(x.s, w as LoveId, x.age, x.L(w as LoveId)) : null;
+        return line ? [line, ...base] : base;
+      },
+    };
+  };
   // sự kiện thời cuộc có thật: khi sang năm mới, nếu giữa năm cũ và năm mới có một sự kiện hợp thì chen vào trước
   return (id, s) => {
     const sc = inner(id, s);

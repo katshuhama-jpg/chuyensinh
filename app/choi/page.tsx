@@ -168,14 +168,18 @@ function Board({
   useEffect(() => setShown(0), [story.scene, story.path.length]);
 
   const [toast, setToast] = useState<string | null>(null);
+  // hệ quả của lựa chọn vừa rồi, hiện ở đầu khung ngã rẽ kế tiếp (khi các ngã rẽ nối nhau)
+  const [lastFx, setLastFx] = useState<string | null>(null);
   // chọn xong là đóng ngay, không hiện lại cảnh vừa chọn; hệ quả hiện thành một dòng nhắc nhỏ và vào nhật ký
   const go = useCallback(
     (i: number, note?: string, quiet = false) => {
       const f = onCommit(i, note);
       setFb(null);
-      const msg = f && !quiet ? [...f.sys, ...f.notes][0] : null;
+      // hệ quả thấy ngay: đổi gì (♥, chỉ số, tiền) và một dòng chuyện kèm theo
+      const msg = f && !quiet ? [f.delta ? `→ ${f.delta}` : null, [...f.notes, ...f.sys][0] ?? null].filter(Boolean).join('\n') || null : null;
       // đang trong chuỗi ngã rẽ thì gom lại, hiện ba dòng gần nhất khi khung đóng
       if (msg) setToast((t) => (t ? `${t}\n${msg}`.split('\n').slice(-3).join('\n') : msg));
+      setLastFx(msg);
     },
     [onCommit, setFb],
   );
@@ -238,6 +242,7 @@ function Board({
   useEffect(() => {
     setToastHold(decide);
     if (decide) return setSheetOn(true);
+    setLastFx(null);
     const t = setTimeout(() => setSheetOn(false), 260);
     return () => clearTimeout(t);
   }, [decide]);
@@ -437,6 +442,11 @@ function Board({
                 </button>
               )}
             </div>
+            {lastFx && (
+              <p className="lb-last" role="status">
+                <span>Vừa rồi</span> {lastFx}
+              </p>
+            )}
             <Play
               R={R}
               key={`${story.path.length}${fb ? 'f' : 'n'}`}
