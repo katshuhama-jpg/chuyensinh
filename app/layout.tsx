@@ -1,10 +1,31 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
+const DESC = 'Game hẹn hò pixel cả một đời người: từ lúc chào đời đến lúc tóc bạc. Chọn ai để yêu, đời rẽ theo lối ấy. Không day dứt, chỉ tò mò: nếu rẽ lối khác, đời mình sẽ ra sao?';
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://loveslines.vercel.app'),
   title: { default: 'Đường Tình Rẽ Lối', template: '%s · Đường Tình Rẽ Lối' },
-  description: "Love's Altered Lines - không day dứt, chỉ tò mò: Nếu rẽ lối khác, đời mình sẽ ra sao?",
+  description: DESC,
   applicationName: 'Đường Tình Rẽ Lối',
+  keywords: ['game hẹn hò', 'game tình yêu', 'pixel', 'life sim', 'Đường Tình Rẽ Lối', "Love's Altered Lines"],
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    url: '/',
+    siteName: 'Đường Tình Rẽ Lối',
+    title: "Đường Tình Rẽ Lối - Love's Altered Lines",
+    description: DESC,
+    locale: 'vi_VN',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Đường Tình Rẽ Lối - game hẹn hò pixel' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Đường Tình Rẽ Lối - Love's Altered Lines",
+    description: DESC,
+    images: ['/og.png'],
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
