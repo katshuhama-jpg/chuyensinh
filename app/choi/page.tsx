@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { composeStrip } from '@/lib/lpc';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Bg } from '@/components/Backdrop';
 import TileStage from '@/components/TileStage';
@@ -1369,30 +1370,75 @@ function Stage({ x, bg, sceneId, children }: { x: Ctx; bg: Bg; sceneId: string; 
 
 /** Đặt nhân vật theo tâm chân x, hàng chân feet (px gốc 200x144) */
 /** Khung cảnh trên nhật ký đời: nhân vật đứng giữa nơi mình đang sống ở tuổi này (nhà, trường, phố, chỗ làm, vườn quê) */
-function lifePlace(age: number): Bg['place'] {
-  if (age < 6) return 'nha';
-  if (age < 18) return age % 2 ? 'lop' : 'cong';
-  if (age < 23) return age % 2 ? 'congvien' : 'pho';
-  if (age < 60) return age % 3 === 0 ? 'quan' : 'vanphong';
-  return age % 2 ? 'vuon' : 'nha';
+function lifePlace(age: number, x: Ctx): Bg['place'] {
+  const rural = !x.f.urban;
+  const r = (age * 7 + (x.s.seed ?? 0)) % 4;
+  if (age < 6) return rural ? (['nha', 'vuon', 'ngo', 'nha'] as const)[r] : (['nha', 'ngo', 'nha', 'congvien'] as const)[r];
+  if (age < 13) return rural ? (['lop', 'vuon', 'cong', 'ngo'] as const)[r] : (['lop', 'cong', 'ngo', 'congvien'] as const)[r];
+  // tuổi teen thời quán net (2001-2012) hay trốn ra net
+  if (age < 18) return x.year >= 2001 && x.year <= 2012 && r === 3 ? 'net' : rural ? (['lop', 'cong', 'vuon', 'ngo'] as const)[r] : (['lop', 'cong', 'pho', 'phong'] as const)[r];
+  if (age < 23) return x.has('daihoc') && !x.has('dilam') ? (['cong', 'congvien', 'pho', 'quan'] as const)[r] : rural ? (['vuon', 'pho', 'quan', 'ngo'] as const)[r] : (['pho', 'vanphong', 'quan', 'phong'] as const)[r];
+  if (age < 60) return x.s.married && r < 2 ? 'nha' : rural && !x.has('daihoc') ? (['vuon', 'quan', 'pho', 'nha'] as const)[r] : (['vanphong', 'quan', 'pho', 'phong'] as const)[r];
+  return (['vuon', 'nha', 'congvien', 'ngo'] as const)[r];
 }
+/** màu ảnh theo thời: trước 1990 ngả nâu như ảnh cũ, 1990-2004 hơi phai, sau 2026 hơi xanh tương lai */
+const eraClass = (y: number) => (y < 1990 ? 'era-80' : y < 2005 ? 'era-90' : y > 2026 ? 'era-fut' : '');
+
+/** Nhân vật đi qua đi lại trong khung cảnh: đi một quãng, đứng nghỉ, quay đầu đi tiếp */
+function useWalk(on: boolean, from = 60, to = 140) {
+  const [st, setSt] = useState({ x: 100, dir: 2, face: 3, walking: false, ms: 0 });
+  useEffect(() => {
+    if (!on || (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)) return;
+    let live = true;
+    let t: ReturnType<typeof setTimeout>;
+    let x = 100;
+    const step = () => {
+      if (!live) return;
+      const nx = from + Math.round(Math.random() * (to - from));
+      const ms = Math.max(600, Math.abs(nx - x) * 45);
+      setSt({ x: nx, dir: nx > x ? 3 : 1, face: nx > x ? 3 : 1, walking: true, ms });
+      x = nx;
+      t = setTimeout(() => {
+        if (!live) return;
+        setSt((s) => ({ ...s, walking: false, dir: Math.random() < 0.5 ? 2 : s.dir, ms: 0 }));
+        t = setTimeout(step, 1200 + Math.random() * 2200);
+      }, ms);
+    };
+    t = setTimeout(step, 800);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [on, from, to]);
+  return st;
+}
+
 function LifeStage({ x, char, story, age }: { x: Ctx; char: Character; story: Story; age: number }) {
-  const bg: Bg = { place: lifePlace(age), time: 'day' };
-  const id = `life-${Math.floor(age / 3)}`;
+  const bg: Bg = { place: lifePlace(age, x), time: age % 5 === 4 ? 'dusk' : 'day' };
+  const id = `life-${age}`;
   const feet = stg(bg, id).feet;
   const me = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
   const pid = story.partner && story.partner !== 'xemmat' ? story.partner : null;
   const mate = useMemo(() => (pid ? lpcLayers(CAST[pid][x.lg], x.lg, stageOf(age)) : null), [pid, x.lg, age]);
+  // dựng sẵn dải hình đi và đứng hai hướng, để lúc quay đầu không bị nháy
+  useEffect(() => {
+    for (const l of [me, mate]) if (l) for (const a of ['walk', 'idle'] as const) for (const d of [1, 2, 3]) void composeStrip(l, a, d);
+  }, [me, mate]);
+  const w = useWalk(true, mate ? 50 : 40, mate ? 140 : 160);
+  const anim = w.walking ? 'walk' : 'idle';
+  const move = { transition: `left ${w.ms}ms linear` };
+  // đi cùng người yêu: người ấy đi ngay sau, cùng hướng; đứng lại thì quay vào nhau
+  const mateX = w.x + (w.face === 1 ? 26 : -26);
   return (
-    <div className="lb-stage">
+    <div className={`lb-stage ${eraClass(x.year)}`}>
       <Stage x={x} bg={bg} sceneId={id}>
-        <Actor x={mate ? 80 : 100} feet={feet}>
-          <Sprite layers={me} scale={2} anim="idle" dir={mate ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
+        <Actor x={w.x} feet={feet} style={move}>
+          <Sprite layers={me} scale={2} anim={anim} dir={w.walking ? w.dir : mate ? (mateX > w.x ? 3 : 1) : w.dir} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
           <figcaption>{x.me}</figcaption>
         </Actor>
         {mate && pid && (
-          <Actor x={120} feet={feet}>
-            <Sprite layers={mate} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={x.L(pid)} />
+          <Actor x={mateX} feet={feet} style={move}>
+            <Sprite layers={mate} scale={2} anim={anim} dir={w.walking ? w.dir : mateX > w.x ? 1 : 3} dy={age < 13 ? -9 : 0} label={x.L(pid)} />
             <figcaption>{x.L(pid)}</figcaption>
           </Actor>
         )}
@@ -1444,9 +1490,9 @@ function MilestoneSheet({ m, x, onPick }: { m: Milestone; x: Ctx; onPick: (i: nu
   );
 }
 
-function Actor({ x, feet, children }: { x: number; feet: number; children: ReactNode }) {
+function Actor({ x, feet, children, style }: { x: number; feet: number; children: ReactNode; style?: React.CSSProperties }) {
   return (
-    <figure className="ts-actor" style={{ left: x * 2 - 64, top: feet * 2 - 124 }}>
+    <figure className="ts-actor" style={{ left: x * 2 - 64, top: feet * 2 - 124, ...style }}>
       <i className="ts-shadow" />
       {children}
     </figure>

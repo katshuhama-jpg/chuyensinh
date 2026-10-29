@@ -4495,3 +4495,8 @@ p {
 .lb-toast {
   z-index: 45;
 }
+
+/* màu ảnh nền theo thời kỳ */
+.era-80 .ts-cv { filter: sepia(0.55) saturate(0.75) contrast(0.95); }
+.era-90 .ts-cv { filter: sepia(0.22) saturate(0.88); }
+.era-fut .ts-cv { filter: hue-rotate(-18deg) saturate(1.15) brightness(1.05); }
