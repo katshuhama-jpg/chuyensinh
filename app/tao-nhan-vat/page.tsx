@@ -70,7 +70,8 @@ export default function BatDau() {
     if (!fate || !c) return;
     setBusy(true);
     const char = { ...c, name: c.name.trim() };
-    await saveGame({ char, family: fate.family, story: newStory(fate, FIRST_SCENE), startedAt: Date.now() });
+    // mạng chậm thì cũng không bắt chờ mãi: tối đa 6 giây rồi vào chơi
+    await Promise.race([saveGame({ char, family: fate.family, story: newStory(fate, FIRST_SCENE), startedAt: Date.now() }), new Promise((r) => setTimeout(r, 6000))]);
     router.push('/choi');
   }
 

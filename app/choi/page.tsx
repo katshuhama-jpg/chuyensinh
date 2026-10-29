@@ -24,7 +24,7 @@ import { moneyLabelOf } from '@/lib/lovemoney';
 import { commit } from '@/lib/board';
 import { AREAS, doAction, doMilestone, lifePathOf, mByParents, milestoneDue, mOptions, mPrice, mWealth, optionsOf, tallyOf, type AreaKey, type Milestone } from '@/lib/actions';
 import { cashOf, fmtCash, fmtVND, pointsOf, priceAt } from '@/lib/money';
-import { activeOf, choose, ctxOf, fastForward, isStop, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
+import { activeOf, choose, ctxOf, canRewind, fastForward, isStop, prevOf, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
 import { newsOf } from '@/lib/world';
@@ -599,13 +599,13 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
   const shownId = fb ? last.scene : story.scene;
   const age = ageOfScene(shownId);
   // lúc xem phản hồi, vẽ cảnh bằng trạng thái ngay trước lựa chọn (người yêu có thể vừa chia tay)
-  const before = fb && story.hist.length ? { ...story.hist[story.hist.length - 1], hist: [] } : story;
+  const before = (fb && prevOf(story)) || story;
   const x = ctxOf(char, family, before, age);
   const sc = R(shownId, before)!;
   const opts = visibleChoices(sc, x);
   const who = sc.who?.(x) ?? null;
   // sang chương mới thì hiện màn chương
-  const prevCh = !fb && last ? R(last.scene, story.hist[story.hist.length - 1] ? { ...story.hist[story.hist.length - 1], hist: [] } : story)?.chapter : undefined;
+  const prevCh = !fb && last ? R(last.scene, prevOf(story) ?? story)?.chapter : undefined;
   const [card, setCard] = useState(!embedded && !fb && (story.path.length === 0 || prevCh !== sc.chapter));
 
   const meLayers = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
@@ -1464,7 +1464,8 @@ function LifeStage({ x, char, story, age }: { x: Ctx; char: Character; story: St
   useEffect(() => {
     for (const l of [me, mate]) if (l) for (const a of ['walk', 'idle'] as const) for (const d of [1, 2, 3]) void composeStrip(l, a, d);
   }, [me, mate]);
-  const w = useWalk(true, mate ? 50 : 40, mate ? 140 : 160);
+  // em bé chưa biết đi: dưới 2 tuổi đứng yên, 2-3 tuổi chập chững quãng ngắn
+  const w = useWalk(age >= 2, age < 4 ? 80 : mate ? 50 : 40, age < 4 ? 120 : mate ? 140 : 160);
   const anim = w.walking ? 'walk' : 'idle';
   const move = { transition: `left ${w.ms}ms linear` };
   // đi cùng người yêu: người ấy đi ngay sau, cùng hướng; đứng lại thì quay vào nhau
@@ -1651,7 +1652,7 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
               {story.path[story.endAt].age} tuổi · {story.path[story.endAt].title}
             </span>
             <b style={{ fontWeight: 400, color: 'var(--accent)' }}>→ {story.path[story.endAt].choice}</b>
-            <button type="button" className="btn-sub px" onClick={() => onRewind(story.endAt!)}>
+            <button type="button" className="btn-sub px" onClick={() => onRewind(story.endAt!)} disabled={!canRewind(story, story.endAt!)}>
               ↺ Quay lại ngã rẽ này
             </button>
           </div>
@@ -1706,7 +1707,7 @@ function Ending({ char, family, story, onRewind }: { char: Character; family: Fa
             Bấm vào một ngã để quay lại đó và rẽ lối khác.
           </span>
           <ol className="path">
-            {story.path.map((p, i) => (
+            {story.path.map((p, i) => ({ p, i })).filter(({ i }) => canRewind(story, i)).map(({ p, i }) => (
               <li key={i}>
                 <button type="button" className="opt px-dim" onClick={() => onRewind(i)}>
                   <span>

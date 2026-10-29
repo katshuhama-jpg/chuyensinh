@@ -146,7 +146,8 @@ export interface Photo {
 
 export interface Story extends StoryCore {
   /** ảnh chụp trạng thái trước mỗi lựa chọn, để quay lại ngã rẽ */
-  hist: StoryCore[];
+  /** ảnh chụp gọn (không có path, log) trước mỗi lựa chọn; chỉ giữ ở ngã rẽ lớn và vài bước gần nhất, còn lại là null */
+  hist: (StoryCore | null)[];
 }
 
 /** Mọi thứ một cảnh cần để viết chữ */
@@ -370,7 +371,7 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
   const x0 = ctxOf(c, f, s0, scene.age);
   const opts = visibleChoices(scene, x0);
   const ch = opts[idx];
-  const s: Story = { ...core(s0), hist: [...s0.hist, core(s0)] };
+  const s: Story = { ...core(s0), hist: pruneHist([...s0.hist, lite(core(s0))], [...s0.path, { scene: scene.id, age: scene.age, title: '', choice: '' }]) };
   const fb: Feedback = { notes: [], sys: [], mids: [], met: [] };
   const lg: Gender = c.gender === 'f' ? 'm' : 'f';
   const name = (id: LoveId) => LOVES[id][lg];
@@ -563,9 +564,30 @@ export function fastForward(resolve: Resolve, c: Character, f: Family, s0: Story
 }
 
 /** Quay lại ngã rẽ thứ i: trạng thái ngay trước lựa chọn đó */
+/** ảnh chụp gọn: bỏ path và nhật ký (dựng lại từ đời hiện tại khi quay lại) để bản lưu không phình to */
+function lite(c: StoryCore): StoryCore {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { path, log, ...rest } = c;
+  return rest as StoryCore;
+}
+/** ngã rẽ lớn: còn quay lại được từ trang cuối đời */
+const KEY = /^(ch|rv|st1|st3|tq|ms|fo|wd|ps|gl|bat|route|dr|hs)@|^(y2\d_|m\d\d_|c\d+_|t1\d|o\d)/;
+/** chỉ giữ ảnh chụp ở ngã rẽ lớn và 3 bước gần nhất */
+export function pruneHist(h: (StoryCore | null)[], path: Step[]): (StoryCore | null)[] {
+  const n = h.length;
+  return h.map((e, i) => (e && (i >= n - 3 || KEY.test(path[i]?.scene ?? '')) ? (e.path || e.log ? lite(e) : e) : null));
+}
+/** trạng thái ngay trước bước cuối (để vẽ lại cảnh vừa chọn) */
+export function prevOf(s: Story): Story | null {
+  const e = s.hist[s.hist.length - 1];
+  return e ? { ...e, path: s.path.slice(0, -1), log: s.log, hist: [] } : null;
+}
+export const canRewind = (s: Story, i: number) => !!s.hist[i];
 export function rewind(s: Story, i: number): Story {
   const snap = s.hist[i];
-  return { ...JSON.parse(JSON.stringify(snap)), hist: s.hist.slice(0, i) };
+  if (!snap) return s;
+  const age = s.path[i]?.age ?? 0;
+  return { ...JSON.parse(JSON.stringify(snap)), path: s.path.slice(0, i), log: (s.log ?? []).filter((l) => l.age < age || (l.age === age && l.k === 'feed')), hist: s.hist.slice(0, i) };
 }
 
 /** Bản lưu cũ (trước khi có 10 người yêu): bổ sung trường còn thiếu để chơi tiếp được */
@@ -586,5 +608,7 @@ export function normalizeStory(s: Story): Story {
       mood: c.mood ?? [],
     };
   };
-  return { ...fix(s), hist: (s.hist ?? []).map(fix) };
+  const top = fix(s);
+  // bản lưu cũ có thể rất to (ảnh chụp đầy đủ mỗi bước): thu gọn ngay khi tải
+  return { ...top, hist: pruneHist((s.hist ?? []).map((h) => (h ? fix({ ...h, path: h.path ?? [], log: h.log ?? [] }) : null)), top.path) };
 }

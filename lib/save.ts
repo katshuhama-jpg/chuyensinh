@@ -86,6 +86,24 @@ export async function loadMe(): Promise<{ username: string; meta: Meta; state: S
   return { username: d.username, meta: d.meta ?? {}, state: d.state };
 }
 
+/** lưu lên máy chủ: mỗi lúc chỉ một lượt lưu, lượt đang chờ thì chỉ giữ bản mới nhất; quá 8 giây thì bỏ */
+let inflight: Promise<boolean> | null = null;
+let queued: SaveState | null | undefined;
+async function sendSave(state: SaveState | null): Promise<boolean> {
+  const p = currentPlayer();
+  const sb = supabase();
+  if (!p || !sb) return false;
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), 8000);
+  try {
+    const { error } = await sb.rpc('cs_save_game', { p_token: p.token, p_state: state }).abortSignal(ac.signal);
+    return !error;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
 export async function saveGame(state: SaveState | null): Promise<boolean> {
   const p = currentPlayer();
   const sb = supabase();
@@ -93,8 +111,24 @@ export async function saveGame(state: SaveState | null): Promise<boolean> {
     writeGuest({ ...readGuest(), state });
     return true;
   }
-  const { error } = await sb.rpc('cs_save_game', { p_token: p.token, p_state: state });
-  return !error;
+  if (inflight) {
+    queued = state;
+    return inflight.then(() => true);
+  }
+  inflight = (async () => {
+    let ok = await sendSave(state);
+    while (queued !== undefined) {
+      const q = queued;
+      queued = undefined;
+      ok = await sendSave(q);
+    }
+    return ok;
+  })();
+  try {
+    return await inflight;
+  } finally {
+    inflight = null;
+  }
 }
 
 export async function saveMeta(meta: Meta): Promise<boolean> {
