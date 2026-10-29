@@ -1,5 +1,5 @@
 /**
- * Một đêm hẹn với ngôi sao (nhân vật hư cấu hoàn toàn: Mr. Hến/Diệp, Quân/Mai, Tuấn Khang/Yến).
+ * Một đêm hẹn với ngôi sao (nhân vật hư cấu hoàn toàn: Mr. Hến/Diệp, Quân/Mai, Long Miền Tây/Yến).
  * Bốn chặng: tin nhắn lúc một giờ sáng - ăn đêm đội khẩu trang (có tay săn ảnh) -
  * ảnh lộ thì công khai, phủ nhận hay lùi lại - đêm diễn có một bài hát (hoặc một lời cảm ơn) dành cho mình.
  */
