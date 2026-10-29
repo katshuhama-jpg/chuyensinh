@@ -497,13 +497,17 @@ const list: Scene[] = [
     chapter: CH.tho,
     bg: () => ({ place: 'ngo', time: 'dusk' }),
     who: () => 'khoi',
-    title: 'Con diều mắc cây',
+    title: (x) => vary(x, 'dieu', ['Con diều mắc cây', 'Con diều đứt dây', 'Con diều đầu tiên']),
     text: (x) => [
-      `${x.L('khoi')} nhà bên khóc dưới gốc bàng: con diều mắc tít trên cành cao.`,
+      vary(x, 'dieu', [
+        `${x.L('khoi')} nhà bên khóc dưới gốc bàng: con diều mắc tít trên cành cao.`,
+        `Gió to, dây diều của ${x.L('khoi')} nhà bên đứt phựt. Con diều chao đảo rơi xuống mái nhà hàng xóm.`,
+        `${x.L('khoi')} nhà bên vót tre cả buổi chiều, dán giấy báo làm một con diều méo xệch, mãi không bay lên được.`,
+      ]),
       `Ngoài ngõ, lũ trẻ gọi ${x.me} ra xem ${tvOf(x.year)}.`,
     ],
     choices: [
-      { t: 'Trèo lên gỡ diều giúp', do: (fx) => (fx.flag('dieu'), fx.love('khoi', 15), fx.stat('noi', 5)), note: (x) => `${x.L('khoi')} sẽ nhớ chuyện này.` },
+      { t: (x) => vary(x, 'dieu', ['Trèo lên gỡ diều giúp', 'Bắc ghế trèo lên mái nhặt diều', 'Ngồi xuống sửa diều cùng, chạy thử đến lúc bay']), do: (fx) => (fx.flag('dieu'), fx.love('khoi', 15), fx.stat('noi', 5)), note: (x) => `${x.L('khoi')} sẽ nhớ chuyện này.` },
       { t: 'Chạy đi gọi người lớn', do: (fx) => (fx.love('khoi', 8), fx.stat('tinh', 5)) },
       { t: 'Mặc kệ, chạy ra xem phim', do: (fx) => fx.stat('tam', 5) },
     ],
@@ -549,7 +553,12 @@ const list: Scene[] = [
     who: () => 'khoi',
     title: 'Ngày chuyển nhà',
     text: (x) => [
-      `Nhà ${x.L('khoi')} chuyển ${movedTo(x)}. Xe tải đỗ đầu ngõ từ sáng sớm.`,
+      vary(x, 'chuyen', [
+        `Nhà ${x.L('khoi')} chuyển ${movedTo(x)}. Xe tải đỗ đầu ngõ từ sáng sớm.`,
+        `Bố ${x.L('khoi')} được điều công tác ${movedTo(x)}. Cả nhà dọn đi trong một tuần.`,
+        `Nhà ${x.L('khoi')} bán nhà trả nợ, chuyển ${movedTo(x)} ở với họ hàng. Đi lúc trời còn tối, không kịp chào ai.`,
+        `Ngõ có quyết định giải tỏa mở đường. Nhà ${x.L('khoi')} là nhà đầu tiên chuyển đi, ${movedTo(x)}.`,
+      ]),
       x.has('dieu')
         ? `${x.L('khoi')} dúi vào tay ${x.me} con diều giấy năm nào: "Giữ hộ tớ. Lớn lên tớ về lấy."`
         : `${x.L('khoi')} vẫy tay, ngập ngừng như muốn nói gì đó rồi lại thôi.`,
@@ -699,7 +708,12 @@ const list: Scene[] = [
       const back = x.has('hua') || x.has('kyvat') || x.s.love.khoi >= 20;
       if (!back) return [`Tết năm ấy, có người khách lạ đi ngang ngõ cũ, dừng lại nhìn ngôi nhà bên cạnh rất lâu.`, `${x.me} thấy quen quen, rồi người ấy đi mất.`];
       return [
-        `Tết năm ấy, ${x.L('khoi')} trở về ngõ cũ.`,
+        vary(x, 'veve', [
+          `Tết năm ấy, ${x.L('khoi')} trở về ngõ cũ.`,
+          `Đám cưới chị họ ở quê, ${x.me} ngồi mâm cỗ thì có người kéo ghế ngồi cạnh. Là ${x.L('khoi')}.`,
+          `Chiều mùng hai Tết, có tiếng gõ cửa. Người đứng ngoài cao hơn hẳn, tay xách giỏ quà. Là ${x.L('khoi')}.`,
+          `Đi xe khách về quê ăn Tết, ghế bên cạnh là một người quen quen. Nhìn mãi mới nhận ra: ${x.L('khoi')}.`,
+        ]),
         x.has('dieu') ? `${x.lg === 'm' ? 'Anh' : 'Cô'} đứng trước cửa, chỉ vào con diều treo trên tường: "Tớ về lấy rồi đây."` : `${x.ay.charAt(0).toUpperCase() + x.ay.slice(1)} nhìn ${x.me} một lúc lâu mới dám chào.`,
       ];
     },
@@ -992,7 +1006,14 @@ const list: Scene[] = [
     skip: (x) => !x.s.married,
     title: 'Tết này về bên nào?',
     text: (x) => {
-      const lines = [`Nhà nội muốn về quê nội. Nhà ngoại gọi điện giục từ rằm tháng Chạp.`];
+      const lines = [
+        vary(x, 'tet', [
+          'Nhà nội muốn về quê nội. Nhà ngoại thì giục từ rằm tháng Chạp.',
+          `Hai mươi tám Tết, vé xe về quê hết sạch. Hai bên nội ngoại cùng hỏi: "Năm nay về bên nào?"`,
+          'Năm nay hai bên đều có người già yếu, bên nào cũng mong con cháu về đông đủ.',
+          `${x.year < 2005 ? 'Bức điện tín' : 'Tin nhắn'} từ quê: "Tết này cả họ làm giỗ cụ, vắng ai cũng không được."`,
+        ]),
+      ];
       if (x.c.gender === 'f') lines.push(`Mẹ chồng còn nhắc khéo: "Năm nay có tin vui chưa con? Nhà mình cần cháu trai nối dõi."`);
       return lines;
     },
@@ -1011,7 +1032,14 @@ const list: Scene[] = [
     bg: () => ({ place: 'nha', time: 'dusk' }),
     skip: (x) => !x.s.married,
     title: 'Chuyện con cái',
-    text: (x) => [`Bạn bè cùng lứa đã có con đi mẫu giáo. ${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} hỏi bóng gió mỗi lần gọi điện.`],
+    text: (x) => [
+      vary(x, 'con', [
+        `Bạn bè cùng lứa đã có con đi mẫu giáo. ${x.mom === 'mẹ' ? 'Mẹ' : 'Bà'} cứ hỏi bóng gió mãi.`,
+        'Đám cưới bạn thân, cô dâu bế luôn đứa con đầu lòng lên sân khấu. Cả hội trường quay xuống nhìn hai vợ chồng mình.',
+        `Ngồi ăn cơm, ${spouseName(x)} bỗng nói: "Nhà mình yên quá nhỉ." Rồi cả hai im lặng.`,
+        `Đi siêu thị, ${spouseName(x)} đứng rất lâu ở quầy đồ trẻ con, cầm lên một đôi tất bé xíu.`,
+      ]),
+    ],
     choices: [
       { t: 'Sinh con ngay năm nay', do: (fx, x) => (fx.kids(1), fx.rel('con', 55), fx.stat('tien', -10), hasPartner(x) && fx.love(P(x), 5)), sys: 'Đinh! Mở khóa danh hiệu "Phụ huynh mất ngủ". Bản Hệ Thống xin phép làm bảo mẫu ảo.' },
       { t: 'Đợi mua được nhà rồi mới sinh', do: (fx) => (fx.kids(1), fx.rel('con', 45), fx.stat('tien', 10)) },
@@ -1070,7 +1098,14 @@ const list: Scene[] = [
     chapter: CH.nha,
     bg: () => ({ place: 'vanphong', time: 'day' }),
     title: 'Gia đình hay sự nghiệp',
-    text: (x) => [`Công ty đề nghị ${x.me} lên trưởng phòng, đổi lại phải đi công tác xa nửa năm.`, `${x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ'} đã yếu, gọi điện hay quên.`],
+    text: (x) => [
+      `Công ty đề nghị ${x.me} lên trưởng phòng, đổi lại phải đi công tác xa nửa năm.`,
+      vary(x, 'viec', [
+        `${x.bm === 'ông bà' ? 'Ông bà' : 'Bố mẹ'} đã yếu, dạo này hay quên trước quên sau.`,
+        x.s.kids ? 'Con sắp thi chuyển cấp, tối nào cũng hỏi bài.' : x.s.married ? `${spouseName(x)} vừa ốm một trận, gầy rộc đi.` : 'Con mèo ở nhà già rồi, ai trông nó nửa năm?',
+        x.s.married ? `Tối qua ${spouseName(x)} hỏi nhỏ: "Bao giờ mình mới có một kỳ nghỉ thật sự?"` : `${x.s.bestie} bảo: "Đi đi. Mà đi rồi nhớ về, đừng quên bạn bè."`,
+      ]),
+    ],
     choices: [
       { t: 'Nhận, lo tương lai trước', do: (fx, x) => (fx.stat('tien', 20), fx.rel('con', -15), x.s.married && hasPartner(x) ? fx.love(P(x), -5) : undefined) },
       { t: 'Từ chối, ở gần gia đình', do: (fx, x) => (fx.rel('con', 15), fx.stat('tam', 5), x.s.married && hasPartner(x) ? fx.love(P(x), 8) : undefined) },
@@ -1194,7 +1229,7 @@ function reflectScene(age: number): Scene {
     kind: 'reflect',
     bg: () => ({ place: 'phong', time: 'night' }),
     title: `${age} tuổi, dừng lại một chút`,
-    text: () => ['Thời gian ngừng trôi. Một câu hỏi hiện ra, chỉ mình biết câu trả lời:', `"${a.q}"`],
+    text: () => [age < 40 ? 'Thời gian ngừng trôi. Một câu hỏi hiện ra, chỉ mình biết câu trả lời:' : 'Buổi chiều yên ắng. Tự dưng một câu hỏi cũ quay lại:', `"${a.q}"`],
     ask: () => a.q,
     choices: [{ t: 'Ghi lại', do: (fx) => fx.stat('tam', 3) }, { t: 'Để sau' }],
     next: a.next,
@@ -1437,7 +1472,17 @@ function goScene(age: number): Scene {
         ? [`Ca làm kết thúc lúc nửa đêm. ${x.year < 2005 ? 'Thẻ điện thoại quốc tế còn đúng mười phút.' : 'Wifi khu trọ chập chờn.'} Gọi cho ai bây giờ?`]
         : x.s.married
           ? [`Cuối tuần hiếm hoi cả hai cùng được nghỉ. ${spouseName(x)} hỏi: "Hôm nay mình làm gì?"`]
-          : [inPool(x).length ? `Điện thoại có ${inPool(x).length} cuộc hẹn đang chờ trả lời.` : 'Chưa có ai để hẹn.'],
+          : [
+            inPool(x).length
+              ? vary(x, `go${age}`, [
+                  `Điện thoại có ${inPool(x).length} cuộc hẹn đang chờ trả lời.`,
+                  'Cuối tuần trống lịch. Mở danh bạ, lướt qua mấy cái tên.',
+                  `${x.s.bestie} hỏi: "Tuần này đi với ai đấy? Khai mau."`,
+                  'Lương vừa về. Tuần này phải đi đâu đó cho ra hồn.',
+                  x.year < 2004 ? 'Có mấy lá thư hẹn đang nằm trên bàn.' : 'Mấy khung chat cứ sáng lên liên tục.',
+                ])
+              : 'Chưa có ai để hẹn.',
+          ],
     choices: [
       ...LOVE_IDS.map(
         (id): Choice => ({
@@ -1771,7 +1816,15 @@ function dateScene(age: number, n: number, id: LoveId): Scene {
     who: () => id,
     bg: (x) => (x.year < 2012 ? { place: 'quan', time: 'dusk' } : { place: 'quan', time: 'dusk' }),
     title: (x) => `Hẹn hò với ${x.L(id)}`,
-    text: (x) => [`Cuối tuần, hẹn ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}).`, `Đi đâu bây giờ? (★ là chỗ riêng của ${x.ay})`],
+    text: (x) => [
+      [
+        `Cuối tuần, hẹn ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}).`,
+        `${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}) nhắn: "Chủ nhật rảnh không?"`,
+        `Hẹn được ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}) sau ba lần lỡ hẹn.`,
+        `Tối thứ sáu, ${x.L(id)} (${jobOf(id, x.lg, x.age, x.year)}) gọi: "Mai đi đâu đó đi."`,
+      ][(age + n + LOVE_IDS.indexOf(id)) % 4],
+      `Đi đâu bây giờ? (★ là chỗ riêng của ${x.ay})`,
+    ],
     choices: order.map(
       (k): Choice => ({
         t: (x) => DATES[k].t(x.year),
@@ -2136,7 +2189,29 @@ export function resolverOf(c: Character, f: Family): Resolve {
   };
 }
 
+/** cảnh cố định nhưng không phải đời nào cũng có: tỉ lệ phần trăm được giữ lại, xáo theo từng đời để cốt truyện đỡ lặp */
+const OPTIONAL: Record<string, number> = { c8_lop: 50, c10_he: 50, t15: 60, t16_chat: 55, y23_noidoi: 55, y24_ramat: 70, m32_tet: 50, m40_nguoicu: 55, m45_viec: 50 };
+const lifeRoll = (s: Story, k: string) => {
+  let h = 2166136261 ^ (s.seed ?? 0);
+  for (let i = 0; i < k.length; i++) h = Math.imul(h ^ k.charCodeAt(i), 16777619);
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d);
+  h ^= h >>> 12;
+  return (h >>> 0) % 100;
+};
+/** chọn một câu trong mấy câu cùng ý, theo từng đời */
+const vary = (x: Ctx, k: string, list: string[]) => list[lifeRoll(x.s, k) % list.length];
+
 function innerResolver(c: Character, f: Family): Resolve {
+  const base = innerResolver0(c, f);
+  return (id, s) => {
+    const sc = base(id, s);
+    if (sc && OPTIONAL[id] !== undefined && lifeRoll(s, id) >= OPTIONAL[id]) return { ...sc, skip: () => true };
+    return sc;
+  };
+}
+
+function innerResolver0(c: Character, f: Family): Resolve {
   return (id, s) => {
     const age = ageOfScene(id);
     if (id === 'y22_drama') return dramaScene(ctxOf(c, f, s, 22));

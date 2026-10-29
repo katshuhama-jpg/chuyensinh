@@ -617,6 +617,7 @@ const SLOTS: Record<number, Ev[]> = {
   65: [
     {
       id: 'timnguoicu',
+      if: (x) => ((x.s.seed ?? 0) >> 2) % 5 < 3,
       from: 2012,
       to: 2100,
       title: 'Tìm lại mối tình đầu',

@@ -185,7 +185,12 @@ export function dateStep(step: 2 | 3 | 4, age: number, n: number, id: LoveId, af
       id: `d2@${key}`,
       bg: (x) => (x.has(`dspot_${key}`) ? F.spotBg : { place: 'quan', time: 'dusk' }),
       title: 'Làm gì đây?',
-      text: (x) => [oops(x) ? (roll(x, age * 3 + n) < 0.5 ? F.oops(x) : common(x).t(x, id)) : `Đến nơi rồi. ${Up(x.L(id))} nhìn ${x.me}, chờ xem hôm nay làm gì.`],
+      text: (x) => [oops(x) ? (roll(x, age * 3 + n) < 0.5 ? F.oops(x) : common(x).t(x, id)) : [
+              `Đến nơi rồi. ${Up(x.L(id))} nhìn ${x.me}, chờ xem hôm nay làm gì.`,
+              `${Up(x.L(id))} đến trước mười phút, đứng chỉnh tóc mãi. Thấy ${x.me} thì vờ như vừa tới.`,
+              `${x.me} đến muộn năm phút. ${Up(x.L(id))} giơ đồng hồ lên, giả vờ giận, rồi phì cười.`,
+              `Trời hôm nay đẹp lạ. ${Up(x.L(id))} hỏi: "Giờ mình làm gì?"`,
+            ][(age + n * 3) % 4]],
       choices: [0, 1, 2].map(
         (k): Choice => ({
           t: (x) => (oops(x) && k === fixAt(x) ? (roll(x, age * 3 + n) < 0.5 ? F.fix : common(x).good) : pick3(x)[k].t),
@@ -278,7 +283,14 @@ export function dateStep(step: 2 | 3 | 4, age: number, n: number, id: LoveId, af
     timer: 10,
     // hết giờ thì coi như im lặng
     timeout: order.indexOf(opts[2]),
-    text: (x) => [`Đến ${where(x)}. ${x.L(id)} dừng lại, chưa muốn về.`],
+    text: (x) => [
+      [
+        `Đến ${where(x)}. ${x.L(id)} dừng lại, chưa muốn về.`,
+        `Đi chậm hết mức mà vẫn đến ${where(x)}. ${x.L(id)} đứng lại, xoay xoay chìa khóa.`,
+        `Đến ${where(x)} thì trời lất phất mưa. ${x.L(id)} không vội về.`,
+        `${x.L(id)} đưa ${x.me} về đến ${where(x)}, rồi cả hai cùng đứng im, không ai nói câu "về nhé".`,
+      ][(age * 3 + n) % 4],
+    ],
     choices: order,
     next: after,
   };
