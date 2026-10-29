@@ -4500,3 +4500,11 @@ p {
 .era-80 .ts-cv { filter: sepia(0.55) saturate(0.75) contrast(0.95); }
 .era-90 .ts-cv { filter: sepia(0.22) saturate(0.88); }
 .era-fut .ts-cv { filter: hue-rotate(-18deg) saturate(1.15) brightness(1.05); }
+
+/* tài sản trong sổ tay */
+.as { margin: 4px 0 12px; }
+.as-list { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 4px; }
+.as-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 8px; background: var(--bg-deep); font-size: 18px; }
+.as-list li span { color: var(--mute); }
+.as-list li b { color: var(--ink); text-align: right; }
+.as-list li.no b { color: #e86a6a; }

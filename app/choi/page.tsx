@@ -20,6 +20,7 @@ import { loadMe, saveGame, saveMeta, type SaveState } from '@/lib/save';
 import { activeMission, ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { STARS } from '@/lib/stars';
 import { historyOf } from '@/lib/drama';
+import { moneyLabelOf } from '@/lib/lovemoney';
 import { commit } from '@/lib/board';
 import { AREAS, doAction, doMilestone, lifePathOf, mByParents, milestoneDue, mOptions, mPrice, mWealth, optionsOf, tallyOf, type AreaKey, type Milestone } from '@/lib/actions';
 import { cashOf, fmtCash, fmtVND, pointsOf, priceAt } from '@/lib/money';
@@ -1177,6 +1178,7 @@ function Notebook({ x, story }: { x: Ctx; story: Story }) {
                 ✕
               </button>
             </div>
+            <Assets x={x} story={story} />
             <Meters x={x} story={story} met={met} />
             <div className="mt-h">▣ ALBUM KỶ NIỆM ({(story.album ?? []).length})</div>
             <Album photos={story.album ?? []} char={x.c} lg={x.lg} />
@@ -1184,6 +1186,33 @@ function Notebook({ x, story }: { x: Ctx; story: Story }) {
         </div>
       )}
     </>
+  );
+}
+
+/** Tài sản: tiền, nhà, xe, nợ, quỹ chung, và chuyện tiền đã ảnh hưởng tới tình cảm thế nào */
+function Assets({ x, story }: { x: Ctx; story: Story }) {
+  const cash = cashOf(story, x.year, x.age);
+  const has = (f: string) => story.flags.includes(f);
+  const rows: [string, string][] = [[cash < 0 ? 'Đang nợ' : x.age < 15 ? 'Heo đất' : 'Tiền để dành', fmtCash(cash).replace('Nợ ', '')]];
+  if (has('ms_nha') || has('nha_chung') || has('nha_rieng')) rows.push(['Nhà', has('nha_rieng') ? 'đứng tên mình' : has('nha_chung') || story.married ? 'đứng tên hai vợ chồng' : 'đứng tên mình']);
+  if (has('ms_xe')) rows.push(['Xe', 'đã có xe riêng']);
+  if (has('h_dat_mua')) rows.push(['Đất', 'một lô đất nền mua lúc sốt']);
+  if (story.married) rows.push(['Tiền nhà', has('quychung') ? 'quỹ chung, mỗi người góp' : has('dr_nopluong') ? 'đưa hết cho bạn đời giữ' : has('dr_quyden') ? 'nộp lương, còn giữ quỹ đen' : 'chưa bàn rõ']);
+  if (has('phasan') || has('trono')) rows.push(['Từng', has('trono') ? 'trắng tay, phải bỏ đi tỉnh khác' : 'trắng tay, làm lại từ đầu']);
+  const p = story.partner && story.partner !== 'xemmat' ? story.partner : null;
+  return (
+    <div className="as">
+      <div className="mt-h">₫ TÀI SẢN</div>
+      <ul className="as-list">
+        {rows.map(([k, v]) => (
+          <li key={k} className={k === 'Đang nợ' ? 'no' : ''}>
+            <span>{k}</span>
+            <b>{v}</b>
+          </li>
+        ))}
+      </ul>
+      {p && <p className="mt-hint">{x.L(p)} vốn {moneyLabelOf(p)}. Chuyện tiền bạc ảnh hưởng thẳng đến việc người ấy có ở lại khi khó khăn hay không.</p>}
+    </div>
   );
 }
 
@@ -1332,6 +1361,7 @@ function LoveDetail({ id, x, story, st, onClose }: { id: LoveId; x: Ctx; story: 
           <li>⌂ {pf.home}</li>
           <li>➤ {pf.ride}</li>
           <li>♥ Thích {LOVES[id].likesName}</li>
+          <li>₫ Tiền bạc: {moneyLabelOf(id)}</li>
           {lifeOf(id, x) && <li>✦ Dạo này: {lifeOf(id, x)}</li>}
           {x.has(`kv_${id}`) && <li>◆ Kỷ vật: {FLAVOR[id].keep}</li>}
         </ul>

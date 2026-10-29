@@ -12,6 +12,7 @@ import type { Bg } from '@/components/Backdrop';
 import { FLAVOR } from './dates';
 import { xemmatName } from './names';
 import { fmtVND, unitOf } from './money';
+import { staysInRuin } from './lovemoney';
 import type { Choice, Ctx, Fx, LoveId, Scene } from './story';
 
 type Pool = 'yeu' | 'cuoi' | 'don' | 'any';
@@ -382,7 +383,7 @@ const CUOI: Drama[] = [
     text: (x) => [`Tháng lương đầu tiên sau cưới. ${sp(x)} đặt hai cái phong bì lên bàn: "Mình tính sao đây?"`],
     choices: [
       { t: (x) => `Đưa hết cho ${sp(x)} giữ`, do: (fx, x) => (lv(fx, x, 8), fx.stat('tien', -4), fx.flag('dr_nopluong')) },
-      { t: 'Mỗi người một quỹ, góp chung tiền nhà', do: (fx, x) => (fx.stat('tien', 6), lv(fx, x, 2)) },
+      { t: 'Mỗi người một quỹ, góp chung tiền nhà', do: (fx, x) => (fx.stat('tien', 6), lv(fx, x, 2), fx.flag('quychung')), note: () => '🦋 Quỹ chung nhỏ thôi, nhưng là của hai người.' },
       { t: 'Gửi hết, nhưng giữ lại một "quỹ đen" nhỏ', do: (fx, x) => (lv(fx, x, 6), fx.stat('tien', 4), fx.flag('dr_quyden')), note: () => '🦋 Quỹ đen nào rồi cũng có ngày bị phát hiện.' },
     ],
   },
@@ -1505,7 +1506,14 @@ export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
     who: (cx) => (cx.s.married ? who(cx) : null),
     text: (cx) => [
       `Nợ đã lên ${tien(debt)}. Lãi mẹ đẻ lãi con, ${cx.year >= 2016 ? 'điện thoại réo cả ngày, có số còn nhắn cho cả bạn bè trong danh bạ' : 'chủ nợ đến tận cổng mỗi tối'}.`,
-      cx.s.married ? `${sp(cx)} ngồi đối diện, không nói gì, tay xoay mãi chiếc nhẫn cưới.` : 'Căn phòng trọ tối om, chỉ còn tiếng quạt.',
+      cx.s.married
+        ? staysInRuin(cx)
+          ? `${sp(cx)} ngồi đối diện, không nói gì, rồi nắm lấy tay ${cx.me}: "Mình làm lại."`
+          : `${sp(cx)} ngồi đối diện, tay xoay mãi chiếc nhẫn cưới. Va li đã để sẵn ở cửa.`
+        : 'Căn phòng tối om, chỉ còn tiếng quạt.',
+      ...(cx.s.married && pid(cx) && cx.has(`noikhoac_${pid(cx)}`) ? [`🦋 "Hồi yêu nhau ${cx.goi} bảo lương ${cx.goi} cao lắm cơ mà." Lời nói khoác năm nào giờ mới lộ.`] : []),
+      ...(cx.s.married && cx.has('nha_chung') ? ['🦋 Căn nhà đứng tên hai người, giờ phải bán. Nhưng cũng là cùng nhau quyết.'] : []),
+      ...(cx.s.married && cx.has('nha_rieng') ? ['🦋 Căn nhà chỉ đứng tên mình, giờ người kia cũng chẳng muốn giữ giùm.'] : []),
     ],
     choices: [
       {
@@ -1517,8 +1525,13 @@ export function bankruptAt(age: number, x: Ctx, next: string): Scene | null {
           fx.stat('tien', -30);
           fx.stat('tam', -10);
           fx.stat('noi', 6);
-          if (cx.s.married) lv(fx, cx, low(cx, 50) ? -12 : 10);
-          fx.say(cx.s.married && !low(cx, 50) ? `${sp(cx)} bảo: "Mất nhà thì thuê nhà. Còn hai đứa mình là còn tất cả."` : 'Ngày dọn ra khỏi nhà, hàng xóm đứng xem. Ngẩng mặt mà đi.');
+          if (cx.s.married && staysInRuin(cx)) (lv(fx, cx, 12), fx.flag('ps_oLai'), fx.say(`${sp(cx)} bảo: "Mất nhà thì thuê nhà. Còn hai đứa mình là còn tất cả."`));
+          else if (cx.s.married) {
+            const name = sp(cx);
+            fx.loveEnd(pid(cx) ? `lyhon_${pid(cx)}` : 'lyhon');
+            fx.divorce();
+            fx.say(`${name} xách va li về nhà bố mẹ đẻ. Tháng sau gửi đơn ly hôn qua đường bưu điện.`);
+          } else fx.say('Ngày dọn đi, hàng xóm đứng xem. Ngẩng mặt mà đi.');
         },
         sys: () => 'Đinh! Tài sản về 0. Nhưng Bản Hệ Thống thấy ký chủ vẫn còn nguyên khí phách.',
       },

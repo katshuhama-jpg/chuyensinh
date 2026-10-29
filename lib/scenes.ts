@@ -17,6 +17,7 @@ import { regionOf } from './names';
 import { AREA_PEOPLE, away, tallyOf, type AreaKey } from './actions';
 import { STARS, starNight, starScene } from './stars';
 import { bankruptAt, histAt } from './drama';
+import { moneyFit, moneyLabelOf, moneyLoveScene, windfallAt } from './lovemoney';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
@@ -197,9 +198,12 @@ const LEAVE: Record<LoveId, string> = {
 /** nhận lời cầu hôn của người ấy: cưới, hợp gu thì hạnh phúc, lệch gu thì dở dang */
 function accept(fx: Fx, x: Ctx) {
   const p = P(x);
-  const b = x.s.stats[LOVES[p].likes] >= 55;
+  // hợp gu và hợp cả chuyện tiền bạc thì mới hạnh phúc trọn vẹn
+  const fit = moneyFit(x, p);
+  const b = x.s.stats[LOVES[p].likes] >= 55 && fit;
   fx.marry();
   fx.flag('dinhhon');
+  if (!fit) fx.say(`Chuyện tiền giữa hai người vẫn còn lấn cấn: ${x.L(p)} vốn ${moneyLabelOf(p)}.`);
   if (b) (fx.loveEnd(`hanhphuc_${p}`), fx.say(`${x.L(p)} ôm chặt ${x.me}. Đám cưới vào mùa thu năm ấy.`));
   else (fx.loveEnd(`dodang_${p}`), fx.say(`Hai người cưới nhau. Nhưng ${x.L(p)} vốn thích ${LOVES[p].likesName}, và về sau sẽ có lúc lệch nhịp.`));
 }
@@ -1456,7 +1460,7 @@ function yearFeed(age: number): Scene {
       return lines;
     },
     choices: [{ t: '▶ Sống tiếp', do: (fx, x) => inPool(x).forEach((id) => fx.love(id, 2)) }],
-    next: `go@${age}`,
+    next: `tm@${age}`,
   };
 }
 
@@ -2189,6 +2193,9 @@ export function resolverOf(c: Character, f: Family): Resolve {
     // nợ quá sức thì phá sản trước khi sang chuyện khác
     const ps = bankruptAt(sc.age, ctxOf(c, f, s, sc.age), id);
     if (ps) return ps;
+    // giàu lên lần đầu: thử lòng người bên cạnh
+    const gl = windfallAt(sc.age, ctxOf(c, f, s, sc.age), id);
+    if (gl) return gl;
     return sc;
   };
 }
@@ -2244,6 +2251,8 @@ function innerResolver0(c: Character, f: Family): Resolve {
         return yearFeed(age);
       case 'ht':
         return missionScene(age);
+      case 'tm':
+        return moneyLoveScene(age, `go@${age}`);
       case 'go':
         return goScene(age);
       case 'ms':
