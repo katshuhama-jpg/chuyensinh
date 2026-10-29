@@ -21,7 +21,7 @@ import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
 import { GIFT_CAT, GIFT_PREF, GIFT_VND, shelfOf } from './gifts';
-import { fmtVND, pointsOf, priceAt, wealthOf } from './money';
+import { cashOf, fmtVND, pointsOf, priceAt } from './money';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -1944,7 +1944,7 @@ function giftScene(age: number, n: number, id: LoveId): Scene {
           t: (x) => `${GIFT_CAT[cat].icon} ${GIFT_CAT[cat].name(x.year)}${GIFT_VND[cat] ? ` · ${fmtVND(priceAt(GIFT_VND[cat], x.year))}` : ' · tự tay làm'}`,
           act: 'gift',
           // quà đắt cần đủ tiền; quà tự làm cần đủ khéo và tình cảm
-          if: (x) => (cat === 'handmade' ? x.s.stats.tinh >= 35 : wealthOf(x.s.stats.tien, x.year, x.age) >= priceAt(GIFT_VND[cat], x.year)),
+          if: (x) => (cat === 'handmade' ? x.s.stats.tinh >= 35 : cashOf(x.s, x.year, x.age) >= priceAt(GIFT_VND[cat], x.year)),
           do: (fx, x) => {
             if (GIFT_VND[cat]) fx.stat('tien', -Math.max(0.2, pointsOf(priceAt(GIFT_VND[cat], x.year), x.year, x.age)));
             const again = x.has(`qua_${id}_${cat}`);

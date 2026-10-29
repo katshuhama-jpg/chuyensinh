@@ -72,3 +72,30 @@ export function fmtVND(v: number) {
   if (a < 1_000_000_000) return `${nf(a / 1e6, a < 1e7 ? 1 : 0)} triệu`;
   return `${nf(a / 1e9, a < 1e10 ? 1 : 0)} tỷ`;
 }
+
+/** Tiền để dành được trong một năm (VNĐ): bé thì lì xì bỏ heo đất, lớn thì tiền lương trừ chi tiêu.
+ *  Điểm Tài chính là "khả năng kiếm tiền"; con nhỏ thì tốn kém, về già có lương hưu ít ỏi. */
+export function savingOf(s: { stats: { tien: number }; kids?: number; flags: string[]; marriedAge?: number | null }, year: number, age: number) {
+  const u = unitOf(year, age);
+  const t = s.stats.tien;
+  const work = s.flags.includes('dilam');
+  let k: number;
+  if (age < 6) k = 8;
+  else if (age < 15) k = 10;
+  else if (age < 18) k = 10 + (work ? 6 : 0);
+  else if (age < 22) k = work ? 8 + t / 12 : 3;
+  else if (age < 60) k = t / 7 - 1;
+  else k = 1 + t / 30;
+  // nuôi con: mỗi đứa tốn chừng hai phần ba khoản để dành của một năm, đến khi con lớn
+  if (s.kids && age >= 25 && age < 55) k -= 1.6 * s.kids;
+  // nghèo quá thì cũng chỉ hụt chi một chút mỗi năm, không âm mãi
+  return Math.max(-1, k) * u;
+}
+/** tài sản đang có; đời cũ chưa có sổ tiền thì ước theo điểm Tài chính */
+export function cashOf(s: { cash?: number; stats: { tien: number } }, year: number, age: number) {
+  return s.cash ?? wealthOf(s.stats.tien, year, age);
+}
+/** "12 triệu" hoặc "Nợ 12 triệu" */
+export function fmtCash(v: number) {
+  return v < 0 ? `Nợ ${fmtVND(-v)}` : fmtVND(v);
+}

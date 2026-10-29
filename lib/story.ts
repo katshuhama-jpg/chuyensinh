@@ -4,6 +4,7 @@
  * Nội dung cảnh nằm ở lib/scenes.ts.
  */
 
+import { savingOf, unitOf } from './money';
 import type { Character, Family, Gender, Look } from './character';
 import type { Bg } from '@/components/Backdrop';
 
@@ -120,6 +121,8 @@ export interface StoryCore {
   mood?: number[];
   /** trọng tâm đang chọn, đổi lúc nào cũng được */
   focus?: string;
+  /** tài sản bằng tiền thật (VNĐ), cộng dồn theo năm; âm là đang nợ */
+  cash?: number;
 }
 
 export interface LogLine {
@@ -348,7 +351,11 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
   const lg: Gender = c.gender === 'f' ? 'm' : 'f';
   const name = (id: LoveId) => LOVES[id][lg];
   const fx: Fx = {
-    stat: (k, d) => (s.stats[k] = clamp(s.stats[k] + d)),
+    stat: (k, d) => {
+      s.stats[k] = clamp(s.stats[k] + d);
+      // tiền thật đi theo điểm Tài chính: được thì cộng, tiêu thì trừ đúng số tiền (hết tiền thì thành nợ)
+      if (k === 'tien') s.cash = (s.cash ?? 0) + d * unitOf(c.birthYear + scene.age, scene.age);
+    },
     love: (id, d) => {
       // thêm độ thân với người chưa quen là gặp người đó
       if (d > 0 && !s.met.includes(id)) fx.meet(id);
@@ -441,6 +448,9 @@ export function choose(resolve: Resolve, c: Character, f: Family, s0: Story, idx
     next = txt(sc.next, xs);
   }
   s.scene = next;
+  // mỗi năm trôi qua: cộng khoản để dành của năm ấy (bé: lì xì vào heo đất; lớn: lương trừ chi tiêu)
+  const na = next === 'end' ? scene.age + 1 : resolve(next, s)?.age ?? scene.age;
+  for (let a = scene.age; a < na; a++) s.cash = (s.cash ?? 0) + savingOf(s, c.birthYear + a, a);
   return { s, fb };
 }
 

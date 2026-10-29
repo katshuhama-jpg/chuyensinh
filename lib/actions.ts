@@ -8,7 +8,7 @@
 
 import { choose, ctxOf, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Scene, type Story } from './story';
 import type { Character, Family } from './character';
-import { fmtVND, pointsOf, priceAt, wealthOf } from './money';
+import { cashOf, fmtVND, pointsOf, priceAt } from './money';
 import type { Place } from '@/components/Backdrop';
 
 export type AreaKey = 'hoc' | 'yeu' | 'tien' | 'dulich' | 'nha' | 'ban' | 'minh';
@@ -322,7 +322,7 @@ export function mPrice(m: Milestone, o: MOpt, x: Ctx) {
 const FAMILY_BUDGET: Record<string, number> = { 'Nhà nông': 10_000_000, 'Lao động phổ thông': 15_000_000, 'Công chức trung lưu': 40_000_000, 'Tiểu thương': 50_000_000, 'Khá giả': 200_000_000, 'Hào môn': 2_000_000_000 };
 export const mByParents = (m: Milestone) => m.age < 18;
 /** số tiền dùng được cho mốc này: của bố mẹ (khi còn nhỏ) hoặc tài sản của mình */
-export const mWealth = (m: Milestone, x: Ctx) => (mByParents(m) ? priceAt(FAMILY_BUDGET[x.f.wealth] ?? 3_000_000, x.year) : wealthOf(x.s.stats.tien, x.year, x.age));
+export const mWealth = (m: Milestone, x: Ctx) => (mByParents(m) ? priceAt(FAMILY_BUDGET[x.f.wealth] ?? 3_000_000, x.year) : cashOf(x.s, x.year, x.age));
 export const mPriceText = (v: number) => fmtVND(v);
 
 export function mOptions(m: Milestone, x: Ctx) {

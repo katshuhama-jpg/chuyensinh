@@ -22,7 +22,7 @@ import { STARS } from '@/lib/stars';
 import { historyOf } from '@/lib/drama';
 import { commit } from '@/lib/board';
 import { AREAS, doAction, doMilestone, lifePathOf, mByParents, milestoneDue, mOptions, mPrice, mWealth, optionsOf, tallyOf, type AreaKey, type Milestone } from '@/lib/actions';
-import { fmtVND, pointsOf, priceAt, wealthOf } from '@/lib/money';
+import { cashOf, fmtCash, fmtVND, pointsOf, priceAt } from '@/lib/money';
 import { activeOf, choose, ctxOf, fastForward, isStop, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
@@ -261,7 +261,7 @@ function Board({
         </div>
         <div className="lb-money" aria-label="Tài sản">
           <span>{curAge < 15 ? 'Heo đất' : 'Tài sản'}</span>
-          <b>{fmtVND(wealthOf(story.stats.tien, year, curAge))}</b>
+          <b>{fmtCash(cashOf(story, year, curAge))}</b>
         </div>
         <div className="lb-bar" aria-hidden="true">
           <i key={`${story.path.length}-${shown}`} style={{ animationDuration: `${YEAR_SEC / speed}s`, animationPlayState: running && isFeed ? 'running' : 'paused' }} />
@@ -728,7 +728,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
           <SwipeDeck
             cards={sc.cards!(x)}
             year={x.year}
-            gold={x.year >= 2015 ? { can: wealthOf(x.s.stats.tien, x.year, x.age) >= priceAt(250_000, x.year), price: pointsOf(priceAt(250_000, x.year), x.year, x.age), label: fmtVND(priceAt(250_000, x.year)) + ' một tháng' } : undefined}
+            gold={x.year >= 2015 ? { can: cashOf(x.s, x.year, x.age) >= priceAt(250_000, x.year), price: pointsOf(priceAt(250_000, x.year), x.year, x.age), label: fmtVND(priceAt(250_000, x.year)) + ' một tháng' } : undefined}
             onDone={(id, gold) => {
               const isGold = (o: Choice) => o.act === 'gold';
               let k = opts.findIndex((o) => (id ? o.loveId === id : !o.loveId) && isGold(o) === gold);
