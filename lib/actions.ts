@@ -8,6 +8,8 @@
 
 import { choose, ctxOf, type Choice, type Ctx, type Feedback, type LoveId, type Resolve, type Scene, type Story } from './story';
 import type { Character, Family } from './character';
+import { fmtVND, pointsOf, priceAt, wealthOf } from './money';
+import type { Place } from '@/components/Backdrop';
 
 export type AreaKey = 'hoc' | 'yeu' | 'tien' | 'dulich' | 'nha' | 'ban' | 'minh';
 export const AREAS: { k: AreaKey; t: string; icon: string; d: string }[] = [
@@ -177,3 +179,192 @@ export const AREA_PEOPLE: Record<AreaKey, LoveId[]> = {
   ban: ['hai', 'long', 'bao'],
   minh: ['phong', 'quan', 'hung'],
 };
+
+/* ---------------- Mốc đời: thay cho chọn việc mỗi năm ----------------
+ * Đến tuổi của một mốc, đồng hồ dừng và hiện câu hỏi; giữa các mốc năm tháng tự trôi.
+ * Mỗi lựa chọn tính vào một mảng (để vẫn ra "cả đời dành cho điều gì"), có thể tốn tiền thật (VNĐ theo năm 2020).
+ */
+
+export type MOpt = Opt & { k: AreaKey; /** giá theo mặt bằng 2020 */ vnd?: number };
+export interface Milestone {
+  id: string;
+  age: number;
+  place: Place;
+  title: (x: Ctx) => string;
+  sub: (x: Ctx) => string;
+  opts: MOpt[];
+}
+
+const land = (y: number) => (y >= 2001 && y <= 2007) || (y >= 2015 && y <= 2021);
+const landDown = (y: number) => (y >= 2008 && y <= 2012) || y >= 2022;
+
+export const MILESTONES: Milestone[] = [
+  {
+    id: 'lop1',
+    age: 6,
+    place: 'cong',
+    title: () => 'Vào lớp Một',
+    sub: (x) => `Năm ${x.year}, ${x.me} sáu tuổi. Bố mẹ bàn nhau cho con học ở đâu.`,
+    opts: [
+      { k: 'hoc', t: 'Học trường làng gần nhà', do: (fx) => (fx.stat('hoc', 3), fx.rel('bome', 4)) },
+      { k: 'hoc', t: 'Xin vào trường điểm trên phố', vnd: 3_000_000, do: (fx) => (fx.stat('hoc', 7), fx.stat('tam', -2), fx.flag('ms_truongdiem')), note: '🦋 Học trường điểm, bạn bè sẽ khác.' },
+      { k: 'minh', t: 'Học thêm lớp vẽ, lớp đàn', vnd: 2_000_000, do: (fx) => (fx.stat('duyen', 4), fx.stat('tam', 4)) },
+      { k: 'ban', t: 'Đi học cùng đứa bạn hàng xóm', do: (fx) => (fx.rel('banthan', 7), fx.stat('tam', 2)) },
+    ],
+  },
+  {
+    id: 'cap2',
+    age: 11,
+    place: 'lop',
+    title: () => 'Lên cấp Hai',
+    sub: (x) => `Hết tiểu học. ${x.me} mười một tuổi, bước vào cấp Hai.`,
+    opts: [
+      { k: 'hoc', t: 'Thi vào lớp chọn', do: (fx) => (fx.stat('hoc', 7), fx.stat('khoe', -2)) },
+      { k: 'hoc', t: (x) => (x.year < 2000 ? 'Học tiếng Anh ở nhà thầy giáo' : 'Học tiếng Anh ở trung tâm'), vnd: 6_000_000, do: (fx) => (fx.stat('hoc', 5), fx.flag('ac_tienganh')), note: '🦋 Tiếng Anh sẽ mở ra một cánh cửa.' },
+      { k: 'ban', t: 'Vào đội bóng, đội văn nghệ của trường', do: (fx) => (fx.stat('duyen', 4), fx.stat('khoe', 3), fx.rel('banthan', 4)) },
+      { k: 'nha', t: 'Phụ bố mẹ việc nhà, bán hàng', do: (fx) => (fx.stat('tien', 4), fx.rel('bome', 6)) },
+    ],
+  },
+  {
+    id: 'cap3',
+    age: 14,
+    place: 'lop',
+    title: () => 'Thi vào cấp Ba',
+    sub: (x) => `Năm lớp Chín. ${x.me} phải chọn đường vào cấp Ba.`,
+    opts: [
+      { k: 'hoc', t: 'Ôn thi trường chuyên', do: (fx) => (fx.stat('hoc', 8), fx.stat('khoe', -2), fx.flag('ac_chuyen')), note: '🦋 Thi chuyên năm ấy sẽ còn được nhắc lại.' },
+      { k: 'minh', t: 'Thi trường công gần nhà, học nhẹ nhàng', do: (fx) => (fx.stat('hoc', 3), fx.stat('tam', 4)) },
+      { k: 'hoc', t: 'Học trường tư thục', vnd: 30_000_000, do: (fx) => (fx.stat('hoc', 4), fx.stat('duyen', 3)) },
+      { k: 'tien', t: 'Vừa học vừa phụ việc kiếm tiền', do: (fx) => (fx.stat('tien', 6), fx.stat('hoc', -2)) },
+    ],
+  },
+  {
+    id: 'dilam',
+    age: 22,
+    place: 'vanphong',
+    title: (x) => (x.has('daihoc') ? 'Ra trường, đi làm' : 'Chọn một nghề'),
+    sub: (x) => (x.has('daihoc') ? `Cầm tấm bằng trên tay, ${x.me} bắt đầu đi làm.` : `${x.me} hai mươi hai tuổi, cần một công việc lâu dài.`),
+    opts: [
+      { k: 'tien', t: 'Thi công chức, vào cơ quan nhà nước', do: (fx) => (fx.stat('tien', 5), fx.stat('tam', 3), fx.flag('ms_congchuc')) },
+      { k: 'tien', t: (x) => (x.year < 2000 ? 'Xin vào công ty liên doanh' : 'Vào công ty tư nhân, công ty nước ngoài'), do: (fx) => (fx.stat('tien', 9), fx.stat('khoe', -2)) },
+      {
+        k: 'tien',
+        t: 'Khởi nghiệp, mở cửa hàng nhỏ',
+        vnd: 80_000_000,
+        do: (fx, x) =>
+          x.s.stats.duyen >= 50 || x.s.stats.hoc >= 55 ? (fx.stat('tien', 18), fx.say('Cửa hàng đông khách, vốn về sau hai năm.')) : (fx.stat('tien', -4), fx.say('Ế ẩm một năm, phải sang lại cửa hàng.')),
+        note: '🦋 Làm chủ thì gặp nhiều người hơn.',
+      },
+      { k: 'nha', t: 'Về quê lập nghiệp, gần bố mẹ', do: (fx) => (fx.rel('bome', 8), fx.stat('tam', 4), fx.stat('tien', 3)) },
+    ],
+  },
+  {
+    id: 'oxe',
+    age: 27,
+    place: 'pho',
+    title: () => 'Chỗ ở và chiếc xe',
+    sub: (x) => `Đi làm được vài năm. ${x.me} tính chuyện chỗ ở, đi lại.`,
+    opts: [
+      { k: 'tien', t: 'Thuê phòng trọ nhỏ, để dành tiền', do: (fx) => (fx.stat('tien', 5), fx.stat('tam', -1)) },
+      {
+        k: 'minh',
+        t: (x) => (x.year < 2010 ? 'Mua xe máy mới' : 'Mua ô tô trả góp'),
+        vnd: 0,
+        do: (fx) => (fx.stat('duyen', 3), fx.stat('tam', 4), fx.flag('ms_xe')),
+      },
+      { k: 'nha', t: 'Ở với bố mẹ cho đỡ tốn', do: (fx) => (fx.rel('bome', 6), fx.stat('tien', 3)) },
+      {
+        k: 'tien',
+        t: 'Gom tiền mua một mảnh đất',
+        vnd: 500_000_000,
+        do: (fx, x) =>
+          land(x.year) ? (fx.stat('tien', 25), fx.say('Đất lên giá, mảnh đất đáng gấp đôi.')) : landDown(x.year) ? (fx.stat('tien', -5), fx.say('Đất đóng băng, tiền nằm im một chỗ.')) : fx.stat('tien', 8),
+      },
+    ],
+  },
+  {
+    id: 'nha',
+    age: 35,
+    place: 'nha',
+    title: () => 'Một căn nhà',
+    sub: (x) => `${x.me} ba mươi lăm tuổi. Có nên mua nhà?`,
+    opts: [
+      { k: 'nha', t: 'Mua căn hộ chung cư, trả góp 20 năm', vnd: 600_000_000, do: (fx) => (fx.stat('tam', 6), fx.rel('con', 4), fx.flag('ms_nha')), note: '🦋 Có nhà rồi, nhưng còn món nợ dài.' },
+      { k: 'nha', t: 'Xây nhà trên đất bố mẹ cho', vnd: 400_000_000, do: (fx) => (fx.rel('bome', 6), fx.stat('tam', 4), fx.flag('ms_nha')) },
+      { k: 'tien', t: 'Tiếp tục thuê, dồn tiền làm ăn', do: (fx) => (fx.stat('tien', 8), fx.stat('tam', -2)) },
+      { k: 'minh', t: 'Dọn về quê, sống chậm lại', do: (fx) => (fx.stat('tam', 6), fx.stat('khoe', 3), fx.stat('tien', -2)) },
+    ],
+  },
+  {
+    id: 'u50',
+    age: 50,
+    place: 'vuon',
+    title: () => 'Tuổi năm mươi',
+    sub: (x) => `Nửa đời người. ${x.me} nghĩ đến những năm sau.`,
+    opts: [
+      { k: 'tien', t: 'Gửi tiết kiệm cho tuổi già', do: (fx) => (fx.stat('tien', 6), fx.stat('tam', 3)) },
+      { k: 'nha', t: 'Cho con đi du học', vnd: 1_000_000_000, when: (x) => x.s.kids > 0, do: (fx) => (fx.rel('con', 12), fx.stat('tam', 2)) },
+      { k: 'dulich', t: (x) => (x.s.married ? 'Đi du lịch nước ngoài cùng vợ chồng' : 'Đi du lịch nước ngoài một chuyến'), vnd: 60_000_000, do: (fx, x) => (fx.stat('tam', 8), x.s.partner && x.s.partner !== 'xemmat' ? fx.love(x.s.partner, 8) : undefined) },
+      { k: 'minh', t: 'Khám sức khỏe tổng quát, tập thể dục đều', vnd: 5_000_000, do: (fx) => (fx.stat('khoe', 8), fx.stat('tam', 2)) },
+    ],
+  },
+];
+
+/** giá xe theo năm: xe máy trước 2010, ô tô từ 2010 (VNĐ năm 2020) */
+const carVnd = (y: number) => (y < 2010 ? 30_000_000 : 600_000_000);
+
+/** giá thật (đúng năm) của một lựa chọn trong mốc */
+export function mPrice(m: Milestone, o: MOpt, x: Ctx) {
+  const v = m.id === 'oxe' && o.vnd === 0 ? carVnd(x.year) : (o.vnd ?? 0);
+  return priceAt(v, x.year);
+}
+/** trẻ con thì bố mẹ chi: tiền nhà có thể bỏ ra cho con học (VNĐ năm 2020) theo gia cảnh */
+const FAMILY_BUDGET: Record<string, number> = { 'Nhà nông': 10_000_000, 'Lao động phổ thông': 15_000_000, 'Công chức trung lưu': 40_000_000, 'Tiểu thương': 50_000_000, 'Khá giả': 200_000_000, 'Hào môn': 2_000_000_000 };
+export const mByParents = (m: Milestone) => m.age < 18;
+/** số tiền dùng được cho mốc này: của bố mẹ (khi còn nhỏ) hoặc tài sản của mình */
+export const mWealth = (m: Milestone, x: Ctx) => (mByParents(m) ? priceAt(FAMILY_BUDGET[x.f.wealth] ?? 3_000_000, x.year) : wealthOf(x.s.stats.tien, x.year, x.age));
+export const mPriceText = (v: number) => fmtVND(v);
+
+export function mOptions(m: Milestone, x: Ctx) {
+  return m.opts.filter((o) => x.year >= (o.y0 ?? 0) && x.year <= (o.y1 ?? 9999) && (!o.when || o.when(x)));
+}
+const mDone = (s: Story, m: Milestone) => s.flags.includes(`ms_done_${m.id}`);
+/** mốc đang chờ chọn ở tuổi này (mốc gần nhất đã tới mà chưa chọn, chưa sang mốc sau) */
+export function milestoneDue(s: Story, age: number): Milestone | null {
+  let due: Milestone | null = null;
+  MILESTONES.forEach((m, i) => {
+    const next = MILESTONES[i + 1];
+    if (age >= m.age && (!next || age < next.age) && !mDone(s, m)) due = m;
+  });
+  return due;
+}
+
+/** Chọn lựa chọn `idx` của mốc: trừ tiền, áp hiệu ứng, ghi một ngã rẽ (quay lại được), không đổi cảnh */
+export function doMilestone(R: Resolve, c: Character, f: Family, s0: Story, age: number, m: Milestone, idx: number): { s: Story; fb: Feedback; t: string } {
+  const cur = R(s0.scene, s0);
+  const x = ctxOf(c, f, s0, age);
+  const o = mOptions(m, x)[idx];
+  const cost = mPrice(m, o, x);
+  const scene: Scene = {
+    id: `ms@${m.id}`,
+    age,
+    chapter: cur?.chapter ?? 'Tuổi trẻ',
+    title: m.title(x),
+    text: () => [],
+    choices: [
+      {
+        ...o,
+        do: (fx, cx) => {
+          fx.flag(`ms_done_${m.id}`);
+          fx.flag(`ac_${age}_${o.k}`);
+          if (cost && !mByParents(m)) fx.stat('tien', -pointsOf(cost, cx.year, cx.age));
+          o.do?.(fx, cx);
+        },
+      },
+    ],
+    next: s0.scene,
+  };
+  const R2: Resolve = (id, st) => (id === scene.id ? scene : R(id, st));
+  const r = choose(R2, c, f, { ...s0, scene: scene.id }, 0);
+  return { ...r, t: typeof o.t === 'function' ? o.t(x) : o.t };
+}

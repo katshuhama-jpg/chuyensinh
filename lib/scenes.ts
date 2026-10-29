@@ -20,7 +20,8 @@ import { histAt } from './drama';
 import type { Character, Family } from './character';
 import { eraScene } from './eras';
 import { routeScene } from './routes';
-import { GIFT_CAT, GIFT_PREF, shelfOf } from './gifts';
+import { GIFT_CAT, GIFT_PREF, GIFT_VND, shelfOf } from './gifts';
+import { fmtVND, pointsOf, priceAt, wealthOf } from './money';
 
 const CH = { tho: 'Tuổi thơ', teen: 'Tuổi teen', tre: 'Tuổi trẻ', nha: 'Lập gia đình', gia: 'Tuổi già' };
 
@@ -1940,12 +1941,12 @@ function giftScene(age: number, n: number, id: LoveId): Scene {
     choices: [
       ...shelf.map(
         (cat): Choice => ({
-          t: (x) => `${GIFT_CAT[cat].icon} ${GIFT_CAT[cat].name(x.year)}${GIFT_CAT[cat].price ? ` · -${GIFT_CAT[cat].price} Tài chính` : ' · tự tay làm'}`,
+          t: (x) => `${GIFT_CAT[cat].icon} ${GIFT_CAT[cat].name(x.year)}${GIFT_VND[cat] ? ` · ${fmtVND(priceAt(GIFT_VND[cat], x.year))}` : ' · tự tay làm'}`,
           act: 'gift',
           // quà đắt cần đủ tiền; quà tự làm cần đủ khéo và tình cảm
-          if: (x) => (cat === 'handmade' ? x.s.stats.tinh >= 35 : x.s.stats.tien >= GIFT_CAT[cat].price * 3),
+          if: (x) => (cat === 'handmade' ? x.s.stats.tinh >= 35 : wealthOf(x.s.stats.tien, x.year, x.age) >= priceAt(GIFT_VND[cat], x.year)),
           do: (fx, x) => {
-            if (GIFT_CAT[cat].price) fx.stat('tien', -GIFT_CAT[cat].price);
+            if (GIFT_VND[cat]) fx.stat('tien', -Math.max(0.2, pointsOf(priceAt(GIFT_VND[cat], x.year), x.year, x.age)));
             const again = x.has(`qua_${id}_${cat}`);
             if (pref.likes.includes(cat)) {
               fx.love(id, again ? 8 : 15);
@@ -2000,11 +2001,11 @@ function quetScene(age: number, n: number): Scene {
           loveId: id,
           act: 'gold',
           if: (x) => !x.s.met.includes(id) && !isOut(x.s, id),
-          do: (fx, x) => (fx.stat('tien', -8), fx.meet(id), fx.love(id, 20), fx.say(`Gói Vàng cho biết ${x.L(id)} đã thích ${x.me} từ trước. Câu chào đầu tiên trúng ngay.`)),
+          do: (fx, x) => (fx.stat('tien', -pointsOf(priceAt(250_000, x.year), x.year, x.age)), fx.meet(id), fx.love(id, 20), fx.say(`Gói Vàng cho biết ${x.L(id)} đã thích ${x.me} từ trước. Câu chào đầu tiên trúng ngay.`)),
         }),
       ),
       { t: 'Không hợp ai', do: (fx) => (fx.mid('quet'), fx.stat('tam', -4)) },
-      { t: 'Mua gói Vàng mà vẫn không hợp ai', act: 'gold', do: (fx) => (fx.stat('tien', -8), fx.mid('quet'), fx.stat('tam', -6)) },
+      { t: 'Mua gói Vàng mà vẫn không hợp ai', act: 'gold', do: (fx, x) => (fx.stat('tien', -pointsOf(priceAt(250_000, x.year), x.year, x.age)), fx.mid('quet'), fx.stat('tam', -6)) },
     ],
     next: afterTurn(age, n),
   };

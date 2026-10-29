@@ -4379,3 +4379,65 @@ p {
 .lb-stage .stage-ts {
   margin: 0 auto;
 }
+
+/* tài sản ở thanh trên */
+.lb-money {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 2px 0 8px;
+  font-size: 15px;
+}
+.lb-money span {
+  opacity: 0.75;
+}
+.lb-money b {
+  color: var(--accent);
+  font-size: 20px;
+}
+
+/* mốc đời */
+.lb-ms {
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.lb-ms .ms-art {
+  margin: 4px 0 10px;
+}
+.lb-ms .ms-art .stage-ts {
+  margin: 0 auto;
+}
+.lb-ms > .ms-title,
+.lb-ms > .mt-hint,
+.lb-ms > .ms-wallet,
+.lb-ms > .choices {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+.ms-title {
+  margin: 4px 0 2px;
+  font-size: 22px;
+  color: var(--accent);
+}
+.ms-wallet {
+  margin: 6px 0 10px;
+  font-size: 14px;
+}
+.ms-wallet b {
+  color: var(--accent);
+}
+.ms-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  text-align: left;
+}
+.ms-opt small {
+  font-size: 13px;
+  opacity: 0.8;
+}
+.ms-opt.lock {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

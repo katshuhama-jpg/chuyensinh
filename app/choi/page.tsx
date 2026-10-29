@@ -20,7 +20,8 @@ import { activeMission, ageOfScene, resolverOf, statusOf } from '@/lib/scenes';
 import { STARS } from '@/lib/stars';
 import { historyOf } from '@/lib/drama';
 import { commit } from '@/lib/board';
-import { AREAS, areasOf, doAction, lifePathOf, doneThisYear, optionsOf, tallyOf, type AreaKey } from '@/lib/actions';
+import { AREAS, doAction, doMilestone, lifePathOf, mByParents, milestoneDue, mOptions, mPrice, mWealth, optionsOf, tallyOf, type AreaKey, type Milestone } from '@/lib/actions';
+import { fmtVND, pointsOf, priceAt, wealthOf } from '@/lib/money';
 import { activeOf, choose, ctxOf, fastForward, isStop, LOVE_IDS, LOVES, MAX_ACTIVE, MAX_LIFE, normalizeStory, rewind, MAIN_STATS, STAT_KEYS, STAT_LABEL, txt, visibleChoices, type Choice, type Ctx, type Feedback, type LoveId, type Photo, type Resolve, type Story } from '@/lib/story';
 import { useAuth } from '@/lib/useAuth';
 import { stageOf as bgStage } from '@/lib/scenebg';
@@ -156,7 +157,11 @@ function Board({
   const isFeed = sc?.kind === 'feed';
   const lines = useMemo(() => (isFeed && sc?.feed ? sc.feed(x) : []), [story.scene, story.path.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const stop = !!sc && isStop(sc.id);
-  const running = born && !paused && !menu && !area;
+  const ageNow = isFeed ? (lines[Math.max(0, shown - 1)]?.age ?? age) : age;
+  const busy = !!fb || (!!sc && !isFeed && (!auto || stop));
+  // mốc đời: đến tuổi thì dừng đồng hồ và hỏi
+  const ms = born && !busy ? milestoneDue(story, ageNow) : null;
+  const running = born && !paused && !menu && !area && !ms;
 
   useEffect(() => setShown(0), [story.scene, story.path.length]);
 
@@ -194,6 +199,19 @@ function Board({
     return () => clearTimeout(t);
   }, [isFeed, running, fb, shown, lines.length, speed, go]);
 
+  // tự chọn hộ cả mốc đời (chọn ngẫu nhiên trong những việc đủ tiền)
+  useEffect(() => {
+    if (!ms || !auto || paused) return;
+    const t = setTimeout(() => {
+      const mx = ctxOf(char, family, story, ageNow);
+      const ok = mOptions(ms, mx).map((o, i) => (mPrice(ms, o, mx) <= mWealth(ms, mx) ? i : -1)).filter((i) => i >= 0);
+      const i = ok[Math.floor(Math.random() * ok.length)] ?? 0;
+      const r = doMilestone(R, char, family, story, ageNow, ms, i);
+      onStory({ ...r.s, log: [...(r.s.log ?? []), { age: ageNow, year: char.birthYear + ageNow, t: `${ms.title(mx)}: ${r.t}`, k: 'pick' as const }].slice(-500) });
+    }, 1400 / speed);
+    return () => clearTimeout(t);
+  });
+
   // tự chọn hộ (trừ những ngã rẽ lớn)
   useEffect(() => {
     if (!sc || isFeed || !auto || stop || fb || !running) return;
@@ -210,7 +228,6 @@ function Board({
   const log = [...(story.log ?? []), ...pending.map((l) => ({ ...l, k: 'feed' as const }))].reverse();
   const decide = !!sc && born && ((!isFeed && (!auto || stop)) || !!fb);
   const xa = ctxOf(char, family, story, curAge);
-  const yearDone = doneThisYear(xa);
   const tally = tallyOf(story);
   const span = Math.max(80, lifespanOf(char, story));
 
@@ -228,6 +245,10 @@ function Board({
              · 1 năm ≈ {Math.round(YEAR_SEC / speed)} giây
           </small>
           <Notebook x={x} story={story} />
+        </div>
+        <div className="lb-money" aria-label="Tài sản">
+          <span>{curAge < 15 ? 'Heo đất' : 'Tài sản'}</span>
+          <b>{fmtVND(wealthOf(story.stats.tien, year, curAge))}</b>
         </div>
         <div className="lb-bar" aria-hidden="true">
           <i key={`${story.path.length}-${shown}`} style={{ animationDuration: `${YEAR_SEC / speed}s`, animationPlayState: running && isFeed ? 'running' : 'paused' }} />
@@ -301,40 +322,17 @@ function Board({
           )}
         </section>
 
-        <section className="card-d px-dim">
-          <div className="lb-h">
-            <b>Năm nay tập trung cho</b>
-            <small>MỖI NĂM MỘT VIỆC</small>
-          </div>
-          {yearDone ? (
-            <p className="mt-hint">
-              Năm {curAge} tuổi đã chọn: <b className="yeu">{AREAS.find((a) => a.k === story.focus)?.t}</b>. Sang năm chọn tiếp, hiệu ứng vẫn cộng mỗi năm.
-            </p>
-          ) : (
-            <p className="mt-hint">Chọn một mảng, rồi chọn một việc cụ thể. Mảng nào chọn nhiều sẽ quyết định cả đời mình dành cho điều gì.</p>
-          )}
-          {(() => {
-            const m = activeMission(xa);
-            return m ? (
+        {(() => {
+          const m = activeMission(xa);
+          return m ? (
+            <section className="card-d px-dim">
               <p className={`mt-hint lb-mission ${m.done ? 'ok' : ''}`}>
                 ✦ Nhiệm vụ Hệ Thống: <b>{m.t}</b>
                 {m.done ? ' - đã xong!' : ''}
               </p>
-            ) : null;
-          })()}
-          <div className="lb-areas">
-            {areasOf(xa).map((a) => (
-              <button key={a.k} type="button" className={`tile px lb-area ${story.focus === a.k ? 'on' : ''}`} disabled={yearDone} onClick={() => setArea(a.k)}>
-                <i aria-hidden="true">{a.icon}</i>
-                <b>{a.t}</b>
-                <small>
-                  {a.d}
-                  {tally[a.k] ? ` · đã chọn ${tally[a.k]} lần` : ''}
-                </small>
-              </button>
-            ))}
-          </div>
-        </section>
+            </section>
+          ) : null;
+        })()}
 
         <FamilyPanel char={char} family={family} story={story} age={curAge} x={x} />
 
@@ -385,6 +383,19 @@ function Board({
             </div>
           </div>
         </div>
+      )}
+
+      {ms && (
+        <MilestoneSheet
+          m={ms}
+          x={ctxOf(char, family, story, ageNow)}
+          onPick={(i) => {
+            const r = doMilestone(R, char, family, story, ageNow, ms, i);
+            const add = [{ age: ageNow, year: char.birthYear + ageNow, t: `${ms.title(xa)}: ${r.t}`, k: 'pick' as const }, ...[...r.fb.notes, ...r.fb.sys].slice(0, 2).map((t) => ({ age: ageNow, year: char.birthYear + ageNow, t, k: 'note' as const }))];
+            onStory({ ...r.s, log: [...(r.s.log ?? []), ...add].slice(-500) });
+            setToast([...r.fb.sys, ...r.fb.notes][0] ?? `${ms.title(xa)}: ${r.t}`);
+          }}
+        />
       )}
 
       {toast && (
@@ -646,7 +657,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
           </Stage>
         )}
 
-        <TextBox key={shownId + String(!!fb)} lines={sc.text(x)} ht={who === 'he_thong'} />
+        <TextBox key={'tb' + shownId + String(!!fb)} lines={sc.text(x)} ht={who === 'he_thong'} />
 
         {post && (
           <Feed
@@ -661,7 +672,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
 
         {chat && (
           <Phone
-            key={shownId + String(!!fb)}
+            key={'ph' + shownId + String(!!fb)}
             skin={sc.device?.(x) ?? skinOf(x.year)}
             me={x.me}
             name={whoName}
@@ -678,7 +689,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
 
         {call && (
           <CallScreen
-            key={shownId + String(!!fb)}
+            key={'cs' + shownId + String(!!fb)}
             skin={callSkinOf(x.year)}
             dir={call.dir}
             video={call.video}
@@ -698,7 +709,7 @@ function Play({ R, char, family, story, fb, onChoose, onNext, onFast, embedded }
           <SwipeDeck
             cards={sc.cards!(x)}
             year={x.year}
-            gold={x.year >= 2015 ? { can: x.s.stats.tien >= 30, price: 8 } : undefined}
+            gold={x.year >= 2015 ? { can: wealthOf(x.s.stats.tien, x.year, x.age) >= priceAt(250_000, x.year), price: pointsOf(priceAt(250_000, x.year), x.year, x.age), label: fmtVND(priceAt(250_000, x.year)) + ' một tháng' } : undefined}
             onDone={(id, gold) => {
               const isGold = (o: Choice) => o.act === 'gold';
               let k = opts.findIndex((o) => (id ? o.loveId === id : !o.loveId) && isGold(o) === gold);
@@ -1368,6 +1379,49 @@ function LifeStage({ x, char, story, age }: { x: Ctx; char: Character; story: St
           </Actor>
         )}
       </Stage>
+    </div>
+  );
+}
+
+/** Mốc đời hiện lên hỏi: tranh minh họa, câu hỏi, các lựa chọn kèm giá; không đủ tiền thì khóa */
+function MilestoneSheet({ m, x, onPick }: { m: Milestone; x: Ctx; onPick: (i: number) => void }) {
+  const opts = mOptions(m, x);
+  const have = mWealth(m, x);
+  const bg: Bg = { place: m.place, time: 'day' };
+  return (
+    <div className="lb-veil">
+      <div className="lb-sheet lb-ms px" role="dialog" aria-modal="true" aria-label={m.title(x)}>
+        <div className="lb-sh">
+          <span>
+            MỐC ĐỜI · {x.age} tuổi · {x.year}
+          </span>
+        </div>
+        <div className="ms-art">
+          <Stage x={x} bg={bg} sceneId={`ms-${m.id}`}>
+            <Actor x={100} feet={stg(bg, `ms-${m.id}`).feet}>
+              <Sprite layers={lpcLayers(x.c.look, x.c.gender, stageOf(x.age))} scale={2} anim="idle" dir={2} dy={x.age < 13 ? -9 : 0} label={`${x.me}, ${x.age} tuổi`} />
+              <figcaption>{x.me}</figcaption>
+            </Actor>
+          </Stage>
+        </div>
+        <h2 className="ms-title">{m.title(x)}</h2>
+        <p className="mt-hint">{m.sub(x)}</p>
+        <p className="ms-wallet">
+          {mByParents(m) ? 'Bố mẹ có thể lo cho con' : 'Tài sản đang có'}: <b>{fmtVND(have)}</b>
+        </p>
+        <div className="choices lb-acts">
+          {opts.map((o, i) => {
+            const cost = mPrice(m, o, x);
+            const lock = cost > have;
+            return (
+              <button key={i} type="button" className={`opt px ms-opt ${lock ? 'lock' : ''}`} disabled={lock} onClick={() => onPick(i)}>
+                <b>{txt(o.t, x)}</b>
+                <small>{cost ? (lock ? `Cần ${fmtVND(cost)} · chưa đủ tiền` : `${mByParents(m) ? 'Bố mẹ chi' : 'Tốn'} ${fmtVND(cost)}`) : 'Không tốn tiền'}</small>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

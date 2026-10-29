@@ -29,7 +29,7 @@ export default function SwipeDeck({
   cards: SwipeCard[];
   year: number;
   /** gói Vàng: can = đủ Tài chính để mua */
-  gold?: { can: boolean; price: number };
+  gold?: { can: boolean; price: number; label?: string };
   onDone: (loveId: string | null, gold: boolean) => void;
 }) {
   const skin = deckSkinOf(year);
@@ -94,7 +94,7 @@ export default function SwipeDeck({
       {shop && (
         <div className="dk-pop gold" role="dialog" aria-label="Mua gói Vàng">
           <div className="dk-match">★ GÓI VÀNG ★</div>
-          <p>Xem ngay ai đã thích bạn, match chắc chắn hơn. Giá: -{gold!.price} Tài chính.</p>
+          <p>Xem ngay ai đã thích bạn, match chắc chắn hơn. Giá: {gold!.label ?? `-${gold!.price} Tài chính`}.</p>
           <div className="dk-goldrow">
             {Array.from({ length: Math.max(1, likedMe) }, (_, k) => (
               <i key={k} className="dk-blur" aria-hidden="true">
@@ -107,7 +107,7 @@ export default function SwipeDeck({
               MUA GÓI VÀNG
             </button>
           ) : (
-            <p className="dk-poor">Tài chính chưa đủ. Đi làm thêm rồi quay lại nhé.</p>
+            <p className="dk-poor">Tiền chưa đủ. Đi làm thêm rồi quay lại nhé.</p>
           )}
           <button type="button" className="btn-sub px" onClick={() => setShop(false)}>
             Để sau

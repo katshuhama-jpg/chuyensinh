@@ -8,6 +8,9 @@ import type { LoveId, StatKey } from './story';
 
 export type GiftCat = 'hoa' | 'sach' | 'congnghe' | 'doan' | 'trangsuc' | 'handmade' | 'thethao' | 'amnhac' | 'trainghiem' | 'gaubong';
 
+/** giá thật của từng loại quà (VNĐ, theo mặt bằng năm 2020; đổi theo năm bằng priceAt) */
+export const GIFT_VND: Record<GiftCat, number> = { hoa: 400_000, sach: 150_000, congnghe: 1_200_000, doan: 150_000, trangsuc: 2_500_000, handmade: 0, thethao: 1_500_000, amnhac: 100_000, trainghiem: 3_000_000, gaubong: 400_000 };
+
 export const GIFT_CAT: Record<GiftCat, { label: string; icon: string; price: number; name: (y: number) => string }> = {
   hoa: { label: 'hoa', icon: '✿', price: 4, name: (y) => (y < 2000 ? 'Bó hoa hồng bọc giấy báo' : y <= 2026 ? 'Bó hoa hồng' : 'Hoa hồng không bao giờ héo') },
   sach: { label: 'sách', icon: '▤', price: 3, name: (y) => (y >= 2008 && y <= 2015 ? 'Bộ truyện ngôn tình đang hot' : y < 2000 ? 'Cuốn tiểu thuyết bìa cứng' : 'Cuốn sách hay vừa ra') },
