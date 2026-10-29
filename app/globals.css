@@ -4371,3 +4371,11 @@ p {
 .lb-mission { border: 2px dashed var(--dim); padding: 6px 8px; margin: 6px 0; }
 .lb-mission b { color: var(--accent); }
 .lb-mission.ok { border-style: solid; opacity: 0.8; }
+
+/* khung cảnh có nhân vật trên nhật ký đời */
+.lb-stage {
+  padding: 12px 16px 0;
+}
+.lb-stage .stage-ts {
+  margin: 0 auto;
+}

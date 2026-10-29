@@ -277,6 +277,8 @@ function Board({
         </div>
       </div>
 
+      <LifeStage x={xa} char={char} story={story} age={curAge} />
+
       <div className="body lb-body">
         <section className="card-d px-dim">
           <div className="lb-h">
@@ -1337,6 +1339,39 @@ function Stage({ x, bg, sceneId, children }: { x: Ctx; bg: Bg; sceneId: string; 
 }
 
 /** Đặt nhân vật theo tâm chân x, hàng chân feet (px gốc 200x144) */
+/** Khung cảnh trên nhật ký đời: nhân vật đứng giữa nơi mình đang sống ở tuổi này (nhà, trường, phố, chỗ làm, vườn quê) */
+function lifePlace(age: number): Bg['place'] {
+  if (age < 6) return 'nha';
+  if (age < 18) return age % 2 ? 'lop' : 'cong';
+  if (age < 23) return age % 2 ? 'congvien' : 'pho';
+  if (age < 60) return age % 3 === 0 ? 'quan' : 'vanphong';
+  return age % 2 ? 'vuon' : 'nha';
+}
+function LifeStage({ x, char, story, age }: { x: Ctx; char: Character; story: Story; age: number }) {
+  const bg: Bg = { place: lifePlace(age), time: 'day' };
+  const id = `life-${Math.floor(age / 3)}`;
+  const feet = stg(bg, id).feet;
+  const me = useMemo(() => lpcLayers(char.look, char.gender, stageOf(age)), [char, age]);
+  const pid = story.partner && story.partner !== 'xemmat' ? story.partner : null;
+  const mate = useMemo(() => (pid ? lpcLayers(CAST[pid][x.lg], x.lg, stageOf(age)) : null), [pid, x.lg, age]);
+  return (
+    <div className="lb-stage">
+      <Stage x={x} bg={bg} sceneId={id}>
+        <Actor x={mate ? 80 : 100} feet={feet}>
+          <Sprite layers={me} scale={2} anim="idle" dir={mate ? 3 : 2} dy={age < 13 ? -9 : 0} label={`${x.me}, ${age} tuổi`} />
+          <figcaption>{x.me}</figcaption>
+        </Actor>
+        {mate && pid && (
+          <Actor x={120} feet={feet}>
+            <Sprite layers={mate} scale={2} anim="idle" dir={1} dy={age < 13 ? -9 : 0} label={x.L(pid)} />
+            <figcaption>{x.L(pid)}</figcaption>
+          </Actor>
+        )}
+      </Stage>
+    </div>
+  );
+}
+
 function Actor({ x, feet, children }: { x: number; feet: number; children: ReactNode }) {
   return (
     <figure className="ts-actor" style={{ left: x * 2 - 64, top: feet * 2 - 124 }}>
